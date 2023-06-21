@@ -1,10 +1,9 @@
 # -----------------------
-# Author(s): Ryan Kinzer and Mike Ackerman
-# Purpose: Gather data and run the STADEM model. A loop is provided to cycle through Chinook salmon
-# and steelhead, and all years beginning in 2010
+# Author(s): Ryan N. Kinzer and Mike Ackerman
+# Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: June 20, 2023
+#   Last Modified: June 21, 2023
 #
 # Notes:
 
@@ -13,7 +12,7 @@ rm(list = ls())
 
 # install STADEM from GitHub, if not already available
 if(!require(STADEM)) {
-  remotes::install_github("KevinSee/STADEM")
+  remotes::install_github("KevinSee/STADEM", build_vignettes = T)
 }
 
 # load packages
