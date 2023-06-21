@@ -22,12 +22,12 @@ library(STADEM)
 library(here)
 
 # establish some folders, if not already
-stademFolder = "STADEM_results"
+stademFolder = "output/stadem_results"
 if(!dir.exists(stademFolder)) {
   dir.create(stademFolder)
 }
 
-modelFolder = "ModelFiles"
+modelFolder = "model_files"
 if(!dir.exists(modelFolder)) {
   dir.create(modelFolder)
 }
@@ -78,7 +78,7 @@ for(spp in species) {
                               wild_tags = FALSE)                        # should only wild tags be used to estimate daytime passage and re-ascension rates?
     
     # JAGs needs to access a .txt file of the model code
-    model_file_nm = here("ModelFiles/STADEM_LGR_model.txt")
+    model_file_nm = here("model_files/STADEM_LGR_model.txt")
     
     # what distribution to use for window counts
     win_model = c('pois', 'neg_bin', 'neg_bin2', 'quasi_pois', 'log_space')[2]
