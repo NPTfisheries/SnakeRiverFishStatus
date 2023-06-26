@@ -12,7 +12,7 @@
 #' @return NULL
 #' @examples buildConfig()
 #'
-buildConfig_LGR = function() {
+buildConfig_RK = function() {
 
   config_all = queryPtagisMeta()
 
