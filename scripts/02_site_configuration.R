@@ -24,12 +24,15 @@ remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 # load necessary libraries
 library(tidyverse)
 library(PITcleanr)
+library(here)
 
-# source buildNetwork_tbl() function
+# source some functions
 source(here("R/buildNetwork_tbl.R"))
+source(here("R/buildConfig_LGR.R"))
 
 # query metadata for all PTAGIS INT and MRR sites
-ptagis_sites = buildConfig()
+ptagis_sites = buildConfig_LGR() # Ryan Kinzer's version
+# ptagis_sites = buildConfig()   # Kevin See's version
 
 # customize several nodes because of name changes across the years and combine some sites into single nodes
 configuration = ptagis_sites %>%
@@ -90,4 +93,9 @@ configuration = ptagis_sites %>%
     node = str_replace(node, "^BTC", "BTL"),                                   # Group together Big Timber Creek
     node = ifelse(site_code == "18M", str_replace(node, "^18M", "HEC"), node)  # Group together Hawley Creek and 18-mile Creek
   )
+
+# append TRT population names
+
+
+
 
