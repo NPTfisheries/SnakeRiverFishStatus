@@ -12,6 +12,8 @@
 # 
 # Updates were made in SY2021 runs to include sites downstream of LGR
 # and to change node names to include _D, _M and _U.
+#
+# MA: I still need to update to use buildConfig() from RK's PITcleanr to resolve A0 and B0 nodes
 
 # clear environment
 rm(list = ls())
@@ -65,17 +67,27 @@ configuration = ptagis_sites %>%
       TRUE ~ node)) %>%
   mutate(
     node = case_when(
-      site_code %in% c("DWL", "DWOR")    ~ "DWL",                       # Dworshak National Fish Hatchery
-      site_code %in% c("CRT", "CROTRP")  ~ "CRT",                       # Crooked River Trap
-      site_code %in% c("REDTRP", "REDR") ~ "RRT",                       # Red River Trap
-      site_code == "AFC" &  grepl("MAINSTEM", antenna_group) ~ "AFC_D", # mainstem Asotin becomes _D
-      site_code == "AFC" & !grepl("MAINSTEM", antenna_group) ~ "AFC_U", # south and north forks become _U
-      site_code == "TUCH" ~ "TFH_U",                                    # change Tucannon Hatchery to _U; still need to sort this one
-      site_code %in% c("MCCA", "SALSFW") ~ "SALSFW",                    # South Fork Salmon Weir
-      site_code == "CARMEC" ~ "CRC_U",                                  # Carmen Creek; differentiates creek from weir; still need to sort A0s, B0s, etc.
-      site_code == "BIG2C" ~ "TAY_U",                                   # Big Creek
-      site_code == "WIMPYC" ~ "WPC_U", # Wimpey Creek (Lemhi)
-      # CONTINUE HERE
+      site_code %in% c("DWL", "DWOR")                            ~ "DWL",    # Dworshak National Fish Hatchery
+      site_code %in% c("CRT", "CROTRP")                          ~ "CRT",    # Crooked River Trap
+      site_code %in% c("REDTRP", "REDR")                         ~ "RRT",    # Red River Trap
+      site_code == "AFC" &  grepl("MAINSTEM", antenna_group)     ~ "AFC_D",  # mainstem Asotin becomes _D
+      site_code == "AFC" & !grepl("MAINSTEM", antenna_group)     ~ "AFC_U",  # south and north forks become _U
+      site_code == "TUCH"                                        ~ "TFH_U",  # change Tucannon Hatchery to _U; still need to sort this one
+      site_code %in% c("MCCA", "SALSFW")                         ~ "SALSFW", # South Fork Salmon Weir
+      site_code == "CARMEC"                                      ~ "CRC_U",  # Carmen Creek; differentiates creek from weir; still need to sort A0s, B0s, etc.
+      site_code == "BIG2C"                                       ~ "TAY_U",  # Big Creek
+      site_code == "WIMPYC"                                      ~ "WPC_U",  # Wimpey Creek (Lemhi)
+      site_code == "IML" & config_id == 130 & antenna_id == "09" ~ "IML_U",  # Imnaha River Work Room Antenna
+      site_code %in% c("YANKFK", "CEY")                          ~ "YFK_U",  # Yankee Fork and Cearley Creek
+      site_code == "LOOKGC"                                      ~ "LOOH",   # Group Lookingglass Creek w/ Lookingglass Hatchery
+      site_code == "RPDTRP"                                      ~ "RAPH",   # Group Rapid trap with Rapid Hatchery
+      site_code == "CHARLC"                                      ~ "CCA_U",  # Change Charley Creek observations to CCA_U
+      site_code == "BEARVC"                                      ~ "BRC",    # Group Bear Valley adult weir w/ BRC
+      site_code == "POTREF"                                      ~ "EFPW",   # Group EF Potlatch River w/ weir
       TRUE ~ node
-    )
+    )) %>%
+  mutate(
+    node = str_replace(node, "^BTC", "BTL"),                                   # Group together Big Timber Creek
+    node = ifelse(site_code == "18M", str_replace(node, "^18M", "HEC"), node)  # Group together Hawley Creek and 18-mile Creek
   )
+
