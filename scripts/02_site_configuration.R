@@ -27,8 +27,7 @@ library(PITcleanr)
 library(here)
 library(sf)
 
-# source some functions
-source(here("R/buildNetwork_tbl.R"))
+# source buildConfig()
 source(here("R/buildConfig_RK.R"))
 
 # query metadata for all PTAGIS INT and MRR sites
@@ -178,8 +177,8 @@ sthd_parent_child = parent_child %>%
   arrange(MPG, POP_NAME, parent, child)
 
 # -----------------------
-# create node attributes
-node_attributes = tibble(label = union(parent_child$child, parent_child$parent)) %>%
+# create site attributes
+site_attributes = tibble(label = union(parent_child$child, parent_child$parent)) %>%
   left_join(config %>%
               select(label = site_code,
                      MPG = sthd_MPG,
@@ -200,8 +199,11 @@ node_attributes = tibble(label = union(parent_child$child, parent_child$parent))
       grepl("Spawner/Kelt/Repeat Spawner", detection_type) ~ MPG,
       TRUE ~ "Below LWG"))
 
-node_graph = buildNetwork_tbl(parent_child = parent_child,
-                              node_attributes = node_attributes)  
+# source buildNetwork_tbl()
+source(here("R/buildNetwork_tbl.R"))
+
+site_graph = buildNetwork_tbl(parent_child = parent_child,
+                              node_attributes = site_attributes)  
 
 # -----------------------
 # create site network
@@ -214,7 +216,7 @@ library(ggraph)
 plasma_pal = c(plasma(n = 6, begin = 0.5), "grey90")
 
 # create site_network
-site_network = ggraph(node_graph, layout = "tree") +
+site_network = ggraph(site_graph, layout = "tree") +
   geom_edge_bend() +
   geom_node_label(aes(label = label,
                       fill = group),
@@ -249,12 +251,70 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 source(here("R/addParentChildNodes_RK.R"))
 
 # build network graph for nodes
-pc_nodes = addParentChildNodes(parent_child, config) # only works with rk_edits to PITcleanr
+pc_nodes = addParentChildNodes_RK(parent_child, config) # Ryan Kinzer's version
+#pc_nodes = addParentChildNodes(parent_child, config)    # Kevin See's version
 
+node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
+  left_join(config %>%
+              select(label = node,
+                     MPG = sthd_MPG,
+                     POP_NAME = sthd_POP_NAME,
+                     TRT_POPID = sthd_TRT_POPID,
+                     rkm_total) %>%
+              distinct(),
+            by = "label") %>%
+  group_by(label) %>%
+  slice(which.max(rkm_total)) %>%
+  mutate(detection_type = case_when(
+    rkm_total > 695 & !grepl("TPJ", label) ~ "Spawner/Kelt/Repeat Spawner",
+    label == 'OXBO'                        ~ 'Spawner/Kelt/Repeat Spawner',
+    label == 'GRA'                         ~ 'Release',
+    TRUE ~ 'Kelt/Repeat Spawner'
+  ),
+  group = case_when(
+    grepl("Spawner/Kelt/Repeat Spawner", detection_type) ~ MPG,
+    TRUE ~ "Below LWG"
+  )) %>%
+  select(label, group) %>%
+  distinct()
 
-source(here("R/buildNetwork_tbl.R"))
-source(here("R/buildConfig_RK.R"))
+node_graph = buildNetwork_tbl(parent_child = pc_nodes,
+                              node_attributes = node_attributes) 
 
-ptagis_sites = buildConfig_RK() # Ryan Kinzer's version
-# ptagis_sites = buildConfig()  # Kevin See's version
+node_network = ggraph(node_graph, layout = "tree") +
+  geom_edge_bend() +
+  geom_node_label(aes(label = label, 
+                      fill = group), 
+                  size = 1) +
+  scale_fill_manual(values = plasma_pal,
+                    breaks = c("Clearwater River", 
+                               "Hells Canyon", 
+                               "Grande Ronde River",
+                               "Imnaha River", 
+                               "Salmon River", 
+                               "Lower Snake")) +
+  guides(
+    fill = guide_legend(
+      title = "",
+      override.aes = aes(label = ""),
+      nrow = 1
+    )) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+node_network
+
+# save node_network
+ggsave(paste0(here("output/figures/node_network_"), root_site, ".png"),
+       node_network,
+       width = 14,
+       height = 8.5)
+
+# save some important items
+save(configuration, 
+     parent_child, 
+     pc_nodes, 
+     file = paste0(here("data/configuration_files/site_config_"), root_site, ".rda"))
+
+# END SCRIPT
 
