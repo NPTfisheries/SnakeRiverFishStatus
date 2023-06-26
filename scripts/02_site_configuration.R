@@ -25,6 +25,7 @@ remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 library(tidyverse)
 library(PITcleanr)
 library(here)
+library(sf)
 
 # source some functions
 source(here("R/buildNetwork_tbl.R"))
@@ -94,8 +95,35 @@ configuration = ptagis_sites %>%
     node = ifelse(site_code == "18M", str_replace(node, "^18M", "HEC"), node)  # Group together Hawley Creek and 18-mile Creek
   )
 
+# -----------------------
 # append TRT population names
+load(here("data/spatial/SR_pops.rda"))
+rm(fall_pop)
 
+sr_sthd_pops = st_as_sf(sth_pop) %>%
+  select(sthd_DPS = ESU_DPS, 
+         sthd_MPG = MPG, 
+         sthd_POP_NAME = POP_NAME, 
+         sthd_TRT_POPID = TRT_POPID, 
+         sthd_GSI_Group = GSI_Group)
 
+sr_chnk_pops = st_as_sf(spsm_pop) %>%
+  select(chnk_ESU = ESU_DPS, 
+         chnk_MPG = MPG, 
+         chnk_POP_NAME = POP_NAME, 
+         chnk_TRT_POPID = TRT_POPID, 
+         chnk_GSI_Group = GSI_Group)
 
+rm(sth_pop, spsm_pop)
 
+configuration %<>%
+  filter(!is.na(latitude) | !is.na(longitude)) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326) %>%
+  st_join(sr_sthd_pops) %>%
+  st_join(sr_chnk_pops) %>%
+  mutate(across(c(contains("sthd_"), contains("chnk_")), ~ifelse(grepl('^GRA$|^GRS$|^GOA$|^NPTH$|^DWL$', node), NA, .))) %>%
+  mutate(across(c(chnk_POP_NAME, chnk_TRT_POPID), ~ifelse(grepl("^SW1$|^SW2$", node), "SEUMA/SEMEA/SEMOO", .))) %>%
+  mutate(sthd_POP_NAME = ifelse(grepl("^SC1$|^SC2$", node), "South Fork Clearwater River", sthd_POP_NAME)) %>%
+  mutate(chnk_POP_NAME = ifelse(grepl("^SC1$|^SC2$", node), "Upper South Fork Clearwater", chnk_POP_NAME)) %>%
+  mutate(sthd_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "CRSFC-s", sthd_TRT_POPID)) %>%
+  mutate(chnk_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "SCUMA", chnk_TRT_POPID))
