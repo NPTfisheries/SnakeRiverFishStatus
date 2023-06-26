@@ -29,11 +29,11 @@ library(sf)
 
 # source some functions
 source(here("R/buildNetwork_tbl.R"))
-source(here("R/buildConfig_LGR.R"))
+source(here("R/buildConfig_RK.R"))
 
 # query metadata for all PTAGIS INT and MRR sites
-ptagis_sites = buildConfig_LGR() # Ryan Kinzer's version
-# ptagis_sites = buildConfig()   # Kevin See's version
+ptagis_sites = buildConfig_RK() # Ryan Kinzer's version
+# ptagis_sites = buildConfig()  # Kevin See's version
 
 # customize several nodes because of name changes across the years and combine some sites into single nodes
 configuration = ptagis_sites %>%
@@ -127,3 +127,134 @@ configuration %<>%
   mutate(chnk_POP_NAME = ifelse(grepl("^SC1$|^SC2$", node), "Upper South Fork Clearwater", chnk_POP_NAME)) %>%
   mutate(sthd_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "CRSFC-s", sthd_TRT_POPID)) %>%
   mutate(chnk_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "SCUMA", chnk_TRT_POPID))
+
+# -----------------------
+# create parent-child table
+config = configuration %>%   # for use w/ the parent-child table
+  st_set_geometry(NULL)
+
+root_site = "GRA"
+parent_child = read_csv(paste0(here("data/configuration_files/parent_child_"), root_site, ".csv")) %>%
+  # remove Clearwater hatchery for now... creating some problems with SC1 and SC2
+  filter(child != "CLWH") %>%
+  # add rkm
+  left_join(config %>%
+              select(parent = site_code,
+                     parent_rkm = rkm_total) %>%
+              filter(!is.na(parent_rkm)) %>%
+              distinct()) %>%
+  left_join(config %>%
+              select(child = site_code,
+                     child_rkm = rkm_total) %>%
+              filter(!is.na(child_rkm)) %>%
+              distinct()) %>%
+  mutate(child_rkm = case_when(
+    child == 'UpperColumbia' ~ 540,
+    child == 'Yakima' ~ 539,
+    child == 'WallaWalla' ~ 509,
+    child == 'Umatilla' ~ 465,
+    child == 'JohnDay' ~ 351,
+    child == 'Deschutes' ~ 328,
+    child == 'HoodRiver' ~ 273,
+    child == 'WindRiver' ~ 251,
+    child == 'LittleWhite' ~ 261,
+    child == 'WhiteSalmon' ~ 271,
+    child == 'Klickitat' ~ 290,
+    child == 'OXBO' ~ 850,
+    TRUE ~ child_rkm
+  ))
+ 
+# plotNodes(parent_child) 
+
+# append steelhead MPG and pop names; not sure why, yet?
+sthd_parent_child = parent_child %>%
+  left_join(config %>%
+              select(site_code,
+                     MPG = sthd_MPG,
+                     POP_NAME = sthd_POP_NAME,
+                     TRT_POPID = sthd_TRT_POPID) %>%
+              distinct(),
+            by = c("child" = "site_code")) %>%
+  arrange(MPG, POP_NAME, parent, child)
+
+# -----------------------
+# create node attributes
+node_attributes = tibble(label = union(parent_child$child, parent_child$parent)) %>%
+  left_join(config %>%
+              select(label = site_code,
+                     MPG = sthd_MPG,
+                     POP_NAME = sthd_POP_NAME,
+                     TRT_POPID = sthd_TRT_POPID,
+                     site_type,
+                     site_type_name,
+                     rkm_total) %>%
+              distinct(),
+            by = "label") %>%
+  mutate(detection_type = case_when(
+    rkm_total > 695 & label != "TPJ" ~ "Spawner/Kelt/Repeat Spawner",
+    label == "OXBO"                  ~ "Spawner/Kelt/Repeat Spawner",
+    label == "GRA"                   ~ "Spawner/Kelt/Repeat Spawner",
+    TRUE ~ "Kelt/Repeat Spawner"
+    ),
+    group = case_when(
+      grepl("Spawner/Kelt/Repeat Spawner", detection_type) ~ MPG,
+      TRUE ~ "Below LWG"))
+
+node_graph = buildNetwork_tbl(parent_child = parent_child,
+                              node_attributes = node_attributes)  
+
+# -----------------------
+# create site network
+
+# load necessary libraries
+library(viridis)
+library(ggraph)
+
+# set color palette
+plasma_pal = c(plasma(n = 6, begin = 0.5), "grey90")
+
+# create site_network
+site_network = ggraph(node_graph, layout = "tree") +
+  geom_edge_bend() +
+  geom_node_label(aes(label = label,
+                      fill = group),
+                  size = 1) +
+  scale_fill_manual(values = plasma_pal,
+                    breaks = c("Clearwater River", 
+                               "Hells Canyon", 
+                               "Grande Ronde River",
+                               "Imnaha River", 
+                               "Salmon River", 
+                               "Lower Snake")) +
+  guides(fill = guide_legend(
+    title = "",
+    override.aes = aes(label = ""),
+    nrow = 1
+  )) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+site_network
+
+# save site_network
+ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
+       site_network,
+       width = 14,
+       height = 8.5)
+
+# -----------------------
+# build network graph for nodes
+
+# source addParentChildNodes_RK()
+source(here("R/addParentChildNodes_RK.R"))
+
+# build network graph for nodes
+pc_nodes = addParentChildNodes(parent_child, config) # only works with rk_edits to PITcleanr
+
+
+source(here("R/buildNetwork_tbl.R"))
+source(here("R/buildConfig_RK.R"))
+
+ptagis_sites = buildConfig_RK() # Ryan Kinzer's version
+# ptagis_sites = buildConfig()  # Kevin See's version
+
