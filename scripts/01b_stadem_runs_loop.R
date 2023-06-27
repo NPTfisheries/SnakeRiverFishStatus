@@ -42,7 +42,7 @@ species = c("Chinook", "Steelhead")
 for(spp in species) {
   
   # set years
-  if(spp == "Chinook")   { years = c(2010:2019, 2022) }
+  if(spp == "Chinook")   { years = c(2010:2019, 2021:2022) }
   if(spp == "Steelhead") { years = 2010:2022 }
   
   # for Chinook, include jacks
