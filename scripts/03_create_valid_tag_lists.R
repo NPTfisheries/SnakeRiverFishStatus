@@ -5,7 +5,8 @@
 # Created Date: May 1, 2019
 #   Last Modified: June 27, 2023
 #
-# Notes: 
+# Notes: See bottom of script. After completing the complete tag history queries in PTAGIS,
+# consider running the QA/QC of the complete tag histories, which is currently commented out.
 
 # clear environment
 rm(list = ls())
@@ -26,7 +27,7 @@ trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-27.csv"))
 
 # set species and spawn year
 spc = "Chinook"
-yr  = 2010
+yr  = 2014
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -54,3 +55,21 @@ tag_list = valid_df %>%
               sep = "\t")
 
 ### END SCRIPT
+
+#-----------------------
+# QA/QC the complete tag histories: need to download the CTH(s) from PTAGIS first
+# cth_file = paste0(here("data/complete_tag_histories"), "/LGR_", spc, "_", yr, ".csv")
+# 
+# # requires PITcleanr
+# library(PITcleanr)
+# 
+# # run qcTagHistory()
+# cth_qc = qcTagHistory(cth_file)
+# cth_qc
+# 
+# orphans <- qc_detections$orphan_tags %>%
+#   write.table(paste0(tagsFolder,'/Orphan_',spp,'.txt'),
+#               quote = F,
+#               row.names = F,
+#               col.names = F,
+#               sep = '\t')
