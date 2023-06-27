@@ -8,3 +8,18 @@
 # Notes: 
 
 # start tomorrow by querying CTHs for all valid tag lists
+
+# clear environment
+rm(list = ls())
+
+# load necessary libraries
+library(tidyverse)
+library(PITcleanr)
+
+# source identifyFishType()
+
+# set up folder structure
+PITcleanr_folder = "output/PITcleanr"
+if(!dir.exists(PITcleanr_folder)) {
+  dir.create(PITcleanr_folder)
+}
