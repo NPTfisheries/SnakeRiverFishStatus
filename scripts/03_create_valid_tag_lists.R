@@ -17,7 +17,7 @@ library(here)
 library(lubridate)
 
 # set up folder structure
-tags_folder = here("data/valid_tag_lists")
+tags_folder = here("output/valid_tag_lists")
 if(!dir.exists(tags_folder)) {
   dir.create(tags_folder)
 }
@@ -26,8 +26,8 @@ if(!dir.exists(tags_folder)) {
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-27.csv"))
 
 # set species and spawn year
-spc = "Chinook"
-yr  = 2014
+spc = "Steelhead"
+yr  = 2022
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
