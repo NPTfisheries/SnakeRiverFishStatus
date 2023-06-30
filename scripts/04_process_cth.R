@@ -7,6 +7,9 @@
 #
 # Notes: For now, I'm just going to query PTAGIS for CTHs for each valid tag list. However, consider in the future using
 # queryObsDART(). I just don't know if you can use that function to query for a particular tag list.
+#
+# Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
+# differentiates spawners from kelts??? Consider adding that functionality in at a later date.
 
 # clear environment
 rm(list = ls())
@@ -25,8 +28,8 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Chinook"
-yr = 2010
+spc = "Steelhead"
+yr = 2022
 
 # load configuration and site and node parent-child data frames
 root_site = "GRA"
@@ -70,7 +73,7 @@ if(spc == "Steelhead") {
 }
 
 # clean observations to only include first observation of GRA after start of spawn year and after...
-obs_direct = comp_obs %>%
+lgr_after_obs = comp_obs %>%
   # add a column "start_date" which is the first observation at Granite after the start of the spawn year
   left_join(comp_obs %>%
               # get just GRA trap observations (exclude just observations)
@@ -93,16 +96,41 @@ obs_direct = comp_obs %>%
 
 # use filterDetections() to provide some indication of whether each detection should be kept for analysis i.e., moving in a single direction
 # note the function first runs addDirection() which determines movement based on relationships in the provided parent_child table
-dabom_obs = filterDetections(compress_obs = obs_direct,
+dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                              parent_child = pc_nodes,
-                             max_obs_date = NULL) %>%
+                             max_obs_date = NULL) %>%      # max_obs_date could be used to exclude kelts
   mutate(id = 1:n()) %>%
   select(id, everything()) %>%
   mutate(life_stage = "spawner") %>%
   select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
          node, direction, everything())
 
-# CONTINUE HERE
+# correct some calls for fish that re-ascended i.e., were seen at GRA (adult ladder and trap), GRS (juvenile fish bypass), and
+# GRA again. We don't want these fish assigned to GRS and also another branch b/c they will be flagged as multiple branches
 
+reascenders = dabom_obs %>%
+  filter(life_stage == "spawner") %>%
+  filter(node %in% c("GRA", "GRS")) %>%
+  group_by(tag_code) %>%
+  slice(which.max(min_det)) %>%
+  select(tag_code, max_LGR = node)
 
+dabom_obs = dabom_obs %>%
+  left_join(reascenders) %>%
+  mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
+                                NA,
+                                if_else(node == "GRS" & max_LGR == "GRA",
+                                        FALSE,
+                                        auto_keep_obs)),
+         user_keep_obs = ifelse(is.na(user_keep_obs),
+                                NA,
+                                ifelse(node == "GRS" & max_LGR == "GRA",
+                                       FALSE,
+                                       user_keep_obs))) %>%
+  select(-max_LGR)
 
+# write to excel file
+write_xlsx(dabom_obs,
+           paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
+
+# END SCRIPT
