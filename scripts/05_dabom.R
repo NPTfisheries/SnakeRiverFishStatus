@@ -3,11 +3,15 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: June 30, 2023
+#   Last Modified: August 7, 2023
 #
 # Notes: 
 
 # START HERE
+
+# load necessary libraries
+library(tidyverse)
+
 
 # Start running the new DABOM package
 library(tidyverse)
