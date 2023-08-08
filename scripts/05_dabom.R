@@ -7,23 +7,24 @@
 #
 # Notes: 
 
-# START HERE
-
 # load necessary libraries
 library(tidyverse)
 library(here)
 library(PITcleanr)
 
+# install DABOM, if necessary
+# remotes::install_github("KevinSee/DABOM", build_vignettes = T)
+remotes::install_github("mackerman44/DABOM", head = "master")
+library(DABOM)
+
 #--------------------
 # some initial setup
-
 # load configuration
 load(here("data/configuration_files/site_config_GRA.rda"))
 node_order = buildNodeOrder(pc_nodes) # build all of the paths to each detection location based on parent-child relationships
 
 # load trap_df to get origin
-trap_path = here("data/LGTrappingDB/LGTrappingDB_2023-06-27.csv")
-trap_df = read_csv(trap_path)
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-27.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -31,10 +32,9 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 
 #--------------------
 # start analysis
-
 # set species and spawn year
 spc = "Chinook"
-yr = 2015
+yr = 2021
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -101,7 +101,26 @@ bad_tags = bad_paths %>%
 
 # RK included a section here to create smaller models for debugging; skip for the time being
 
-# file path to model
+# write default, initial jags model
+init_mod_file = here("model_files/lgr_dabom_jags.txt")
+writeDABOM(file_name = init_mod_file,
+           parent_child = parent_child,
+           configuration = configuration,
+           time_varying = TRUE)
+
+source(here("R/writeDABOM_KS.R"))
+source(here("R/getNodeInfo_RK.R"))
+source(here("R/addParentChildNodes_RK.R"))
+source(here("R/defineDabomColNms_RK.R"))
+
+# write species and year specific jags model
+final_mod_file = here(paste0("model_files/lgr_dabom_jags_", spc, "_SY", yr, ".txt"))
+fixNoFishNodes(init_file = init_mod_file,
+               file_name = final_mod_file,
+               filter_ch = filter_ch,
+               parent_child = parent_child,
+               configuration = configuration,
+               fish_origin = origin_df)
 
 
 
