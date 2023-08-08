@@ -19,7 +19,8 @@
 rm(list = ls())
 
 # install PITcleanr (if needed)
-remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
+# remotes::install_github("mackerman44/PITcleanr", ref = "main")
+# remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 
 # load necessary libraries
 library(tidyverse)
@@ -27,12 +28,9 @@ library(PITcleanr)
 library(here)
 library(sf)
 
-# source buildConfig()
-source(here("R/buildConfig_RK.R"))
-
 # query metadata for all PTAGIS INT and MRR sites
-ptagis_sites = buildConfig_RK() # Ryan Kinzer's version
-# ptagis_sites = buildConfig()  # Kevin See's version
+ptagis_sites = buildConfig(node_assign = "array",
+                           nodes_2_dmu = TRUE)
 
 # customize several nodes because of name changes across the years and combine some sites into single nodes
 configuration = ptagis_sites %>%
@@ -247,12 +245,8 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 # -----------------------
 # build network graph for nodes
 
-# source addParentChildNodes_RK()
-source(here("R/addParentChildNodes_RK.R"))
-
-# build network graph for nodes
-pc_nodes = addParentChildNodes_RK(parent_child, config) # Ryan Kinzer's version
-#pc_nodes = addParentChildNodes(parent_child, config)    # Kevin See's version
+# build network graph for nodes; this function is specific to Snake River. Eventually merge w/ addParentChildNodes()
+pc_nodes = addParentChildNodes_LGR(parent_child, config) 
 
 node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
   left_join(config %>%
