@@ -39,31 +39,31 @@ LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-20.csv"))
 species = c("Chinook", "Steelhead")
 
 # loop over species
-for(spp in species) {
+for(spc in species) {
   
   # set years
-  if(spp == "Chinook")   { years = c(2010:2019, 2021:2022) }
-  if(spp == "Steelhead") { years = 2010:2022 }
+  if(spc == "Chinook")   { years = c(2010:2019, 2021:2022) }
+  if(spc == "Steelhead") { years = 2010:2022 }
   
   # for Chinook, include jacks
-  if(spp == "Chinook")   { incl_jacks = TRUE  } 
-  if(spp == "Steelhead") { incl_jacks = FALSE }
+  if(spc == "Chinook")   { incl_jacks = TRUE  } 
+  if(spc == "Steelhead") { incl_jacks = FALSE }
   
   # start year loop
   for(yr in years) {
     
     # set spawn year dates
-    if(spp == "Chinook") {
+    if(spc == "Chinook") {
       start_date = paste0(yr, "0301")
       end_date = paste0(yr, "0817")
     }
-    if(spp == "Steelhead") {
+    if(spc == "Steelhead") {
       start_date = paste0(yr-1, "0701")
       end_date = paste0(yr, "0630")
     }
     
     # compile data
-    stadem_list = compileGRAdata(spp = spp,                 # species
+    stadem_list = compileGRAdata(spp = spc,                 # species
                                  yr = yr,                   # the spawn year
                                  dam = "LWG",               # the dam to query for window counts
                                  start_date = start_date,   # query start date
@@ -101,7 +101,7 @@ for(spp in species) {
     # save results
     save(stadem_mod,
          stadem_list,
-         file = paste0(here(stademFolder), "/LGR_STADEM_", spp, "_", yr, ".rda"))
+         file = paste0(here(stademFolder), "/LGR_STADEM_", spc, "_", yr, ".rda"))
 
   } # end year loop
 } # end species loop
