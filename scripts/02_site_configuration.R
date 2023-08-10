@@ -4,7 +4,7 @@
 # processing and the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: June 21, 2023
+#   Last Modified: August 10, 2023
 #
 # Notes: The output and saved file from this script is used for processing tag
 # observations, with TRT population and GSI grouping designations
@@ -12,14 +12,12 @@
 # 
 # Updates were made in SY2021 runs to include sites downstream of LGR
 # and to change node names to include _D, _M and _U.
-#
-# MA: I still need to update to use buildConfig() from RK's PITcleanr to resolve A0 and B0 nodes
 
 # clear environment
 rm(list = ls())
 
 # install PITcleanr (if needed)
-# remotes::install_github("mackerman44/PITcleanr", ref = "main")
+remotes::install_github("mackerman44/PITcleanr", ref = "npt_develop")
 # remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 
 # load necessary libraries
@@ -27,10 +25,11 @@ library(tidyverse)
 library(PITcleanr)
 library(here)
 library(sf)
+library(ggraph)
 
 # query metadata for all PTAGIS INT and MRR sites
 ptagis_sites = buildConfig(node_assign = "array",
-                           nodes_2_dmu = TRUE)
+                           array_suffix = "UD")
 
 # customize several nodes because of name changes across the years and combine some sites into single nodes
 configuration = ptagis_sites %>%
@@ -244,9 +243,8 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 
 # -----------------------
 # build network graph for nodes
-
 # build network graph for nodes; this function is specific to Snake River. Eventually merge w/ addParentChildNodes()
-pc_nodes = addParentChildNodes_LGR(parent_child, config) 
+pc_nodes = addParentChildNodes_LGR(parent_child, configuration)
 
 node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
   left_join(config %>%
