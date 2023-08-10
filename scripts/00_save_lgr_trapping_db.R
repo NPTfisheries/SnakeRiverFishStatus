@@ -22,7 +22,7 @@ if(.Platform$OS.type != "unix") { # includes windows machines
   source(here("R/loadLGTrappingDBase.R"))
   
   # set path to LGTrappingDB Access database
-  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2023-06-27.accdb")
+  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2023-08-10.accdb")
   
   # connect to LGTrappingDB
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)
