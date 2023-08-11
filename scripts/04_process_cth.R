@@ -29,8 +29,8 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Chinook"
-yr = 2021
+spc = "Steelhead"
+yr = 2022
 
 # load configuration and site and node parent-child data frames
 root_site = "GRA"
