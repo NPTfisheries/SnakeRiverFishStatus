@@ -18,6 +18,7 @@ rm(list = ls())
 library(tidyverse)
 library(PITcleanr)
 library(here)
+library(writexl)
 
 # source identifyFishType()
 
@@ -28,8 +29,8 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Steelhead"
-yr = 2022
+spc = "Chinook"
+yr = 2021
 
 # load configuration and site and node parent-child data frames
 root_site = "GRA"
@@ -84,10 +85,10 @@ lgr_after_obs = comp_obs %>%
               group_by(tag_code) %>%
               # get just first GRA observation after start of spawn year
               filter(min_det == min(min_det)) %>% 
-              summarise(gra_start_date = min_det,
+              summarise(start_date = min_det,
                         .groups = "drop")) %>%
   # now, remove any observations that occur prior to gra_start_date
-  filter(min_det >= gra_start_date) %>%
+  filter(min_det >= start_date) %>%
   #rename(start_date = gra_start_date) %>%
   # reset slots to start at 1, again
   group_by(tag_code) %>%
