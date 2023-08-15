@@ -4,7 +4,7 @@
 # processing and the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: August 10, 2023
+#   Last Modified: August 15, 2023
 #
 # Notes: The output and saved file from this script is used for processing tag
 # observations, with TRT population and GSI grouping designations
@@ -17,7 +17,8 @@
 rm(list = ls())
 
 # install PITcleanr (if needed)
-remotes::install_github("mackerman44/PITcleanr", ref = "npt_develop")
+remotes::install_github("KevinSee/PITcleanr", ref = "npt_develop")
+# remotes::install_github("mackerman44/PITcleanr", ref = "npt_develop")
 # remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 
 # load necessary libraries
@@ -28,7 +29,7 @@ library(sf)
 library(ggraph)
 
 # query metadata for all PTAGIS INT and MRR sites
-ptagis_sites = buildConfig(node_assign = "array",
+ptagis_sites = buildConfig(node_assign = "array", # the defaults
                            array_suffix = "UD")
 
 # customize several nodes because of name changes across the years and combine some sites into single nodes
@@ -130,6 +131,7 @@ config = configuration %>%   # for use w/ the parent-child table
   st_set_geometry(NULL)
 
 root_site = "GRA"
+# I probably need to review this parent-child table for accuracy
 parent_child = read_csv(paste0(here("data/configuration_files/parent_child_"), root_site, ".csv")) %>%
   # remove Clearwater hatchery for now... creating some problems with SC1 and SC2
   filter(child != "CLWH") %>%
