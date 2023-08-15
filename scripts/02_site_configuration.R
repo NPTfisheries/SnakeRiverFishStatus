@@ -123,25 +123,23 @@ configuration %<>%
   mutate(sthd_POP_NAME = ifelse(grepl("^SC1$|^SC2$", node), "South Fork Clearwater River", sthd_POP_NAME)) %>%
   mutate(chnk_POP_NAME = ifelse(grepl("^SC1$|^SC2$", node), "Upper South Fork Clearwater", chnk_POP_NAME)) %>%
   mutate(sthd_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "CRSFC-s", sthd_TRT_POPID)) %>%
-  mutate(chnk_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "SCUMA", chnk_TRT_POPID))
+  mutate(chnk_TRT_POPID = ifelse(grepl("^SC1$|^SC2$", node), "SCUMA", chnk_TRT_POPID)) %>%
+  st_drop_geometry()
 
 # -----------------------
 # create parent-child table
-config = configuration %>%   # for use w/ the parent-child table
-  st_set_geometry(NULL)
-
 root_site = "GRA"
 # I probably need to review this parent-child table for accuracy
 parent_child = read_csv(paste0(here("data/configuration_files/parent_child_"), root_site, ".csv")) %>%
   # remove Clearwater hatchery for now... creating some problems with SC1 and SC2
   filter(child != "CLWH") %>%
   # add rkm
-  left_join(config %>%
+  left_join(configuration %>%
               select(parent = site_code,
                      parent_rkm = rkm_total) %>%
               filter(!is.na(parent_rkm)) %>%
               distinct()) %>%
-  left_join(config %>%
+  left_join(configuration %>%
               select(child = site_code,
                      child_rkm = rkm_total) %>%
               filter(!is.na(child_rkm)) %>%
@@ -166,7 +164,7 @@ parent_child = read_csv(paste0(here("data/configuration_files/parent_child_"), r
 
 # append steelhead MPG and pop names; not sure why, yet?
 sthd_parent_child = parent_child %>%
-  left_join(config %>%
+  left_join(configuration %>%
               select(site_code,
                      MPG = sthd_MPG,
                      POP_NAME = sthd_POP_NAME,
@@ -177,8 +175,9 @@ sthd_parent_child = parent_child %>%
 
 # -----------------------
 # create site attributes
-site_attributes = tibble(label = union(parent_child$child, parent_child$parent)) %>%
-  left_join(config %>%
+site_attributes = tibble(label = union(parent_child$child, 
+                                       parent_child$parent)) %>%
+  left_join(configuration %>%
               select(label = site_code,
                      MPG = sthd_MPG,
                      POP_NAME = sthd_POP_NAME,
@@ -249,7 +248,7 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 pc_nodes = addParentChildNodes_LGR(parent_child, configuration)
 
 node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
-  left_join(config %>%
+  left_join(configuration %>%
               select(label = node,
                      MPG = sthd_MPG,
                      POP_NAME = sthd_POP_NAME,
