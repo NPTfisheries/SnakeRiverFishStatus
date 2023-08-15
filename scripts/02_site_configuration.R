@@ -17,7 +17,7 @@
 rm(list = ls())
 
 # install PITcleanr (if needed)
-remotes::install_github("KevinSee/PITcleanr", ref = "npt_develop")
+# remotes::install_github("KevinSee/PITcleanr", ref = "npt_develop")
 # remotes::install_github("mackerman44/PITcleanr", ref = "npt_develop")
 # remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 
@@ -205,7 +205,6 @@ site_graph = buildNetwork_tbl(parent_child = parent_child,
 
 # -----------------------
 # create site network
-
 # load necessary libraries
 library(viridis)
 library(ggraph)
@@ -233,7 +232,6 @@ site_network = ggraph(site_graph, layout = "tree") +
   )) +
   theme_void() +
   theme(legend.position = "bottom")
-
 site_network
 
 # save site_network
@@ -245,7 +243,8 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 # -----------------------
 # build network graph for nodes
 # build network graph for nodes; this function is specific to Snake River. Eventually merge w/ addParentChildNodes()
-pc_nodes = addParentChildNodes_LGR(parent_child, configuration)
+pc_nodes = addParentChildNodes(parent_child, configuration)
+#pc_nodes = addParentChildNodes_LGR(parent_child, configuration)
 
 node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
   left_join(configuration %>%
@@ -294,7 +293,6 @@ node_network = ggraph(node_graph, layout = "tree") +
     )) +
   theme_void() +
   theme(legend.position = "bottom")
-
 node_network
 
 # save node_network
@@ -310,4 +308,3 @@ save(configuration,
      file = paste0(here("data/configuration_files/site_config_"), root_site, ".rda"))
 
 # END SCRIPT
-
