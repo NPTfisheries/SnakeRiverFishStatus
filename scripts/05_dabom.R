@@ -150,7 +150,7 @@ if(time_varying) {
 
 # tell JAGS which parameters in the model that it should save
 test_mod_file = here(paste0("model_files/lgr_dabom_jags_", spc, "_SY", yr, "_test.txt"))
-jags_params = setSavedParams(model_file = final_mod_file)
+jags_params = setSavedParams(model_file = test_mod_file)
 
 # set mcmc parameters (full run)
 # n.chains = 4
@@ -176,6 +176,8 @@ dabom_output = jags.model(file = test_mod_file,
 
 # or run using parallel cores
 source(here("R/run_dabom_parallel_v2.R"))
+final_mod_file = test_mod_file # run_dabom_parallel_v2.R forces jags file to be final_model_file... need to fix!
+# see line 18 in run_dabom_parallel_v2.R
 dabom_output = run_dabom_parallel_v2(model = final_mod_file,
                                      data = jags_data,
                                      jags_params = jags_params,
