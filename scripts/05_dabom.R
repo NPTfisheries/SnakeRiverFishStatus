@@ -11,20 +11,19 @@
 library(tidyverse)
 library(here)
 library(PITcleanr)
-#library(sf)
 
 # install DABOM, if necessary
-# remotes::install_github("KevinSee/DABOM", build_vignettes = T)
-# remotes::install_github("mackerman44/DABOM", head = "npt_develop")
+# remotes::install_github("KevinSee/DABOM", head = "npt_develop")
 library(DABOM)
 
 #--------------------
 # some initial setup
 # load configuration
 load(here("data/configuration_files/site_config_GRA.rda"))
-# configuration = configuration %>%
-#   st_drop_geometry()
-node_order = buildNodeOrder(pc_nodes) # build all of the paths to each detection location based on parent-child relationships
+
+# build all of the paths to each detection location based on parent-child relationships
+node_order = buildNodeOrder(parent_child = pc_nodes,
+                            direction = "u") 
 
 # load trap_df to get origin
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-08-10.csv"))
@@ -106,30 +105,30 @@ bad_tags = bad_paths %>%
 
 # write default, initial jags model
 init_mod_file = here("model_files/lgr_dabom_jags.txt")
-writeDABOM_LGR(file_name = init_mod_file,
-               parent_child = parent_child,
-               configuration = configuration,
-               time_varying = TRUE)
+writeDABOM(file_name = init_mod_file,
+           parent_child = parent_child,
+           configuration = configuration,
+           time_varying = TRUE)
 
 # write species and year specific jags model
 final_mod_file = here(paste0("model_files/lgr_dabom_jags_", spc, "_SY", yr, ".txt"))
-fixNoFishNodes_LGR(init_file = init_mod_file,
-                   file_name = final_mod_file,
-                   filter_ch = filter_ch,
-                   parent_child = parent_child,
-                   configuration = configuration,
-                   fish_origin = origin_df)
+fixNoFishNodes(init_file = init_mod_file,
+               file_name = final_mod_file,
+               filter_ch = filter_ch,
+               parent_child = parent_child,
+               configuration = configuration,
+               fish_origin = origin_df)
 
 # create a function to spit out initial values for MCMC chains
-init_fnc = setInitialValues_LGR(filter_ch = filter_ch,
+init_fnc = setInitialValues(filter_ch = filter_ch,
                                 parent_child = parent_child,
                                 configuration = configuration)
 
 # create all the input data for the JAGS model
-jags_data = createJAGSinputs_LGR(filter_ch = filter_ch,
-                                 parent_child = parent_child,
-                                 configuration = configuration,
-                                 fish_origin = origin_df)
+jags_data = createJAGSinputs(filter_ch = filter_ch,
+                             parent_child = parent_child,
+                             configuration = configuration,
+                             fish_origin = origin_df)
 
 # add data for time-varying models
 time_varying = T

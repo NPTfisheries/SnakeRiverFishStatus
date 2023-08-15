@@ -19,7 +19,6 @@ run_dabom_parallel_v2 <- function(model,
   #tmp <- clusterEvalQ(cl, library(dclone))
   
   start_time <- proc.time()
-  
   cat('Beginning adaptation phase.','\n')
   
   mod_object <- try(parJagsModel(cl = cl,
@@ -36,7 +35,6 @@ run_dabom_parallel_v2 <- function(model,
   if(inherits(mod_object, "try-error")){
     
     stopCluster(cl)
-    
     stop('DABOM initialization failed to run after ', adapt_time, ' minutes with the following error message: \n', mod_object[1])
   }
   
