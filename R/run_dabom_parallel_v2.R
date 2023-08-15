@@ -15,7 +15,7 @@ run_dabom_parallel_v2 <- function(model, data, jags_params, inits,
   
   mod_object <- try(parJagsModel(cl = cl,
                    name = 'res',
-                   file = final_mod_file,
+                   file = final_mod_file, # need to fix this, forces object to be final_mod_file
                    data = jags_data,
                    inits = init_fnc,
                    n.chains = n.chains,
