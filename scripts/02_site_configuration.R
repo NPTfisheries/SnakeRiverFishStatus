@@ -18,8 +18,6 @@ rm(list = ls())
 
 # install PITcleanr (if needed)
 # remotes::install_github("KevinSee/PITcleanr", ref = "npt_develop")
-# remotes::install_github("mackerman44/PITcleanr", ref = "npt_develop")
-# remotes::install_github("KevinSee/PITcleanr", ref = "main", build_vignettes = T)
 
 # load necessary libraries
 library(tidyverse)
@@ -113,6 +111,7 @@ sr_chnk_pops = st_as_sf(spsm_pop) %>%
 
 rm(sth_pop, spsm_pop)
 
+# additional changes to configuration
 configuration %<>%
   filter(!is.na(latitude) | !is.na(longitude)) %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326) %>%
@@ -242,9 +241,7 @@ ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
 
 # -----------------------
 # build network graph for nodes
-# build network graph for nodes; this function is specific to Snake River. Eventually merge w/ addParentChildNodes()
 pc_nodes = addParentChildNodes(parent_child, configuration)
-#pc_nodes = addParentChildNodes_LGR(parent_child, configuration)
 
 node_attributes = tibble(label = union(pc_nodes$child, pc_nodes$parent)) %>%
   left_join(configuration %>%
