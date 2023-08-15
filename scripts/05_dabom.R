@@ -175,9 +175,7 @@ dabom_output = jags.model(file = test_mod_file,
 
 # or run using parallel cores
 source(here("R/run_dabom_parallel_v2.R"))
-final_mod_file = test_mod_file # run_dabom_parallel_v2.R forces jags file to be final_model_file... need to fix!
-# see line 18 in run_dabom_parallel_v2.R
-dabom_output = run_dabom_parallel_v2(model = final_mod_file,
+dabom_output = run_dabom_parallel_v2(model = test_mod_file,
                                      data = jags_data,
                                      jags_params = jags_params,
                                      inits = init_fnc,
@@ -192,5 +190,5 @@ dabom_output = run_dabom_parallel_v2(model = final_mod_file,
 # save results to dabom_folder
 save(dabom_output,
      filter_ch,
-     parent_child,
+     pc_nodes,
      file = paste0(dabom_folder, "/lgr_dabom", spc, "_SY", yr, ".rda"))
