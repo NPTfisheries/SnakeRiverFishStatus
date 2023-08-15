@@ -1,7 +1,16 @@
 # function to run DABOM on multiple cores equal to number of chains using
 # dclone and jags.parfit.
-run_dabom_parallel_v2 <- function(model, data, jags_params, inits,
-                      n.chains, n.adapt, n.burn, n.iter, thin, filter_ch, filename){
+run_dabom_parallel_v2 <- function(model, 
+                                  data, 
+                                  jags_params, 
+                                  inits,
+                                  n.chains, 
+                                  n.adapt, 
+                                  n.burn, 
+                                  n.iter, 
+                                  thin, 
+                                  filter_ch, 
+                                  filename){
   require(rjags)
   require(dclone)  
   
@@ -14,13 +23,12 @@ run_dabom_parallel_v2 <- function(model, data, jags_params, inits,
   cat('Beginning adaptation phase.','\n')
   
   mod_object <- try(parJagsModel(cl = cl,
-                   name = 'res',
-                   file = final_mod_file, # need to fix this, forces object to be final_mod_file
-                   data = jags_data,
-                   inits = init_fnc,
-                   n.chains = n.chains,
-                   n.adapt = n.adapt)
-                   )
+                                 name = 'res',
+                                 file = model,
+                                 data = jags_data,
+                                 inits = init_fnc,
+                                 n.chains = n.chains,
+                                 n.adapt = n.adapt))
   
   temp_time <- proc.time() - start_time
   adapt_time <- round(temp_time[3] / 60,2)
