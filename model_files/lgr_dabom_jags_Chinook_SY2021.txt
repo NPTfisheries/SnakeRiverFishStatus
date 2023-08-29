@@ -29,15 +29,15 @@ model {
 	 Klickitat_p <- 0; # no detections / not in operation
 	 TDA_p <- 0; # no detections / not in operation
 	 Deschutes_p <- 0; # no detections / not in operation
-	 JDA_p <- 0; # no detections / not in operation
+	 JDA_p ~ dbeta(1, 1);
 	 JohnDay_p <- 0; # no detections / not in operation
 	 Umatilla_p <- 0; # no detections / not in operation
 	 MCN_p <- 0; # no detections / not in operation
 	 WallaWalla_p <- 0; # no detections / not in operation
-	 IHR_p <- 0; # no detections / not in operation
+	 IHR_p ~ dbeta(1, 1);
 	 Yakima_p <- 0; # no detections / not in operation
 	 UpperColumbia_p <- 0; # no detections / not in operation
-	 LMA_p <- 0; # no detections / not in operation
+	 LMA_p ~ dbeta(1, 1);
 	 LYFE_p <- 0; # no detections / not in operation
 	 LTR_U_p ~ dbeta(1, 1);
 	 LTR_D_p ~ dbeta(1, 1);
@@ -275,7 +275,7 @@ model {
 	 omega_IHR[3, 1:n_branch_IHR] <- psi_IHR[2,]; 
 	 omega_IHR[3, (n_branch_IHR + 1)] <- 0; 
 
-	 phi_LMA[1] <- 0 # no upstream detections
+	 phi_LMA[1] ~ dbeta(1, 1); 
 	 phi_LMA[2] <- 0 # no upstream detections
 
 	 psi_GOA[1, 1:n_branch_GOA] ~ ddirch(GOA_dirch_vec[1,]); 
