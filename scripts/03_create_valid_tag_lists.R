@@ -3,10 +3,13 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: June 27, 2023
+#   Last Modified: October 3, 2023
 #
 # Notes: See bottom of script. After completing the complete tag history queries in PTAGIS,
 # consider running the QA/QC of the complete tag histories, which is currently commented out.
+# Also, I've copied pasted over both the filterLGRtrapDB() and summariseValidTagsLGR.R() functions
+# from PITcleanr. If useful, consider pulling those in sometime. If not, they can likely be
+# deleted from the repo.
 
 # clear environment
 rm(list = ls())
