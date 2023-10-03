@@ -4,7 +4,7 @@
 # processing and the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: August 15, 2023
+#   Last Modified: October 3, 2023
 #
 # Notes: The output and saved file from this script is used for processing tag
 # observations, with TRT population and GSI grouping designations
@@ -17,7 +17,7 @@
 rm(list = ls())
 
 # install PITcleanr (if needed)
-remotes::install_github("KevinSee/PITcleanr", ref = "npt_dev_ma")
+remotes::install_github("KevinSee/PITcleanr", ref = "develop")
 
 # load necessary libraries
 library(tidyverse)
@@ -216,7 +216,7 @@ site_network = ggraph(site_graph, layout = "tree") +
   geom_edge_bend() +
   geom_node_label(aes(label = label,
                       fill = group),
-                  size = 1) +
+                  size = 2) +
   scale_fill_manual(values = plasma_pal,
                     breaks = c("Clearwater River", 
                                "Hells Canyon", 
@@ -236,7 +236,7 @@ site_network
 # save site_network
 ggsave(paste0(here("output/figures/site_network_"), root_site, ".png"),
        site_network,
-       width = 14,
+       width = 20,
        height = 8.5)
 
 # -----------------------
@@ -274,7 +274,7 @@ node_network = ggraph(node_graph, layout = "tree") +
   geom_edge_bend() +
   geom_node_label(aes(label = label, 
                       fill = group), 
-                  size = 1) +
+                  size = 1.5) +
   scale_fill_manual(values = plasma_pal,
                     breaks = c("Clearwater River", 
                                "Hells Canyon", 
@@ -295,7 +295,7 @@ node_network
 # save node_network
 ggsave(paste0(here("output/figures/node_network_"), root_site, ".png"),
        node_network,
-       width = 14,
+       width = 20,
        height = 8.5)
 
 # save some important items
