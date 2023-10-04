@@ -10,6 +10,7 @@
 # load necessary libraries
 library(tidyverse)
 library(here)
+# remotes::install_github("KevinSee/PITcleanr", head = "develop")
 library(PITcleanr)
 
 # install DABOM, if necessary
@@ -121,8 +122,8 @@ fixNoFishNodes(init_file = init_mod_file,
 
 # create a function to spit out initial values for MCMC chains
 init_fnc = setInitialValues(filter_ch = filter_ch,
-                                parent_child = parent_child,
-                                configuration = configuration)
+                            parent_child = parent_child,
+                            configuration = configuration)
 
 # create all the input data for the JAGS model
 jags_data = createJAGSinputs(filter_ch = filter_ch,
@@ -173,6 +174,14 @@ dabom_output = jags.model(file = test_mod_file,
                           n.chains = n.chains,
                           n.adapt = n.adapt)
 
+# create capture history with tag codes for debugging
+# cap_hist = createDABOMcapHist(filter_ch = filter_ch,
+#                               parent_child = parent_child,
+#                               configuration = configuration,
+#                               split_matrices = F)
+# cap_hist[950, ] %>%
+#   select(where(~ any(. == 1)))
+
 # or run using parallel cores
 source(here("R/run_dabom_parallel_v2.R"))
 dabom_output = run_dabom_parallel_v2(model = test_mod_file,
@@ -191,4 +200,4 @@ dabom_output = run_dabom_parallel_v2(model = test_mod_file,
 save(dabom_output,
      filter_ch,
      pc_nodes,
-     file = paste0(dabom_folder, "/lgr_dabom", spc, "_SY", yr, ".rda"))
+     file = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
