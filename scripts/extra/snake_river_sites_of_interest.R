@@ -185,17 +185,24 @@ dam_sites = ptagis_sf %>%
 #----------------------
 # Downriver Sub-basin Sites; here we're just grabbing the lowest-most site from each of the downstream sub-basins of interest
 downriver_sites = ptagis_sf %>%
-  filter(site_code %in% c("PRA",  # Priest Rapids Dam (Upper Columbia)
-                          "PRO",  # Prosser Dam (Yakima)
-                          "WWB",  # Walla Walla River Barge IPTDS
-                          "UMW",  # Umatilla River Recycled Water Facility IPTDS
-                          "JD1",  # John Day River, McDonald Ferry IPTDS
-                          "DRM",  # Deschutes River Mouth IPTDS
-                          "KLR",  # Klickitat River Floating IPTDS
-                          "FID",  # Farmer's Diversion IPTDS (Hood River)
-                          "RCX",  # Rattlesnake Creek IPTDS (White Salmon)
-                          "LWL",  # Little White Salmon NFH (Little White Salmon)
-                          "WRA")) # Upper Wind River IPTDS   
+  # recode primary subbasins and tributaries outside the Snake River basin; using the "\\d+" ensures that we search for
+  # all consecutive digits prior to a "." i.e., some sites in the Upper Columbia have a 4-digit start to their rkm.
+  # Then "\\.\\d+" ensures we search for consecutive digits after a ".".
+  mutate(subbasin = case_when(
+    as.numeric(str_extract(rkm, "\\d+")) > 539 ~ "UpperColumbia", # Priest Rapids Dam (Upper Columbia)
+    as.numeric(str_extract(rkm, "\\d+")) == 539 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "Yakima",
+    as.numeric(str_extract(rkm, "\\d+")) == 509 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "WallaWalla",
+    as.numeric(str_extract(rkm, "\\d+")) == 465 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "Umatilla",
+    as.numeric(str_extract(rkm, "\\d+")) == 351 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "JohnDay",
+    as.numeric(str_extract(rkm, "\\d+")) == 328 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "Deschutes",
+    as.numeric(str_extract(rkm, "\\d+")) == 290 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "Klickitat",
+    as.numeric(str_extract(rkm, "\\d+")) == 273 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "HoodRiver",
+    as.numeric(str_extract(rkm, "\\d+")) == 271 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "WhiteSalmon",
+    as.numeric(str_extract(rkm, "\\d+")) == 261 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "LittleWhite",
+    as.numeric(str_extract(rkm, "\\d+")) == 251 & as.numeric(sub(".","", str_extract(rkm, "\\.\\d+"))) > 0 ~ "WindRiver",
+  )) %>%
+  filter(!is.na(subbasin)) %>%
+  select(-subbasin)
 
 #----------------------
 # bind them all together
@@ -206,6 +213,6 @@ sites_of_interest = bind_rows(sr_int_sites,
 
 # write to .csv
 write_csv(sites_of_interest,
-          here("data/configuration_files/sites_of_interest.csv"))
+          here("data/configuration_files/sr_sites_of_interest.csv"))
 
 # END SCRIPT
