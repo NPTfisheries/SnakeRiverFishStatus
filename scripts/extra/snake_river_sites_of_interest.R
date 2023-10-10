@@ -1,7 +1,8 @@
 # -----------------------
 # Author(s): Mike Ackerman, Kevin See, and Ryan Kinzer
-# Purpose: Generate a list of sites of interest for Snake River DABOM model runs.
-# List will later be used to develop parent-child tables, configuration files, etc.
+#
+# Purpose: Create a list of site_codes of interest for Snake River DABOM model runs.
+# The list will later be used to develop configuration files, parent-child tables, etc.
 # 
 # Created Date: October 4, 2023
 #   Last Modified: October 10, 2023
