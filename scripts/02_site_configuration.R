@@ -48,7 +48,7 @@ sr_sthd_pops %>%
 org_config = buildConfig(node_assign = "array",
                          array_suffix = "UD")
 
-# trim down to sites within the Snake River steelhead DPS
+# make configuration sites spatial
 ptagis_sf = org_config %>%
   # clean things up a bit
   select(site_code,
@@ -152,13 +152,20 @@ sr_mrr_sites_sf = ptagis_sf %>%
   filter(!n_chnk_tags <= 100 | !n_sthd_tags <= 100) %>%
   select(-n_chnk_tags,
          -n_sthd_tags) %>%
+  # remove some sites that pass this filter, but we can't assign detections to a location
+  filter(!site_code %in% c("SALR4", 
+                           "SALRSF",
+                           "CLWH",
+                           "IMNTRP",
+                           "CATHEC")) %>%
   # remove Lower Granite Dam MRR sites
   filter(!str_detect(site_code, "LGR")) %>%
   # remove acclimation ponds 
   filter(!str_detect(site_description, "AcclimationPond")) %>%
   # Do I want to leave out all hatcheries? These detections seem unreliable i.e., what's their disposition?
   filter(!str_detect(site_description, "Hatchery")) %>%
-  # finally, add back in some MRR sites that have been included in previous DABOM model runs. Do we really need all of these?
+  # finally, add back in some MRR sites that didn't pass our above filter, but have been included in previous DABOM model runs. 
+  # Do we really need all of these?
   bind_rows(ptagis_sf %>%
               filter(site_code %in% c("ALMOTC",   # Almota Creek - tributary to Snake River
                                       "BCANF",    # Big Canyon Facility
@@ -168,7 +175,6 @@ sr_mrr_sites_sf = ptagis_sf %>%
                                       "CAMP4C",   # Camp Creek, tributary to Big Sheep Creek, Imnaha drainage
                                       "CARMEC",   # Carmen Creek - tributary to Salmon River
                                       "CHARLC",   # Charley Creek, Asotin Creek watershed
-                                      "CLWH",     # Clearwater Hatchery
                                       "CROTRP",   # Crooked River Trap
                                       "DRY2C",    # Dry Creek - tributary to Imnaha River
                                       "DWOR",     # Dworshak National Fish Hatchery
@@ -208,11 +214,53 @@ sr_sites_list = bind_rows(sr_int_sites_sf,
   distinct() %>%
   pull()
 
+# Snake River INT and MRR Sites
 sr_config = org_config %>%
   filter(site_code %in% sr_sites_list) %>%
-  # THIS IS WHERE TO FIX SNAKE RIVER SITES
-  
-  
+  # Fix a few INT sites
+  mutate(
+    node = case_when(
+      site_code == "BTC"                 ~ str_replace(node, "BTC", "BTL"), # Big Timber Creek; BTC was replaced by BTL
+      site_code == "HEC"                 ~ str_replace(node, "HEC", "18M"), # Group 18-mile & Hawley creeks
+      site_code == "IML" & antenna_id == "09" ~ "IML_U", # Imnaha River Work Room Antenna
+      site_code == "AFC" &  grepl("MAINSTEM", antenna_group)     ~ "AFC_D",  # mainstem Asotin becomes _D
+      site_code == "AFC" & !grepl("MAINSTEM", antenna_group)     ~ "AFC_U",  # south and north forks become _U
+      TRUE ~ node)) %>%
+  # Recode and/or merge some MRR sites; often merging MRR observations into INT sites
+  mutate(
+    node = case_when(
+      # UPPER SALMON
+      site_code == "SAWT"                ~ "STL",     # Group Sawtooth Hatchery w/ Ladder Array
+      site_code == "SALREF"              ~ "SALEFT",  # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
+      site_code %in% c("CEY", "YANKFK")  ~ "YFK_U",   # Yankee Fork and Cearley Creek
+      site_code == "WIMPYC"              ~ "WPC_U",   # Wimpey Creek (Lemhi River)
+      site_code == "CARMEC"              ~ "CRC_U",   # Carmen Creek weir
+      site_code == "PANTHC"              ~ "PCA_U",   # Group Panther Creek obs (e.g., carcass recoveries) w/ PCA
+      # MIDDLE FORK SALMON
+      site_code == "BEARVC"              ~ "BRC",     # Group Bear Valley adult weir w/ BRC
+      site_code == "BIG2C"               ~ "TAY_U",   # Group Big Creek obs (e.g., carcass recoveries) w/ TAY
+      # SOUTH FORK SALMON
+      site_code %in% c("MCCA", "SALSFW") ~ "STR",     # South Fork Salmon River weir
+      site_code == "SECESR"              ~ "ZEN_U",   # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN
+      # LITTLE SALMON
+      site_code == "RPDTRP"              ~ "RAPH",    # Group Rapid trap with Rapid Hatchery
+      # SOUTH FORK CLEARWATER AND DWORSHAK
+      site_code %in% c("REDTRP", "REDR") ~ "RRT",     # Red River Trap
+      site_code %in% c("CROTRP", "CRT")    ~ "CRA_U",   # Group Crooked River Trap to w/ CRA
+      site_code == "DWOR"                ~ "DWL_U",   # Dworshak National Fish Hatchery
+      # POTLATCH RIVER
+      site_code == "POTREF"              ~ "EFPW",    # Group EF Potlatch obs w/ weir
+      # IMNAHA RIVER
+      site_code == "IMNAHW"              ~ "IML_U",   # Group Imnaha Weir w/ trap array
+      # GRANDE RONDE
+      site_code == "LOOKGC"              ~ "LOOH",    # Group Lookingglass Creek w/ Lookingglass Hatchery
+      site_code == "CATHEW"              ~ "CCU_U",   # Group Catherine Creek weir w/ Ladder Array
+      # LOWER SNAKE
+      site_code == "TUCH"                ~ "TFH_U",   # Group Tucannon Hatchery to TFH_U
+      site_code == "CHARLC"              ~ "CCA_U",
+      TRUE ~ node))
+
+# Snake and Columbia River dams configuration 
 dam_config = org_config %>%
   # filter our just relevant dam sites
   filter(site_code %in% c("GRA", "LGRLDR", "LGR",            # LGR Adults
@@ -242,6 +290,7 @@ dam_config = org_config %>%
                        "BON", "BCC", "BWL", "BONAFF")     ~ "BON",
       TRUE ~ node))
 
+# Downriver Subbasins configuration
 downriver_config = org_config %>%
   mutate(
     node = case_when(
@@ -264,45 +313,20 @@ downriver_config = org_config %>%
     "PRA", "PRO", "WWB", "UMW", "JD1", "DRM", "KLR", "FID", "RCX", "LWL", "WRA"
   ))
 
-# sites list used to create parent-child table, make spatial
-sites_sf = bind_rows(sr_int_sites_sf,
-                     sr_mrr_sites_sf) %>%
-  select(-contains("sthd")) %>%
-  # add back in dams
-  bind_rows(ptagis_sf %>%
-              filter(site_code %in% c("LGR",       # LGR Adults
-                                      "GRS",       # LGR Juveniles; GRJ, GRX = LGR Juvenile Bypass; GRS = LGR Spillway
-                                      "GOA",       # Little Goose Dam
-                                      "LMA",       # Lower Monumental Dam
-                                      "IHR",       # Ice Harbor Dam
-                                      "MCN",       # McNary Dam
-                                      "JDA",       # John Day Dam
-                                      "TDA",       # The Dalles Dam
-                                      "BON"))) %>% # Bonneville Dam
-  # add back in lowest ptagis sites in downriver subbasins
-  bind_rows(ptagis_sf %>%
-              filter(site_code %in% c("PRA",       # Upper Columbia
-                                      "PRO",       # Yakima
-                                      "WWB",       # Walla Walla
-                                      "UMW",       # Umatilla
-                                      "JD1",       # John Day
-                                      "DRM",       # Deschutes
-                                      "KLR",       # Klickitat
-                                      "FID",       # Hood River
-                                      "RCX",       # White Salmon
-                                      "LWL",       # Little White Salmon
-                                      "WRA"))) %>% # Wind River 
-  # trim to unique sites
-  distinct(site_code,
-           site_name,
-           site_type,
-           site_type_name,
-           rkm,
-           site_description,
-           geometry,
-           .keep_all = T) %>%
+# merge into a single configuration file
+configuration = bind_rows(sr_config,
+                          dam_config,
+                          downriver_config)
+
+# convert configuration into a sites_sf
+sites_sf = configuration %>%
+  select(site_code = node) %>%
+  mutate(site_code = str_replace(site_code, "_D$|_U$", "")) %>%
+  distinct() %>%
+  left_join(ptagis_sf) %>%
   # remove an extra Prosser Dam record
   filter(!(site_code == "PRO" & site_type == "MRR")) %>%
+  st_as_sf(crs = 4326) %>%
   st_transform(crs = 5070) # NAD83
 
 #----------------------
@@ -380,5 +404,92 @@ ggsave(here("output/figures/full_site_map.png"),
        site_map,
        width = 14,
        height = 8.5)
+
+#----------------------
+# build parent-child table
+parent_child = sites_sf %>%
+  # just keep values at and upstream of LGR for the initial parent-child table
+  filter(
+    grepl("^522\\.[0-9]{3}", rkm) & 
+      as.numeric(sub("^522\\.([0-9]{3}).*", "\\1", rkm)) >= 173
+  ) %>% 
+  filter(!site_code == "GRS") %>%
+  buildParentChild(flowlines = flowlines,
+                   rm_na_parent = FALSE,
+                   add_rkm = FALSE) %>%
+  # fix site mapping issues above LGR
+  editParentChild(fix_list = 
+                    list(c("KEN", "AGC", "EVU"),
+                         c("HLM", "EPR", "EFPW"),
+                         c("IR3", "IML", "IR4"),
+                         c("IR4", "IR5", "IML"),
+                         c("KEN", "0HR", "EVU"),
+                         c("LLS", "LBS", "LRW"),
+                         c("LLS", "LB8", "LRW"),
+                         c("LLS", "LCL", "LRW"),
+                         c("LBS", "18M", "LRW"),
+                         c("LBS", "BTL", "LRW"),
+                         c("LBS", "CAC", "LRW"),
+                         c("NPTH", "SW1", "LGR"),
+                         c("NPTH", "DWL", "LGR"),
+                         c("NPTH", "LRL", "LGR"),
+                         c("NPTH", "SC1", "LGR"),
+                         c("NPTH", "LAW", "LGR"),
+                         c("NPTH", "LC1", "LGR"),
+                         c("NPTH", "CLC", "LGR"),
+                         c("NPTH", "JA1", "LGR"),
+                         c("NPTH", "SIX", "LGR"),
+                         c("NPTH", "KOOS", "CLC"),
+                         c("UGR", "GRANDW", "UGS"))) %>%
+  filter(!is.na(parent)) %>%
+  bind_rows(
+    tribble(
+      ~parent, ~child,
+      "LGR", "GRS",    # Lower Granite Spillway
+      "GRS", "PWA",    # Penawawa Creek
+      "PWA", "PENAWC",
+      "GRS", "GOA",    # Little Goose Dam
+      "GOA", "LTR",    # Tucannon River
+      "LTR", "MTR",
+      "MTR", "UTR",
+      "UTR", "TFH",
+      "TFH", "TPJ",
+      "GOA", "LYFE",   # Lyons Ferry Hatchery
+      "GOA", "LMA",    # Lower Monumental Dam
+      "LMA", "IHR",    # Ice Harbor Dam
+      "IHR", "PRA",    # Upper Columbia River
+      "IHR", "PRO",    # Yakima River
+      "IHR", "WWB",    # Walla Walla River
+      "IHR", "MCN",    # McNary Dam
+      "MCN", "UMW",    # Umatilla Dam
+      "MCN", "JD1",    # John Day River
+      "MCN", "JDA",    # John Day Dam
+      "JDA", "DRM",    # Deschutes River
+      "JDA", "TDA",    # The Dalles Dam
+      "TDA", "KLR",    # Klickitat River
+      "TDA", "FID",    # Hood River
+      "TDA", "RCX",    # White Salmon River
+      "TDA", "LWL",    # Little White Salmon River
+      "TDA", "WRA",    # Wind River
+      "TDA", "BON"))   # Bonneville Dam
+
+# add nodes to parent-child table (currently doesn't work)
+pc_nodes = addParentChildNodes(parent_child = parent_child,
+                               configuration = configuration)  
+
+# build paths (use on nodes, when available)
+pc_paths = buildPaths(parent_child = parent_child,
+                      direction = "u")
+
+#----------------------
+# write configuration, parent-child table, flowlines, etc.
+save(configuration,
+     sites_sf,
+     flowlines,
+     parent_child,
+     file = here("data/configuration_files/site_config_LGR_20231012.rda"))
+
+# END SCRIPT
+
 
 
