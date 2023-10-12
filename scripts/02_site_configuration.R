@@ -478,12 +478,13 @@ parent_child = sites_sf %>%
       "TDA", "BON"))   # Bonneville Dam
 
 # add nodes to parent-child table (currently doesn't work)
-# pc_nodes = addParentChildNodes(parent_child = parent_child,
-#                                configuration = configuration)  
+pc_nodes = parent_child %>%
+  select(parent, child) %>%
+  addParentChildNodes(.,  configuration = configuration)  
 
 # build paths (use on nodes, when available)
-# pc_paths = buildPaths(parent_child = parent_child,
-#                       direction = "u")
+pc_paths = buildPaths(parent_child = pc_nodes,
+                      direction = "u")
 
 #----------------------
 # write configuration, parent-child table, flowlines, etc.
@@ -491,6 +492,8 @@ save(configuration,
      sites_sf,
      flowlines,
      parent_child,
+     pc_nodes,
+     pc_paths,
      file = here("data/configuration_files/site_config_LGR_20231012.rda"))
 
 # END SCRIPT
