@@ -17,15 +17,14 @@ rm(list = ls())
 # remotes::install_github("KevinSee/PITcleanr", ref = "develop")
 
 # load needed libraries
-library(here)
 library(PITcleanr)
 library(tidyverse)
+library(here)
 library(sf)
 library(magrittr)
 
 #----------------------
-# Snake River Sites of Interest
-
+# prep to summarize Snake River sites of Interest
 # get Snake River steelhead DPS polygon to filter area of interest
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
@@ -48,9 +47,9 @@ sr_sthd_pops %>%
 org_config = buildConfig(node_assign = "array",
                          array_suffix = "UD")
 
-# make configuration sites spatial
+# trim configuration file down to unique sites and make spatial
 ptagis_sf = org_config %>%
-  # clean things up a bit
+  # select only columns of interest
   select(site_code,
          site_name,
          site_type,
@@ -62,7 +61,7 @@ ptagis_sf = org_config %>%
          latitude,
          longitude,
          site_description) %>%
-  # and make spatial
+  # make spatial
   filter(!is.na(latitude) | !is.na(longitude)) %>%
   st_as_sf(coords = c("longitude", 
                       "latitude"), 
@@ -76,7 +75,7 @@ ptagis_sf = org_config %>%
            .keep_all = T) 
 
 #----------------------
-# Snake River INT sites
+# Create list of Snake River INT sites
 sr_int_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
   st_join(sr_sthd_pops) %>%
@@ -104,12 +103,11 @@ sr_int_sites_sf = ptagis_sf %>%
                            "SAJ", # Salmon River Trap
                            "SNJ", # Snake River Trap
                            "LGW")) # Lookingglass Creek weir (not sure why this wasn't in previous models)
-# "PWA" (Penawawa Creek) wasn't included in previous DABOM model runs; adding in for now
 
 #----------------------
-# Snake River MRR Sites
+# Create list of Snake River MRR Sites
 # read in complete tag histories since SY2010
-cth_df = list.files(path = here("data/complete_tag_histories/"),
+tags_by_site = list.files(path = here("data/complete_tag_histories/"),
                     pattern = "\\.csv$",
                     full.names = T) %>%
   setNames(nm = .) %>%
@@ -118,10 +116,8 @@ cth_df = list.files(path = here("data/complete_tag_histories/"),
   mutate(file_name = str_replace(file_name, ".*/", ""), 
          species = str_extract(file_name, "(?<=_)[^_]+"),       
          spawn_year = str_extract(file_name, "SY[0-9]{4}")) %>%
-  select(-file_name)
-
-# summarize number of tags observed by site
-tags_by_site = cth_df %>%
+  select(-file_name) %>%
+  # summarize number of unique tags observed by site
   select(species,
          spawn_year,
          site_code = `Event Site Code Value`,
@@ -137,13 +133,14 @@ tags_by_site = cth_df %>%
   mutate(n_chnk_tags = rowSums(select(., starts_with("Chinook")), na.rm = TRUE),
          n_sthd_tags = rowSums(select(., starts_with("Steelhead")), na.rm = TRUE))
 
-# join detections to MRR sites
+# mrr sites of interest
 sr_mrr_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
   st_join(sr_sthd_pops) %>%
   filter(!is.na(sthd_DPS)) %>%
   # grab only MRR sites
   filter(site_type == "MRR") %>%
+  # join unique tags observed by site
   left_join(tags_by_site %>%
               select(site_code,
                      n_chnk_tags,
@@ -152,7 +149,7 @@ sr_mrr_sites_sf = ptagis_sf %>%
   filter(!n_chnk_tags <= 100 | !n_sthd_tags <= 100) %>%
   select(-n_chnk_tags,
          -n_sthd_tags) %>%
-  # remove some sites that pass this filter, but we can't assign detections to a location
+  # remove some sites that pass this filter, but we can't safely assign detections to another INT or MRR location
   filter(!site_code %in% c("SALR4", 
                            "SALRSF",
                            "CLWH",
@@ -164,7 +161,7 @@ sr_mrr_sites_sf = ptagis_sf %>%
   filter(!str_detect(site_description, "AcclimationPond")) %>%
   # Do I want to leave out all hatcheries? These detections seem unreliable i.e., what's their disposition?
   filter(!str_detect(site_description, "Hatchery")) %>%
-  # finally, add back in some MRR sites that didn't pass our above filter, but have been included in previous DABOM model runs. 
+  # finally, add back in some MRR sites that didn't pass the above filters, but have been included in past DABOM model runs. 
   # Do we really need all of these?
   bind_rows(ptagis_sf %>%
               filter(site_code %in% c("ALMOTC",   # Almota Creek - tributary to Snake River
@@ -207,6 +204,8 @@ sr_mrr_sites_sf = ptagis_sf %>%
 
 #----------------------
 # build configuration file
+
+# list of Snake River INT and MRR sites of interest to trim org_config
 sr_sites_list = bind_rows(sr_int_sites_sf,
                           sr_mrr_sites_sf) %>%
   st_drop_geometry() %>%
@@ -317,6 +316,7 @@ downriver_config = org_config %>%
 configuration = bind_rows(sr_config,
                           dam_config,
                           downriver_config)
+rm(sr_config, dam_config, downriver_config)
 
 # convert configuration into a sites_sf
 sites_sf = configuration %>%
@@ -346,8 +346,8 @@ if(dwn_flw) {
 }
 
 # now cut off areas too far upstream
-upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
 library(ggmap)
+upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
 upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
   st_as_sf(coords = c("lon", "lat"),
            crs = 4326) %>%
@@ -357,13 +357,16 @@ nhd_upstrm_lst = nhdplusTools::plot_nhdplus(outlets = list(upstrm_comid),
                                             streamorder = min(nhd_list$flowlines$StreamOrde),
                                             actually_plot = F) 
 
+# cut off flowlines upstream of Hells Canyon Dam
 flowlines %<>%
   anti_join(nhd_upstrm_lst$flowline %>%
               st_drop_geometry() %>%
               select(Hydroseq))
 
 #----------------------
-# plot the flowlines and sites
+# plot the flowlines and sites 
+# I'm going to eventually move this out of this script into a separate script 
+# where I create various useful maps and site/node network graphs
 library(ggrepel)
 site_map = ggplot() +
   geom_sf(data = sr_sthd_pops,
@@ -442,6 +445,7 @@ parent_child = sites_sf %>%
                          c("NPTH", "KOOS", "CLC"),
                          c("UGR", "GRANDW", "UGS"))) %>%
   filter(!is.na(parent)) %>%
+  # now add in parent-child relationships below LGR
   bind_rows(
     tribble(
       ~parent, ~child,
@@ -474,12 +478,12 @@ parent_child = sites_sf %>%
       "TDA", "BON"))   # Bonneville Dam
 
 # add nodes to parent-child table (currently doesn't work)
-pc_nodes = addParentChildNodes(parent_child = parent_child,
-                               configuration = configuration)  
+# pc_nodes = addParentChildNodes(parent_child = parent_child,
+#                                configuration = configuration)  
 
 # build paths (use on nodes, when available)
-pc_paths = buildPaths(parent_child = parent_child,
-                      direction = "u")
+# pc_paths = buildPaths(parent_child = parent_child,
+#                       direction = "u")
 
 #----------------------
 # write configuration, parent-child table, flowlines, etc.
@@ -490,6 +494,3 @@ save(configuration,
      file = here("data/configuration_files/site_config_LGR_20231012.rda"))
 
 # END SCRIPT
-
-
-
