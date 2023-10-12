@@ -477,12 +477,12 @@ parent_child = sites_sf %>%
       "TDA", "WRA",    # Wind River
       "TDA", "BON"))   # Bonneville Dam
 
-# add nodes to parent-child table (currently doesn't work)
+# add nodes to parent-child table
 pc_nodes = parent_child %>%
   select(parent, child) %>%
   addParentChildNodes(.,  configuration = configuration)  
 
-# build paths (use on nodes, when available)
+# build paths to each node
 pc_paths = buildPaths(parent_child = pc_nodes,
                       direction = "u")
 
