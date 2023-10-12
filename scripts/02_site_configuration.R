@@ -245,7 +245,7 @@ sr_config = org_config %>%
       site_code == "RPDTRP"              ~ "RAPH",    # Group Rapid trap with Rapid Hatchery
       # SOUTH FORK CLEARWATER AND DWORSHAK
       site_code %in% c("REDTRP", "REDR") ~ "RRT",     # Red River Trap
-      site_code %in% c("CROTRP", "CRT")    ~ "CRA_U",   # Group Crooked River Trap to w/ CRA
+      site_code %in% c("CROTRP", "CRT")  ~ "CRA_U",   # Group Crooked River Trap to w/ CRA
       site_code == "DWOR"                ~ "DWL_U",   # Dworshak National Fish Hatchery
       # POTLATCH RIVER
       site_code == "POTREF"              ~ "EFPW",    # Group EF Potlatch obs w/ weir
@@ -362,51 +362,6 @@ flowlines %<>%
   anti_join(nhd_upstrm_lst$flowline %>%
               st_drop_geometry() %>%
               select(Hydroseq))
-
-#----------------------
-# plot the flowlines and sites 
-# I'm going to eventually move this out of this script into a separate script 
-# where I create various useful maps and site/node network graphs
-library(ggrepel)
-site_map = ggplot() +
-  geom_sf(data = sr_sthd_pops,
-          aes(fill = sthd_MPG)) +
-  geom_sf(data = flowlines,
-          aes(color = as.factor(StreamOrde),
-              size = StreamOrde)) +
-  scale_color_viridis_d(direction = -1,
-                        option = "D",
-                        name = "Stream\nOrder",
-                        end = 0.8) +
-  scale_size_continuous(range = c(0.2, 1.2),
-                        guide = 'none') +
-  geom_sf(data = sites_sf,
-          size = 3, 
-          color = "black") +
-  ggrepel::geom_label_repel(
-    data = sites_sf %>%
-      filter(site_code != "LGR"),
-    aes(label = site_code,
-        geometry = geometry),
-    size = 2,
-    stat = "sf_coordinates",
-    min.segment.length = 0,
-    max.overlaps = 100) +
-  geom_sf_label(data = sites_sf %>%
-                  filter(site_code == "LGR"),
-                aes(label = site_code),
-                color = "red") +
-  theme_void() +
-  labs(fill = "Steelhead\nMPG") +
-  theme(axis.title = element_blank(),
-        legend.position = "bottom")
-site_map
-
-# save site map
-ggsave(here("output/figures/full_site_map.png"),
-       site_map,
-       width = 14,
-       height = 8.5)
 
 #----------------------
 # build parent-child table

@@ -12,29 +12,83 @@
 rm(list = ls())
 
 # load necessary libraries
-library(tidyverse)
-library(sf)
 library(here)
-library(viridis)
-library(ggspatial)
-library(cowplot)
+library(tidyverse)
+library(magrittr)
+library(sf)
+library(ggrepel)
+# library(viridis)
+# library(ggspatial)
+# library(cowplot)
 
 # source theme_map()
 source(here("R/theme_map.R"))
 
+#----------------------
 # load some data
-load(here("data/configuration_files/site_config_GRA.rda"))
-load(here("data/spatial/SR_pops.rda"))
-load(here("data/spatial/large_rivers.rda"))
+load(here("data/configuration_files/site_config_LGR_20231012.rda")) ; rm(configuration, parent_child, pc_nodes, pc_paths)
+load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
+sr_sthd_pops = st_as_sf(sth_pop) %>%
+  select(sthd_DPS = ESU_DPS, 
+         sthd_MPG = MPG, 
+         sthd_POP_NAME = POP_NAME, 
+         sthd_TRT_POPID = TRT_POPID, 
+         sthd_GSI_Group = GSI_Group); rm(sth_pop)
+# load(here("data/spatial/large_rivers.rda"))
 
+#----------------------
+# Columbia-wide Map
+crb_site_map = ggplot() +
+  geom_sf(data = sr_sthd_pops,
+          aes(fill = sthd_MPG)) +
+  geom_sf(data = flowlines,
+          aes(color = as.factor(StreamOrde),
+              size = StreamOrde)) +
+  scale_color_viridis_d(direction = -1,
+                        option = "D",
+                        name = "Stream\nOrder",
+                        end = 0.8) +
+  scale_size_continuous(range = c(0.2, 1.2),
+                        guide = 'none') +
+  geom_sf(data = sites_sf,
+          size = 3, 
+          color = "black") +
+  ggrepel::geom_label_repel(
+    data = sites_sf %>%
+      filter(site_code != "LGR"),
+    aes(label = site_code,
+        geometry = geometry),
+    size = 2,
+    stat = "sf_coordinates",
+    min.segment.length = 0,
+    max.overlaps = 100) +
+  geom_sf_label(data = sites_sf %>%
+                  filter(site_code == "LGR"),
+                aes(label = site_code),
+                color = "red") +
+  theme_void() +
+  labs(fill = "Steelhead\nMPG") +
+  theme(axis.title = element_blank(),
+        legend.position = "bottom")
+crb_site_map
+
+# save site map
+ggsave(here("output/figures/crb_site_map.png"),
+       crb_site_map,
+       width = 14,
+       height = 8.5)
+
+### CONTINUE HERE
+# make Snake River map, Site network, Node network
+
+# get polygons for pacific northwest states
 pnw = st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) %>%
   filter(ID %in% c("idaho", "oregon", "washington")) %>%
   st_transform(crs = 4326)
 
-sth_pop %<>%
-  filter(TRT_POPID != "CRNFC-s")
-
-bb = st_bbox(sth_pop)
+# create a bounding box 
+bb = st_bbox(sth_pop %<>% 
+               filter(TRT_POPID != "CRNFC-s"))
 
 pnw_map = ggplot() +
   geom_sf(data = pnw, inherit.aes = FALSE) +
