@@ -17,8 +17,8 @@ library(tidyverse)
 library(magrittr)
 library(sf)
 library(ggrepel)
-# library(viridis)
-# library(ggspatial)
+library(viridis)
+library(ggspatial)
 # library(cowplot)
 
 # source theme_map()
@@ -78,7 +78,8 @@ ggsave(here("output/figures/crb_site_map.png"),
        width = 14,
        height = 8.5)
 
-### CONTINUE HERE
+#----------------------
+# Snake River Map
 # make Snake River map, Site network, Node network
 
 # get polygons for pacific northwest states
@@ -87,29 +88,36 @@ pnw = st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) %>%
   st_transform(crs = 4326)
 
 # create a bounding box 
-bb = st_bbox(sth_pop %<>% 
-               filter(TRT_POPID != "CRNFC-s"))
+bb = st_bbox(sr_sthd_pops %<>% 
+               filter(sthd_TRT_POPID != "CRNFC-s"))
 
-pnw_map = ggplot() +
-  geom_sf(data = pnw, inherit.aes = FALSE) +
-  geom_sf(data = sth_pop, fill = 'grey30', inherit.aes = TRUE) +
+# view pnw and sr steelhead populations
+ggplot() +
+  geom_sf(data = pnw, 
+          inherit.aes = FALSE) +
+  geom_sf(data = sr_sthd_pops, 
+          fill = 'grey30', 
+          inherit.aes = TRUE) +
   theme_map()
 
-map_nodes = tibble(site_code = union(parent_child$parent, parent_child$child)) %>%
-  inner_join(configuration %>%
-               select(starts_with("site_")) %>%
-               distinct())
-
-# set color palette
+# set a color palette
 plasma_pal = c(plasma(n = 6, begin = 0.5), "grey90")
 
 # create snake river map
 snake_map = ggplot() +
-  geom_sf(data = pnw, fill = NA, inherit.aes = FALSE) +                # pacific northwest states
-  geom_sf(data = sth_pop, aes(fill = MPG), inherit.aes = TRUE) +       # steelhead populations
-  geom_sf(data = pnw_rivers, colour = 'cyan', inherit.aes = FALSE) +   # pacific northwest rivers
-  geom_sf(data = snake_rivers, colour = 'cyan', inherit.aes = FALSE) + # snake rivers
-  geom_sf(data = map_nodes, aes(geometry = geometry), size = 2) +      # model sites
+  geom_sf(data = pnw,
+          fill = NA,
+          inherit.aes = FALSE) +
+  geom_sf(data = sr_sthd_pops,
+          aes(fill = sthd_MPG),
+          inherit.aes = TRUE) +
+  geom_sf(data = flowlines,
+          colour = "cyan",
+          size = 1,
+          inherit.aes = FALSE) +
+  geom_sf(data = sites_sf,
+          aes(geometry = geometry), 
+          size = 2) +
   scale_fill_manual(values = plasma_pal,
                     breaks = c("Clearwater River", 
                                "Hells Canyon", 
@@ -131,19 +139,12 @@ snake_map = ggplot() +
            ylim = c(bb$ymin, bb$ymax)) +
   theme_map() +
   theme(legend.position = "bottom")
-
 snake_map
-  
-full_map = ggdraw() +
-  draw_plot(snake_map) +
-  draw_plot(pnw_map, x = 0.75, y = 0.8, width = 0.2, height = 0.2)
-
-full_map
 
 # save snake river site map
-ggsave(paste0(here("output/figures/snake_river_site_map.png")),
-              full_map,
-              width = 8,
-              height = 7)
+ggsave(paste0(here("output/figures/snake_site_map.png")),
+       snake_map,
+       width = 8,
+       height = 7)
 
 # END SCRIPT
