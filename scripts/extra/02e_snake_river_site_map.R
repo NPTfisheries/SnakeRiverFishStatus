@@ -19,6 +19,7 @@ library(sf)
 library(ggrepel)
 library(viridis)
 library(ggspatial)
+library(ggraph)
 # library(cowplot)
 
 # source theme_map()
@@ -26,7 +27,7 @@ source(here("R/theme_map.R"))
 
 #----------------------
 # load some data
-load(here("data/configuration_files/site_config_LGR_20231012.rda")) ; rm(configuration, parent_child, pc_nodes, pc_paths)
+load(here("data/configuration_files/site_config_LGR_20231012.rda")) ; rm(configuration, pc_paths)
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_DPS = ESU_DPS, 
@@ -80,8 +81,6 @@ ggsave(here("output/figures/crb_site_map.png"),
 
 #----------------------
 # Snake River Map
-# make Snake River map, Site network, Node network
-
 # get polygons for pacific northwest states
 pnw = st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) %>%
   filter(ID %in% c("idaho", "oregon", "washington")) %>%
@@ -146,5 +145,72 @@ ggsave(paste0(here("output/figures/snake_site_map.png")),
        snake_map,
        width = 8,
        height = 7)
+
+#----------------------
+# site node network using plotNodes (don't currently love this)
+site_p = plotNodes(parent_child = parent_child,
+                   layout = "auto",
+                   point_size = 5,
+                   label_points = T,
+                   label_size = 2)
+site_p
+
+#----------------------
+# site network using buildNetwork_tbl()
+# I still need to fix this, plus create a node_network (in addition to site_network)
+
+site_attributes = sites_sf %>%
+  st_transform(crs = 4326) %>%
+  st_join(sr_sthd_pops) %>%
+  select(label = site_code,
+         MPG = sthd_MPG,
+         POP_NAME = sthd_POP_NAME,
+         TRT_POPID = sthd_TRT_POPID,
+         site_type,
+         site_type_name,
+         rkm_total) %>%
+  mutate(detection_type = case_when(
+    rkm_total > 695 & label != "TPJ" ~ "Spawner/Kelt/Repeat Spawner",
+    label == "OXBO"                  ~ "Spawner/Kelt/Repeat Spawner",
+    label == "GRA"                   ~ "Spawner/Kelt/Repeat Spawner",
+    TRUE ~ "Kelt/Repeat Spawner"),
+  group = case_when(
+    grepl("Spawner/Kelt/Repeat Spawner", detection_type) ~ MPG,
+    TRUE ~ "Below LWG")) %>%
+  st_set_geometry(NULL)
+
+# source buildNetwork()
+source('./R/buildNetwork_tbl.R')
+site_graph = buildNetwork_tbl(parent_child = parent_child,
+                              node_attributes = site_attributes)
+
+# create site network
+site_network = ggraph(site_graph,
+                      layout = "tree") +
+  geom_edge_bend() +
+  geom_node_label(aes(label = label,
+                      fill = group),
+                  size = 2) +
+  scale_fill_manual(values = plasma_pal,
+                    breaks = c("Clearwater River", 
+                               "Hells Canyon", 
+                               "Grande Ronde River",
+                               "Imnaha River", 
+                               "Salmon River", 
+                               "Lower Snake")) +
+  guides(fill = guide_legend(
+    title = "",
+    override.aes = aes(label = ""),
+    nrow = 1
+  )) +
+  theme_void() +
+  theme(legend.position = "bottom")
+site_network
+
+# save site_network
+ggsave(here("output/figures/site_network_LGR.png"),
+       site_network,
+       width = 20,
+       height = 8.5)
 
 # END SCRIPT
