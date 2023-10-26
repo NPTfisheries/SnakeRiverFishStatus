@@ -27,7 +27,7 @@ source(here("R/theme_map.R"))
 
 #----------------------
 # load some data
-load(here("data/configuration_files/site_config_LGR_20231012.rda")) ; rm(configuration, pc_paths)
+load(here("data/configuration_files/site_config_LGR_20231026.rda")) ; rm(configuration, pc_paths)
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_DPS = ESU_DPS, 
