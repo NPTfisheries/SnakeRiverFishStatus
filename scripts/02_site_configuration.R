@@ -165,6 +165,7 @@ sr_mrr_sites_sf = ptagis_sf %>%
   filter(!site_code %in% c("ASOTIC",  # Asotin Creek
                            "CATHEC",  # Catherine Creek
                            "CLWH",    # Clearwater Hatchery
+                           "OXBO",
                            "GRAND2",  # Grande Ronde River - Wallowa River to headwaters (km 131-325)
                            "SALR4",   # Salmon River - Pahsimeroi River to headwaters (km 489-650)
                            "SALRSF",  # South Fork Salmon River
@@ -273,8 +274,6 @@ sr_config = org_config %>%
       site_code == "PENAWC"              ~ "PWA_U",   # Group Penawawa Creek to PWA_U
       TRUE ~ node))
 
-# START HERE
-
 # Snake and Columbia River dams configuration 
 dam_config = org_config %>%
   # filter our just relevant dam sites
@@ -347,11 +346,11 @@ sites_sf = configuration %>%
 
 #----------------------
 # download the NHDPlus v2 Flowlines
-dwn_flw = T
+dwn_flw = F # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
 nhd_list = queryFlowlines(sites_sf = sites_sf,
                           root_site_code = "LGR",
                           min_strm_order = 2,
-                          dwnstrm_sites = dwn_flw, # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
+                          dwnstrm_sites = dwn_flw, 
                           dwn_min_stream_order_diff = 4)
 
 # compile the upstream and downstream flowlines
@@ -393,28 +392,20 @@ parent_child = sites_sf %>%
                    add_rkm = FALSE) %>%
   # fix site mapping issues above LGR
   editParentChild(fix_list = 
-                    list(c("KEN", "AGC", "EVU"),
-                         c("HLM", "EPR", "EFPW"),
-                         c("IR3", "IML", "IR4"),
-                         c("IR4", "IR5", "IML"),
+                    list(# Lemhi River
                          c("KEN", "0HR", "EVU"),
+                         c("KEN", "AGC", "EVU"),
                          c("LLS", "LBS", "LRW"),
                          c("LLS", "LB8", "LRW"),
                          c("LLS", "LCL", "LRW"),
                          c("LBS", "18M", "LRW"),
                          c("LBS", "BTL", "LRW"),
                          c("LBS", "CAC", "LRW"),
-                         c("NPTH", "SW1", "LGR"),
-                         c("NPTH", "DWL", "LGR"),
-                         c("NPTH", "LRL", "LGR"),
-                         c("NPTH", "SC1", "LGR"),
-                         c("NPTH", "LAW", "LGR"),
-                         c("NPTH", "LC1", "LGR"),
-                         c("NPTH", "CLC", "LGR"),
-                         c("NPTH", "JA1", "LGR"),
-                         c("NPTH", "SIX", "LGR"),
-                         c("NPTH", "KOOS", "CLC"),
-                         c("UGR", "GRANDW", "UGS"))) %>%
+                         # Imnaha River
+                         c("IR3", "IML", "IR4"),
+                         c("IR4", "IR5", "IML"),
+                         # Clear Creek
+                         c("LGR", "KOOS", "CLC"))) %>%
   filter(!is.na(parent)) %>%
   # now add in parent-child relationships below LGR
   bind_rows(
@@ -422,14 +413,13 @@ parent_child = sites_sf %>%
       ~parent, ~child,
       "LGR", "GRS",    # Lower Granite Spillway
       "GRS", "PWA",    # Penawawa Creek
-      "PWA", "PENAWC",
       "GRS", "GOA",    # Little Goose Dam
+      "GRS", "ALMOTC", # Almota Creek
       "GOA", "LTR",    # Tucannon River
       "LTR", "MTR",
       "MTR", "UTR",
       "UTR", "TFH",
       "TFH", "TPJ",
-      "GOA", "LYFE",   # Lyons Ferry Hatchery
       "GOA", "LMA",    # Lower Monumental Dam
       "LMA", "IHR",    # Ice Harbor Dam
       "IHR", "PRA",    # Upper Columbia River
@@ -465,7 +455,7 @@ save(configuration,
      parent_child,
      pc_nodes,
      pc_paths,
-     file = here("data/configuration_files/site_config_LGR_20231012.rda"))
+     file = here("data/configuration_files/site_config_LGR_20231026.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
