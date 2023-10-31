@@ -14,7 +14,7 @@
 rm(list = ls())
 
 # install PITcleanr, if needed
-# remotes::install_github("KevinSee/PITcleanr", ref = "develop")
+remotes::install_github("KevinSee/PITcleanr", ref = "develop")
 
 # load needed libraries
 library(PITcleanr)
@@ -346,7 +346,7 @@ sites_sf = configuration %>%
 
 #----------------------
 # download the NHDPlus v2 Flowlines
-dwn_flw = F # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
+dwn_flw = T # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
 nhd_list = queryFlowlines(sites_sf = sites_sf,
                           root_site_code = "LGR",
                           min_strm_order = 2,
@@ -455,7 +455,7 @@ save(configuration,
      parent_child,
      pc_nodes,
      pc_paths,
-     file = here("data/configuration_files/site_config_LGR_20231026.rda"))
+     file = here("data/configuration_files/site_config_LGR_20231031.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
