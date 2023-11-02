@@ -21,6 +21,7 @@ library(here)
 library(writexl)
 
 # source identifyFishType()
+source(here("R/identifyFishType.R"))
 
 # set up folder structure
 PITcleanr_folder = "output/PITcleanr"
@@ -33,8 +34,7 @@ spc = "Steelhead"
 yr = 2022
 
 # load configuration and site and node parent-child data frames
-root_site = "GRA"
-load(paste0(here("data/configuration_files/site_config_"), root_site, ".rda"))
+load(here("data/configuration_files/site_config_LGR_20231031.rda"))
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
@@ -43,13 +43,14 @@ cth_df = readCTH(cth_path)
 # QC complete tag history
 cth_qc = qcTagHistory(cth_df)
 
-# orphan tags
+# create orphan tag folder, if not present
 orphan_folder = "output/orphan_tags"
 if(!dir.exists(orphan_folder)) {
   dir.create(orphan_folder)
 }
 
-orphan_tags = cth_qc$orphan_tags %>%
+# write orphan tags to file
+cth_qc$orphan_tags %>%
   as_tibble() %>%
   rename(tag_code = value) %>%
   left_join(cth_df) %>%
@@ -72,6 +73,8 @@ if(spc == "Steelhead") {
   sy_start_date = lubridate::ymd(paste0(yr - 1,'0701'))
   sy_end_date = lubridate::ymd(paste0(yr,'0630'))
 }
+
+# BEGIN HERE
 
 # clean observations to only include first observation of GRA after start of spawn year and after...
 lgr_after_obs = comp_obs %>%
