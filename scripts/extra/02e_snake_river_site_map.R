@@ -27,7 +27,7 @@ source(here("R/theme_map.R"))
 
 #----------------------
 # load some data
-load(here("data/configuration_files/site_config_LGR_20231026.rda")) ; rm(configuration, pc_paths)
+load(here("data/configuration_files/site_config_LGR_20231031.rda")) ; rm(configuration, pc_paths)
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_DPS = ESU_DPS, 
@@ -157,8 +157,6 @@ site_p
 
 #----------------------
 # site network using buildNetwork_tbl()
-# I still need to fix this, plus create a node_network (in addition to site_network)
-
 site_attributes = sites_sf %>%
   st_transform(crs = 4326) %>%
   st_join(sr_sthd_pops) %>%
@@ -169,40 +167,48 @@ site_attributes = sites_sf %>%
          site_type,
          site_type_name,
          rkm_total) %>%
+  # assign everyting upstream as "Spawner/Kelt/Repeat Spawner" whereas everything downstream is 
+  # "Kelt/Repeat Spawner"
   mutate(detection_type = case_when(
     rkm_total > 695 & label != "TPJ" ~ "Spawner/Kelt/Repeat Spawner",
-    label == "OXBO"                  ~ "Spawner/Kelt/Repeat Spawner",
     label == "GRA"                   ~ "Spawner/Kelt/Repeat Spawner",
-    TRUE ~ "Kelt/Repeat Spawner"),
-  group = case_when(
+    TRUE ~ "Kelt/Repeat Spawner"
+  )) %>%
+  # sites upstream are assigned to MPG, sites downstream are assigned to "Below LGR"
+  mutate(group = case_when(
     grepl("Spawner/Kelt/Repeat Spawner", detection_type) ~ MPG,
-    TRUE ~ "Below LWG")) %>%
-  st_set_geometry(NULL)
+    TRUE ~ "Below LGR"
+  )) # %>%
+  # st_set_geometry(NULL)
 
 # source buildNetwork()
 source('./R/buildNetwork_tbl.R')
 site_graph = buildNetwork_tbl(parent_child = parent_child,
                               node_attributes = site_attributes)
 
+# set a color palette
+sn_pal = c(viridis(n = 5, begin = 0.5), "grey50")
+
 # create site network
 site_network = ggraph(site_graph,
                       layout = "tree") +
   geom_edge_bend() +
+  #geom_edge_elbow() +
+  #geom_edge_diagonal() +
   geom_node_label(aes(label = label,
                       fill = group),
-                  size = 2) +
-  scale_fill_manual(values = plasma_pal,
-                    breaks = c("Clearwater River", 
-                               "Hells Canyon", 
+                  size = 3) +
+  scale_fill_manual(values = sn_pal,
+                    breaks = c("Lower Snake",
                                "Grande Ronde River",
-                               "Imnaha River", 
-                               "Salmon River", 
-                               "Lower Snake")) +
+                               "Imnaha River",
+                               "Clearwater River",
+                               "Salmon River",
+                               "Below LGR")) +
   guides(fill = guide_legend(
-    title = "",
+    title = "Steelhead MPGs",
     override.aes = aes(label = ""),
-    nrow = 1
-  )) +
+    nrow = 1)) +
   theme_void() +
   theme(legend.position = "bottom")
 site_network
@@ -210,6 +216,50 @@ site_network
 # save site_network
 ggsave(here("output/figures/site_network_LGR.png"),
        site_network,
+       width = 20,
+       height = 8.5)
+
+#----------------------
+# create node network
+node_attributes = union(pc_nodes$parent, pc_nodes$child) %>%
+  as_tibble() %>%
+  rename(label = value) %>% 
+  mutate(site_code = str_replace(label, "_D$|_U$", "")) %>%
+  left_join(site_attributes %>%
+              select(label,
+                     group) %>%
+              st_drop_geometry(),
+            by = c("site_code" = "label"))
+
+node_graph = buildNetwork_tbl(parent_child = pc_nodes,
+                              node_attributes = node_attributes)
+
+node_network = ggraph(node_graph,
+                      layout = "tree") +
+  geom_edge_bend() +
+  #geom_edge_elbow() +
+  #geom_edge_diagonal() +
+  geom_node_label(aes(label = label,
+                      fill = group),
+                  size = 3) +
+  scale_fill_manual(values = sn_pal,
+                    breaks = c("Lower Snake",
+                               "Grande Ronde River",
+                               "Imnaha River",
+                               "Clearwater River",
+                               "Salmon River",
+                               "Below LGR")) +
+  guides(fill = guide_legend(
+    title = "Steelhead MPGs",
+    override.aes = aes(label = ""),
+    nrow = 1)) +
+  theme_void() +
+  theme(legend.position = "bottom")
+node_network
+
+# save site_network
+ggsave(here("output/figures/node_network_LGR.png"),
+       node_network,
        width = 20,
        height = 8.5)
 

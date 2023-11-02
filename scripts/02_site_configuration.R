@@ -14,7 +14,7 @@
 rm(list = ls())
 
 # install PITcleanr, if needed
-remotes::install_github("KevinSee/PITcleanr", ref = "develop")
+# remotes::install_github("KevinSee/PITcleanr", ref = "develop")
 
 # load needed libraries
 library(PITcleanr)
@@ -436,7 +436,9 @@ parent_child = sites_sf %>%
       "TDA", "RCX",    # White Salmon River
       "TDA", "LWL",    # Little White Salmon River
       "TDA", "WRA",    # Wind River
-      "TDA", "BON"))   # Bonneville Dam
+      "TDA", "BON")) %>% # Bonneville Dam
+  select(-parent_hydro,
+         -child_hydro)
 
 # add nodes to parent-child table
 pc_nodes = parent_child %>%
