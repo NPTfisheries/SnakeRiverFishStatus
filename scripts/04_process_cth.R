@@ -27,7 +27,7 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2022
 
 # load configuration and site and node parent-child data frames
@@ -118,7 +118,8 @@ if(spc == "Steelhead"){
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
 }
-# THE ABOVE, INCLUDING steelheadLifeStage, STILL NEEDS SIGNFICANT REVIEW AND WORK
+# THE ABOVE, INCLUDING steelheadLifeStage(), STILL NEEDS SIGNFICANT REVIEW AND WORK
+# I ALSO NEED TO DETERMINE WHERE AND HOW TO SET-ASIDE DETECTION FOR KELTS AND REPEAT SPAWNERS
 
 # Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
 # GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
