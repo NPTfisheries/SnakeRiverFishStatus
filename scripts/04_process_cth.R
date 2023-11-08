@@ -20,9 +20,6 @@ library(PITcleanr)
 library(here)
 library(writexl)
 
-# source identifyFishType()
-source(here("R/identifyFishType.R"))
-
 # set up folder structure
 PITcleanr_folder = "output/PITcleanr"
 if(!dir.exists(PITcleanr_folder)) {
@@ -74,64 +71,80 @@ if(spc == "Steelhead") {
   sy_end_date = lubridate::ymd(paste0(yr,'0630'))
 }
 
-# BEGIN HERE
-
-# clean observations to only include first observation of GRA after start of spawn year and after...
+# clean observations to only include the first observation at LGR after the start of the spawn year and after...
 lgr_after_obs = comp_obs %>%
-  # add a column "start_date" which is the first observation at Granite after the start of the spawn year
+  # add a column "tag_start_date" which is the first observation at Granite after the start of the spawn year
   left_join(comp_obs %>%
-              # get just GRA trap observations (exclude just observations)
-              filter(node == "GRA",                                 
+              filter(node == "LGR",
                      event_type_name %in% c("Mark", "Recapture")) %>%
-              # remove observations that occur prior to the spawn year
-              filter(min_det >= sy_start_date) %>% 
+              # remove LGR observations that occur prior to the spawn year
+              filter(min_det >= sy_start_date) %>%
+              # get just first LGR observations after start of spawn year
               group_by(tag_code) %>%
-              # get just first GRA observation after start of spawn year
-              filter(min_det == min(min_det)) %>% 
-              summarise(start_date = min_det,
+              filter(min_det == min(min_det)) %>%
+              summarise(tag_start_date = min_det,
                         .groups = "drop")) %>%
-  # now, remove any observations that occur prior to gra_start_date
-  filter(min_det >= start_date) %>%
-  #rename(start_date = gra_start_date) %>%
+  # now, remove any observations that occur prior to tag_start_date
+  filter(min_det >= tag_start_date) %>%
+  select(-tag_start_date) %>%
   # reset slots to start at 1, again
   group_by(tag_code) %>%
   mutate(slot = 1:n()) %>%
   ungroup()
 
-# use filterDetections() to provide some indication of whether each detection should be kept for analysis i.e., moving in a single direction
-# note the function first runs addDirection() which determines movement based on relationships in the provided parent_child table
-dabom_obs = filterDetections(compress_obs = lgr_after_obs,
-                             parent_child = pc_nodes,
-                             max_obs_date = NULL) %>%      # max_obs_date could be used to exclude kelts
-  mutate(id = 1:n()) %>%
-  select(id, everything()) %>%
-  mutate(life_stage = "spawner") %>%
-  select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
-         node, direction, everything())
+# use filterDetections() to provide some indication of whether each detections should be kept for analysis
+# i.e., moving in a single direction. Note: the function first runs addDirection() which determines movement
+# based on relationships in the provided parent-child table.
+if(spc == "Chinook"){
+  dabom_obs = filterDetections(compress_obs = lgr_after_obs,
+                               parent_child = pc_nodes,
+                               max_obs_date = NULL) %>%
+    mutate(id = 1:n(),
+           life_stage = "spawner") %>%
+    select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
+           node, direction, everything())
+}
+if(spc == "Steelhead"){
+  tmp = filterDetections(compress_obs = lgr_after_obs,
+                         parent_child = pc_nodes,
+                         max_obs_date = str_remove_all(sy_end_date, "-"))
 
-# correct some calls for fish that re-ascended i.e., were seen at GRA (adult ladder and trap), GRS (juvenile fish bypass), and
-# GRA again. We don't want these fish assigned to GRS and also another branch b/c they will be flagged as multiple branches
+  # source steelheadLifeStage()
+  source(here("R/steelheadLifeStage.R"))
+  dabom_obs = steelheadLifeStage(obs_df = tmp,
+                                 spawn_year = yr,
+                                 max_spawn_month = 3) %>%
+    mutate(id = 1:n()) %>%
+    select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
+           node, direction, everything())
+}
+# THE ABOVE, INCLUDING steelheadLifeStage, STILL NEEDS SIGNFICANT REVIEW AND WORK
 
+# Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
+# GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
+# also another branch b/c they will be flagged as multiple branches
 reascenders = dabom_obs %>%
   filter(life_stage == "spawner") %>%
-  filter(node %in% c("GRA", "GRS")) %>%
+  filter(node %in% c("LGR", "GRS")) %>%
+  # what is the latest detection for each fish at either "LGR" or "GRS"?
   group_by(tag_code) %>%
   slice(which.max(min_det)) %>%
-  select(tag_code, max_LGR = node)
+  select(tag_code,
+         last_LGR = node)
 
 dabom_obs = dabom_obs %>%
   left_join(reascenders) %>%
   mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
                                 NA,
-                                if_else(node == "GRS" & max_LGR == "GRA",
+                                if_else(node == "GRS" & last_LGR == "LGR",
                                         FALSE,
                                         auto_keep_obs)),
          user_keep_obs = ifelse(is.na(user_keep_obs),
                                 NA,
-                                ifelse(node == "GRS" & max_LGR == "GRA",
+                                ifelse(node == "GRS" & last_LGR == "LGR",
                                        FALSE,
                                        user_keep_obs))) %>%
-  select(-max_LGR)
+  select(-last_LGR)
 
 # write to excel file
 write_xlsx(dabom_obs,
