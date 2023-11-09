@@ -31,7 +31,7 @@ spc = "Chinook"
 yr = 2022
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20231031.rda"))
+load(here("data/configuration_files/site_config_LGR_20231109.rda"))
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
