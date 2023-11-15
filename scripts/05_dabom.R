@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: August 10, 2023
+#   Last Modified: November 15, 2023
 #
 # Notes: 
 
@@ -20,14 +20,14 @@ library(DABOM)
 #--------------------
 # some initial setup
 # load configuration
-load(here("data/configuration_files/site_config_GRA.rda"))
+load(here("data/configuration_files/site_config_LGR_20231109.rda")) ; rm(flowlines)
 
 # build all of the paths to each detection location based on parent-child relationships
 node_order = buildNodeOrder(parent_child = pc_nodes,
                             direction = "u") 
 
 # load trap_df to get origin
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-08-10.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-15.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -37,7 +37,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Chinook"
-yr = 2021
+yr = 2022
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -63,7 +63,13 @@ tags = unique(filter_ch$tag_code)
 
 # get valid tags and origin
 origin_df = trap_df %>%
+  # filter LGTrappingDB down to the spawn year
+  filter(SpawnYear == paste0("SY", yr)) %>%
+  # and just PIT tags in our valid tag list
   filter(LGDNumPIT %in% tags) %>%
+  # and exclude those with no BioSamplesID
+  filter(!is.na(BioSamplesID)) %>%
+  # append "origin" based on SRR
   mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
   select(tag_code = LGDNumPIT, origin) %>%
   distinct()
@@ -74,7 +80,9 @@ origin_df %>%
   summarise(n = n_distinct(tag_code))
 
 # any tags have both a H and W record?
-duplicates = origin_df$tag_code[duplicated(origin_df$tag_code)] # eventually consider doing something about these
+duplicates = origin_df$tag_code[duplicated(origin_df$tag_code)] 
+# If yes, something needs to be done. I think I largely resolved by filtering trap_df down to the specific spawn
+# year first and excluding samples with no BioSamplesID
 
 # DABOM is capable of fitting a model w/ both H and W; filter if inc_hatchery = FALSE
 if(inc_hatchery == FALSE) {
@@ -83,9 +91,8 @@ if(inc_hatchery == FALSE) {
     filter(tag_code %in% origin_df$tag_code)
 }
 
-# final error check of migration routes; necessary b/c we're using a mixed node order
-# starting w/ BON to develop the configuration file and PITcleanr file, and then a 
-# node order starting at GRA to build DABOM histories and models
+# an error check of migration paths; find any observations remaining that are not in the path to the 
+# "final location. Can this be improved using estimateFinalLoc?
 bad_paths = filter_ch %>%
   group_by(tag_code) %>%
   slice_max(node_order) %>%
@@ -94,13 +101,10 @@ bad_paths = filter_ch %>%
   right_join(filter_ch) %>%
   ungroup() %>%
   rowwise() %>%
-  mutate(bad_path = grepl(node, final_path)) %>%
+  mutate(obs_in_path = grepl(node, final_path)) %>%
   group_by(tag_code) %>%
-  mutate(error = any(bad_path == FALSE))
-
-bad_tags = bad_paths %>%
-  filter(error == TRUE) %>%
-  distinct(tag_code)
+  mutate(error = any(obs_in_path == FALSE)) %>%
+  filter(error == TRUE)
 
 # RK included a section here to create smaller models for debugging; skip for the time being
 
