@@ -120,6 +120,7 @@ if(spc == "Steelhead"){
 }
 # THE ABOVE, INCLUDING steelheadLifeStage(), STILL NEEDS SIGNFICANT REVIEW AND WORK
 # I ALSO NEED TO DETERMINE WHERE AND HOW TO SET-ASIDE DETECTION FOR KELTS AND REPEAT SPAWNERS
+# CAN WE USE EstimateFinalLoc() to assist this process?
 
 # Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
 # GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
