@@ -3,10 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: June 27, 2023
-#
-# Notes: For now, I'm just going to query PTAGIS for CTHs for each valid tag list. However, consider in the future using
-# queryObsDART(). I just don't know if you can use that function to query for a particular tag list.
+#   Last Modified: November 16, 2023
 #
 # Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
 # differentiates spawners from kelts??? Consider adding that functionality in at a later date.
@@ -86,7 +83,7 @@ lgr_after_obs = comp_obs %>%
                         .groups = "drop")) %>%
   # now, remove any observations that occur prior to tag_start_date
   filter(min_det >= tag_start_date) %>%
-  select(-tag_start_date) %>%
+  # select(-tag_start_date) %>%
   # reset slots to start at 1, again
   group_by(tag_code) %>%
   mutate(slot = 1:n()) %>%

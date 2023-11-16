@@ -22,10 +22,6 @@ library(DABOM)
 # load configuration
 load(here("data/configuration_files/site_config_LGR_20231109.rda")) ; rm(flowlines)
 
-# build all of the paths to each detection location based on parent-child relationships
-node_order = buildNodeOrder(parent_child = pc_nodes,
-                            direction = "u") 
-
 # load trap_df to get origin
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-15.csv"))
 
@@ -56,7 +52,8 @@ dabom_obs = readxl::read_excel(paste0(pitcleanr_folder, "/", spc, "_SY", yr, "_p
 
 # remove FALSE obs for DABOM from processed dataset
 filter_ch = dabom_obs %>%
-  filter(user_keep_obs)
+  filter(user_keep_obs) %>%
+  rename(start_date = tag_start_date)
 
 # get unique tags for species and sy
 tags = unique(filter_ch$tag_code)
@@ -180,7 +177,7 @@ dabom_output = jags.model(file = final_mod_file,
 
 # create capture history with tag codes for debugging
 # cap_hist = createDABOMcapHist(filter_ch = filter_ch,
-#                               parent_child = parent_child,
+#                               parent_child = pc_nodes,
 #                               configuration = configuration,
 #                               split_matrices = F)
 # cap_hist[950, ] %>%

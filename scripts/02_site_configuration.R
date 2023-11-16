@@ -477,7 +477,7 @@ parent_child = sites_sf %>%
   select(-parent_hydro,
          -child_hydro)
 
-# add nodes to parent-child table
+# add nodes to parent-child table (I don't think I need to create this here!)
 pc_nodes = parent_child %>%
   select(parent, child) %>%
   addParentChildNodes(.,  configuration = configuration)  
