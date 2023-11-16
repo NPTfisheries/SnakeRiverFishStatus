@@ -483,8 +483,8 @@ pc_nodes = parent_child %>%
   addParentChildNodes(.,  configuration = configuration)  
 
 # build paths to each node
-pc_paths = buildPaths(parent_child = pc_nodes,
-                      direction = "u")
+node_paths = buildNodeOrder(parent_child = pc_nodes,
+                            direction = "u")
 
 #----------------------
 # write configuration, parent-child table, flowlines, etc.
@@ -493,7 +493,7 @@ save(configuration,
      flowlines,
      parent_child,
      pc_nodes,
-     pc_paths,
+     node_paths,
      file = here("data/configuration_files/site_config_LGR_20231109.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
