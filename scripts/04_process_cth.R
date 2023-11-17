@@ -119,31 +119,33 @@ if(spc == "Steelhead"){
 # I ALSO NEED TO DETERMINE WHERE AND HOW TO SET-ASIDE DETECTION FOR KELTS AND REPEAT SPAWNERS
 # CAN WE USE EstimateFinalLoc() to assist this process?
 
+# create a summary of those fish where user_keep_obs = NA
+
 # Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
 # GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
 # also another branch b/c they will be flagged as multiple branches
-reascenders = dabom_obs %>%
-  filter(life_stage == "spawner") %>%
-  filter(node %in% c("LGR", "GRS")) %>%
-  # what is the latest detection for each fish at either "LGR" or "GRS"?
-  group_by(tag_code) %>%
-  slice(which.max(min_det)) %>%
-  select(tag_code,
-         last_LGR = node)
-
-dabom_obs = dabom_obs %>%
-  left_join(reascenders) %>%
-  mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
-                                NA,
-                                if_else(node == "GRS" & last_LGR == "LGR",
-                                        FALSE,
-                                        auto_keep_obs)),
-         user_keep_obs = ifelse(is.na(user_keep_obs),
-                                NA,
-                                ifelse(node == "GRS" & last_LGR == "LGR",
-                                       FALSE,
-                                       user_keep_obs))) %>%
-  select(-last_LGR)
+# reascenders = dabom_obs %>%
+#   filter(life_stage == "spawner") %>%
+#   filter(node %in% c("LGR", "GRS")) %>%
+#   # what is the latest detection for each fish at either "LGR" or "GRS"?
+#   group_by(tag_code) %>%
+#   slice(which.max(min_det)) %>%
+#   select(tag_code,
+#          last_LGR = node)
+# 
+# dabom_obs = dabom_obs %>%
+#   left_join(reascenders) %>%
+#   mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
+#                                 NA,
+#                                 if_else(node == "GRS" & last_LGR == "LGR",
+#                                         FALSE,
+#                                         auto_keep_obs)),
+#          user_keep_obs = ifelse(is.na(user_keep_obs),
+#                                 NA,
+#                                 ifelse(node == "GRS" & last_LGR == "LGR",
+#                                        FALSE,
+#                                        user_keep_obs))) %>%
+#   select(-last_LGR)
 
 # write to excel file
 write_xlsx(dabom_obs,
