@@ -88,7 +88,8 @@ sr_int_sites_sf = ptagis_sf %>%
   filter(!str_detect(site_name, "Little Goose")) %>%
   filter(!str_detect(site_name, "Lower Monumental")) %>%
   # remove unnecessary INT sites we don't want
-  filter(!site_code %in% c("CCP", # Catherine Creek Acclimation Pond
+  filter(!site_code %in% c("0HR", # Henry's Inreach Array, Lemhi
+                           "CCP", # Catherine Creek Acclimation Pond
                            "GRP", # Grande Ronde Acclimation Pond
                            "LOP", # Lostine River Acclimation Pond
                            "RPJ", # Rapid River Hatchery Pond
@@ -99,6 +100,8 @@ sr_int_sites_sf = ptagis_sf %>%
                            "CHN", # Challis Diversion North
                            "CHS", # Challis Diversion South
                            "CLJ", # Clearwater River Juvenile Fish Trap
+                           "CRT", # Crooked River Satellite Facility
+                           "RRT", # Red River Satellite Facility
                            "IMJ", # Imnaha River Juvenile Fish Trap
                            "SAJ", # Salmon River Trap
                            "SNJ", # Snake River Trap
@@ -139,6 +142,7 @@ tags_by_site = list.files(path = here("data/complete_tag_histories/"),
             mean = round(mean(n_tags, na.rm = T), 1),
             md = round(median(n_tags, na.rm = T), 1),
             max = round(max(n_tags, na.rm = T), 1),
+            yrs = toString(spawn_year),
             .groups = "drop")
 
 # mrr sites of interest
@@ -153,77 +157,68 @@ sr_mrr_sites_sf = ptagis_sf %>%
               select(species, site_code, mean) %>%
               pivot_wider(names_from = species,
                           values_from = mean)) %>%
-  # filter for only sites where, on average, there are 10 or greater detection for Chinook salmon or steelhead
-  # (among only years where fish were detected i.e., na.rm = T)
+  # first, let's trim down our list of MRR sites significantly by filtering for only sites where, on average, there 
+  # are 10 or greater detections for either Chinook salmon or steelhead (among only years where fish were detected
+  # i.e., na.rm = T)
   filter(Chinook >= 10 | Steelhead >= 10) %>%
   select(-Chinook, -Steelhead) %>%
   # remove Lower Granite Dam MRR sites
   filter(!str_detect(site_code, "LGR")) %>%
   # remove acclimation ponds 
   filter(!str_detect(site_description, "AcclimationPond")) %>%
-  # remove some sites that pass the above filter, but we can't safely assign detections to another INT or MRR location
+  # now, remove some additional sites that pass the above filter, but are not necessarily useful for escapement analyses.
+  # this can be because we can't safely assign detections to another INT or MRR locations, or that carcass recoveries maybe
+  # occurred prior to an adjacent array and detections muddle interpretation of escapement estimates there
   filter(!site_code %in% c("ASOTIC",  # Asotin Creek
                            "CATHEC",  # Catherine Creek
                            "CLWH",    # Clearwater Hatchery
-                           "OXBO",
+                           "OXBO",    # Oxbow Hatchery
                            "GRAND2",  # Grande Ronde River - Wallowa River to headwaters (km 131-325)
+                           "PANTHC",  # Panther Creek carcass recoveries (some occurred prior to PCA being installed)
+                           "FISHC",   # Fish Creek carcass recoveries (occurred prior to LRU being installed)
+                           "FISTRP",  # Fish Creek trap (occured prior to LRU being installed)
                            "SALR4",   # Salmon River - Pahsimeroi River to headwaters (km 489-650)
                            "SALRSF",  # South Fork Salmon River
                            "SNAKE4"   # Snake River - Salmon River to Hells Canyon Dam (km 303-397)
                            )) %>%
-  # finally, add back in some MRR sites that didn't pass above filters, but have been included in previous
-  # DABOM model runs (up for debate on whether any or all of these are needed).
+  # finally, add back in some MRR sites that are useful i.e., that they can easily be grouped to an adjacent INT site or
+  # have sufficient, regular detections that they can be used to estimate a detection probability at a downstream site, etc.
   bind_rows(ptagis_sf %>%
-              filter(site_code %in% c("ALMOTC",   # Almota Creek - tributary to Snake River
+              filter(site_code %in% c(# UPPER SALMON
                                       "ALTULC",   # Aluturas Lake Creek, Upper Salmon
-                                      "BCANF",    # Big Canyon Facility
-                                      "BEARC",    # Bear Creek, Selway River
-                                      "BEARVC",   # Bear Valley Creek
-                                      "BEAVC",    # Beaver Creek, Marsh Creek
-                                      "BEAV4C",   # Beaver Creek, Big Creek
                                       "BEAVEC",   # Beaver Creek, Upper Salmon
-                                      "BIG2C",    # Big Creek, Middle Fork Salmon River
-                                      "BIGBEC",   # Big Bear Creek, Potlatch River
-                                      "BURLC",    # Burntlog Creek, Johnson Creek
-                                      "CAMP4C",   # Camp Creek, tributary to Big Sheep Creek, Imnaha drainage
-                                      "CAPEHC",   # Capehorn Creek, Marsh Creek
-                                      "CARMEC",   # Carmen Creek - tributary to Salmon River
-                                      "CHARLC",   # Charley Creek, Asotin Creek watershed
-                                      "CROOKC",   # Crooked Fork Lochsa River
-                                      "CROOKR",   # Crooked River, South Fork Clearwater
-                                      "CROTRP",   # Crooked River Trap
-                                      "DRY2C",    # Dry Creek, Imnaha River
-                                      "EFPW",     # East Fork Potlatch River weir
-                                      "ELKC",     # Elk Creek, Bear Valley Creek
-                                      "FREEZC",   # Freezeout Creek, Imnaha River
-                                      "GROUSC",   # Grouse Creek, Secesh River
-                                      "GUMBTC",   # Gumboot Creek, Imnaha River
                                       "HAYDNC",   # Hayden Creek, Lemhi River
-                                      "KNAPPC",   # Knapp Creek, Marsh Creek
-                                      "KOOS",     # Kooskia National Fish Hatchery
+                                      "CARMEC",   # Carmen Creek - tributary to Salmon River
+                                      "YANKWF",   # West Fork Yankee Fork Salmon River 
+                                      # MIDDLE FORK SALMON
+                                      "BEAV4C",   # Beaver Creek, Big Creek
+                                      "BIG2C",    # Big Creek, Middle Fork Salmon River
+                                      # SOUTH FORK SALMON
+                                      "BURNLC",   # Burntlog Creek, Johnson Creek
+                                      "GROUSC",   # Grouse Creek, Secesh River
                                       "LAKEC",    # Lake Creek, Secesh River
-                                      "LBEARC",   # Little Bear Creek, Potlatch River watershed
-                                      "LSHEEF",   # Little Sheep Facility
-                                      "MAHOGC",   # Mahogany Creek, Imnaha River
-                                      "MARSHC",   # Marsh Creek
                                       "MCCA",     # McCall Hatchery
-                                      "MINAMR",   # Minam River
-                                      "MOOS2C",   # Moose Creek, Selway River
-                                      "PAHSIR",   # Pahsimeroi River
-                                      "PENAWC",   # Penawawa Creek - tributary to Snake River
-                                      "POTREF",   # East Fork Potlatch River
-                                      "POTRWF",   # West Fork Potlatch River
+                                      "SUMITC",   # Summit Creek, Secesh River
+                                      # LITTLE SALMON
                                       "RAPH",     # Rapid River Hatchery
                                       "RPDTRP",   # Rapid River Smolt Trap
-                                      "REDR",     # Red River
-                                      "REDTRP",   # Red River Trap
-                                      "SALRNF",   # North Fork Salmon River
-                                      "SUMITC",   # Summit Creek, Secesh River
-                                      "TENMC2",   # Tenmile Creek, tributary to Snake River
+                                      # SOUTH FORK CLEARWATER
+                                      "KOOS",     # Kooskia National Fish Hatchery
+                                      # POTLATCH RIVER
+                                      "EFPW",     # East Fork Potlatch River weir
+                                      # IMNAHA RIVER
+                                      "CAMP4C",   # Camp Creek, tributary to Big Sheep Creek, Imnaha drainage
+                                      "FREEZC",   # Freezeout Creek, Imnaha River
+                                      "LSHEEF",   # Little Sheep Facility
+                                      "MAHOGC",   # Mahogany Creek, Imnaha River
+                                      # GRANDE RONDE
+                                      "BCANF",    # Big Canyon Facility
                                       "WALH",     # Wallowa Hatchery
-                                      "WENR",     # Wenaha River
-                                      "WIMPYC",   # Wimpey Creek (Salmon River)
-                                      "YANKWF"))) # West Fork Yankee Fork Salmon River 
+                                      # LOWER SNAKE
+                                      "ALMOTC",   # Almota Creek - tributary to Snake River
+                                      "CHARLC",   # Charley Creek, Asotin Creek watershed
+                                      "PENAWC",   # Penawawa Creek - tributary to Snake River
+                                      "TENMC2"))) # Tenmile Creek, tributary to Snake River
 
 # MRR sites that have been included in past DABOM models that I've excluded:  
 # "DWOR"   - Dworshak National Fish Hatchery
@@ -247,64 +242,42 @@ sr_config = org_config %>%
   mutate(
     node = case_when(
       site_code == "BTC"                 ~ str_replace(node, "BTC", "BTL"), # Big Timber Creek; BTC was replaced by BTL
-      site_code == "HEC"                 ~ str_replace(node, "HEC", "18M"), # Group 18-mile & Hawley creeks
+      site_code == "18M"                 ~ str_replace(node, "18M", "HEC"), # Group 18-mile & Hawley creeks
       site_code == "IML" & antenna_id == "09"                    ~ "IML_U", # Imnaha River Work Room Antenna
-      site_code == "AFC" &  grepl("MAINSTEM", antenna_group)     ~ "AFC_D",  # mainstem Asotin becomes _D
-      site_code == "AFC" & !grepl("MAINSTEM", antenna_group)     ~ "AFC_U",  # south and north forks become _U
+      site_code == "AFC" &  grepl("MAINSTEM", antenna_group)     ~ "AFC_D", # mainstem Asotin becomes _D
+      site_code == "AFC" & !grepl("MAINSTEM", antenna_group)     ~ "AFC_U", # south and north forks become _U
       TRUE ~ node)) %>%  
   # Recode and/or merge some MRR sites; often merging MRR observations into INT sites
   mutate(
     node = case_when(
       # UPPER SALMON 
-      site_code == "SAWT"                 ~ "STL",    # Group Sawtooth Hatchery & Ladder Array
-      site_code %in% c("BEAVEC", "ALTULC")~ "STL",    # Group Upper Salmon carcass recoveries to STL
+      site_code %in% c("SAWT", "BEAVEC", 
+                       "ALTULC")          ~ "STL",    # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to STL
       site_code %in% c("CEY", "YANKFK",
                        "YANKWF")          ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
       site_code == "SALREF"               ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
-      site_code == "PAHSIR"               ~ "PAHH",   # Group Pahsimeroi River carcass recoveries to Pahsimeroi Hatchery
       site_code == "HAYDNC"               ~ "HYC_U",  # Group Hayden Creek carcass recoveries to HYC_U
-      site_code == "WIMPYC"               ~ "WPC_U",  # Wimpey Creek (Lemhi River)
       site_code == "CARMEC"               ~ "CRC_U",  # Carmen Creek weir
-      site_code == "SALRNF"               ~ "NFS_U",  # North Fork Salmon River
-      site_code == "PANTHC"               ~ "PCA_U",  # Group Panther Creek obs (e.g., carcass recoveries) w/ PCA
       # MIDDLE FORK SALMON
-      site_code %in% c("BEAVC", "CAPEHC",
-                       "MARSHC", "KNAPPC")~ "MAR_U",  # Group all Marsh Creek carcass recoveries to "MAR_U"
-      site_code %in% c("BEARVC", "ELKC")  ~ "BRC",    # Group Bear Valley adult weir w/ BRC
-      site_code %in% c("BIG2C", "BEAV4C") ~ "TAY_U",  # Group Big and Beavers creek obs w/ TAY
+      site_code %in% c("BIG2C", "BEAV4C") ~ "TAY_U",  # Group Big and Beavers creek obs w/ TAY_U
       # SOUTH FORK SALMON
       site_code %in% c("KNOXB","MCCA", 
                        "SALSFW")          ~ "STR",    # South Fork Salmon River weir
       site_code %in% c("SECESR", "GROUSC",
                        "SUMITC", "LAKEC") ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN
-      site_code == "BURLC"                ~ "JOHNSC", # Burntlog Creek to Johnson Creek
+      site_code == "BURNLC"               ~ "JOHNSC", # Burntlog Creek to Johnson Creek
       # LITTLE SALMON
       site_code == "RPDTRP"               ~ "RAPH",   # Group Rapid trap with Rapid Hatchery
-      # LOCHSA AND SELWAY RIVER
-      site_code == "CROOKC"               ~ "LRU",    # Crooked Fork Lochsa River
-      site_code %in% c("MOOS2C", "BEARC") ~ "SW2",    # Moose and Bear creeks, Selway River
       # SOUTH FORK CLEARWATER
-      site_code %in% c("REDTRP", "REDR")  ~ "RRT",    # Red River Trap
-      site_code %in% c("CROTRP", "CRT",
-                       "CROOKR")          ~ "CRA_U",  # Group Crooked River & trap to CRA
-      site_code %in% c("FISHC", "FISTRP") ~ "LRU",    # Group Fish Creek to LRU
-      site_code == "EFPW"                 ~ "EPR_U",  # Group EF Potlatch weir to EPR_U
-      site_code == "POTREF"               ~ "EPR_D",  # Group EF Potlatch obs to EPR_L
-      site_code %in% c("LBEARC", 
-                       "BIGBEC")          ~ "BBA_U",  # Group Little and Big Bear Creek obs to BBA_U
+      site_code == "KOOS"                 ~ "CLC",    # Group Kooskia Hatchery to CLC
       # IMNAHA RIVER
       site_code == "IMNAHW"               ~ "IML_U",   # Group Imnaha Weir w/ trap array
-      site_code == "LSHEEF"               ~ "LSC_U",   # Group Little Sheep Cr obs to LSC_U
       site_code == "CAMP4C"               ~ "CMP_U",   # Group Camp Creek to CMP_U
       site_code %in% c("FREEZC", "MAHOGC")~ "IR3_U",
-      site_code %in% c("GUMBTC", "DRY2C") ~ "IR5_U",
       # GRANDE RONDE
-      site_code == "GRANDW"               ~ "UGS_D",   # Group GRANDW to UGS_D (based on site configuration)
+      site_code == "GRANDW"               ~ "UGS_U",   # Group GRANDW to UGS_U (based on site configuration)
       site_code == "CATHEW"               ~ "CCW_U",   # Group CATHEW to CCW_U (based on site configuration)
-      site_code %in% c("LOOKGC", 
-                       "LOOH", "LGW")     ~ "LGW",     # Group LGW, LOOKGC, and LOOH into a single node
-      site_code == "MINAMR"               ~ "MR1_U",   # Minam River
-      site_code == "WENR"                 ~ "WEN_U",
+      site_code %in% c("LOOKGC", "LOOH")  ~ "LGW_U",   # Group LGW, LOOKGC, and LOOH into a single node
       # LOWER SNAKE
       site_code == "TUCH"                 ~ "TFH_U",   # Group Tucannon Hatchery to TFH_U
       site_code == "CHARLC"               ~ "CCA_U",   # Group Charley Creek to CCA_U
@@ -430,19 +403,16 @@ parent_child = sites_sf %>%
   # fix site mapping issues above LGR
   editParentChild(fix_list = 
                     list(# Lemhi River
-                         c("KEN", "0HR", "EVU"),
                          c("KEN", "AGC", "EVU"),
                          c("LLS", "LBS", "LRW"),
                          c("LLS", "LB8", "LRW"),
                          c("LLS", "LCL", "LRW"),
-                         c("LBS", "18M", "LRW"),
+                         c("LBS", "HEC", "LRW"),
                          c("LBS", "BTL", "LRW"),
                          c("LBS", "CAC", "LRW"),
                          # Imnaha River
                          c("IR3", "IML", "IR4"),
-                         c("IR4", "IR5", "IML"),
-                         # Clear Creek
-                         c("LGR", "KOOS", "CLC"))) %>%
+                         c("IR4", "IR5", "IML"))) %>%
   filter(!is.na(parent)) %>%
   # now add in parent-child relationships below LGR
   bind_rows(
@@ -494,7 +464,7 @@ save(configuration,
      parent_child,
      pc_nodes,
      node_paths,
-     file = here("data/configuration_files/site_config_LGR_20231109.rda"))
+     file = here("data/configuration_files/site_config_LGR_20231117.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
