@@ -3,11 +3,9 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: October 3, 2023
+#   Last Modified: November 20, 2023
 #
-# Notes: See bottom of script. After completing the complete tag history queries in PTAGIS,
-# consider running the QA/QC of the complete tag histories, which is currently commented out.
-# Also, I've copied pasted over both the filterLGRtrapDB() and summariseValidTagsLGR.R() functions
+# Notes: I've copied pasted over both the filterLGRtrapDB() and summariseValidTagsLGR.R() functions
 # from PITcleanr. If useful, consider pulling those in sometime. If not, they can likely be
 # deleted from the repo.
 
@@ -26,7 +24,7 @@ if(!dir.exists(tags_folder)) {
 }
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-27.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
 
 # set species and spawn year
 spc = "Steelhead"
@@ -58,21 +56,3 @@ tag_list = valid_df %>%
               sep = "\t")
 
 ### END SCRIPT
-
-#-----------------------
-# QA/QC the complete tag histories: need to download the CTH(s) from PTAGIS first
-# cth_file = paste0(here("data/complete_tag_histories"), "/LGR_", spc, "_", yr, ".csv")
-# 
-# # requires PITcleanr
-# library(PITcleanr)
-# 
-# # run qcTagHistory()
-# cth_qc = qcTagHistory(cth_file)
-# cth_qc
-# 
-# orphans <- qc_detections$orphan_tags %>%
-#   write.table(paste0(tagsFolder,'/Orphan_',spp,'.txt'),
-#               quote = F,
-#               row.names = F,
-#               col.names = F,
-#               sep = '\t')
