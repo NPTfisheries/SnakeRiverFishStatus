@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: November 16, 2023
+#   Last Modified: November 20, 2023
 #
 # Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
 # differentiates spawners from kelts??? Consider adding that functionality in at a later date.
@@ -24,11 +24,11 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Chinook"
-yr = 2022
+spc = "Steelhead"
+yr = 2010
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20231109.rda"))
+load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
@@ -83,7 +83,6 @@ lgr_after_obs = comp_obs %>%
                         .groups = "drop")) %>%
   # now, remove any observations that occur prior to tag_start_date
   filter(min_det >= tag_start_date) %>%
-  # select(-tag_start_date) %>%
   # reset slots to start at 1, again
   group_by(tag_code) %>%
   mutate(slot = 1:n()) %>%
@@ -92,6 +91,8 @@ lgr_after_obs = comp_obs %>%
 # use filterDetections() to provide some indication of whether each detections should be kept for analysis
 # i.e., moving in a single direction. Note: the function first runs addDirection() which determines movement
 # based on relationships in the provided parent-child table.
+
+# Chinook salmon
 if(spc == "Chinook"){
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
@@ -101,25 +102,27 @@ if(spc == "Chinook"){
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
 }
+
+# Steelhead
 if(spc == "Steelhead"){
-  tmp = filterDetections(compress_obs = lgr_after_obs,
-                         parent_child = pc_nodes,
-                         max_obs_date = str_remove_all(sy_end_date, "-"))
+  dabom_obs = filterDetections(compress_obs = lgr_after_obs,
+                               parent_child = pc_nodes,
+                               max_obs_date = str_remove_all(sy_end_date, "-")) %>%
 
   # source steelheadLifeStage()
-  source(here("R/steelheadLifeStage.R"))
-  dabom_obs = steelheadLifeStage(obs_df = tmp,
-                                 spawn_year = yr,
-                                 max_spawn_month = 3) %>%
-    mutate(id = 1:n()) %>%
+  # source(here("R/steelheadLifeStage.R"))
+  # dabom_obs = steelheadLifeStage(obs_df = tmp,
+  #                                spawn_year = yr,
+  #                                max_spawn_month = 3) %>%
+    mutate(id = 1:n(),
+           life_stage = "spawner") %>% # get rid of at later date
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
 }
+
 # THE ABOVE, INCLUDING steelheadLifeStage(), STILL NEEDS SIGNFICANT REVIEW AND WORK
 # I ALSO NEED TO DETERMINE WHERE AND HOW TO SET-ASIDE DETECTION FOR KELTS AND REPEAT SPAWNERS
 # CAN WE USE EstimateFinalLoc() to assist this process?
-
-# create a summary of those fish where user_keep_obs = NA
 
 # Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
 # GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
