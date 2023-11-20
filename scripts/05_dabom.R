@@ -20,10 +20,10 @@ library(DABOM)
 #--------------------
 # some initial setup
 # load configuration
-load(here("data/configuration_files/site_config_LGR_20231109.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
 
 # load trap_df to get origin
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-15.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Chinook"
-yr = 2022
+yr = 2010
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -154,18 +154,18 @@ if(time_varying) {
 jags_params = setSavedParams(model_file = final_mod_file)
 
 # set mcmc parameters (full run)
-# n.chains = 4
-# n.adapt  = 100
-# n.burn   = 1000
-# n.iter   = 5000
-# n.thin   = 10
-
-# set mcmc parameters (test run)
 n.chains = 4
 n.adapt  = 100
-n.burn   = 10
-n.iter   = 100
+n.burn   = 1000
+n.iter   = 5000
 n.thin   = 10
+
+# set mcmc parameters (test run)
+# n.chains = 4
+# n.adapt  = 100
+# n.burn   = 10
+# n.iter   = 100
+# n.thin   = 10
 
 # run on a single core for testing
 library(rjags)
