@@ -27,8 +27,8 @@ if(!dir.exists(tags_folder)) {
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
 
 # set species and spawn year
-spc = "Steelhead"
-yr  = 2022
+spc = "Chinook"
+yr  = 2023
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
