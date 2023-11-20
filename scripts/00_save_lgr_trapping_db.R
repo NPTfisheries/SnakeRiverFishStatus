@@ -22,13 +22,13 @@ if(.Platform$OS.type != "unix") { # includes windows machines
   source(here("R/loadLGTrappingDBase.R"))
   
   # set path to LGTrappingDB Access database
-  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2023-11-15.accdb")
+  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2023-11-20.accdb")
   
   # connect to LGTrappingDB
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)
   
   # read master table within LGTrappingDB
-  trap_dbase = DBI::dbReadTable(con, 'tblLGDMasterCombineExportJodyW')
+  trap_dbase = DBI::dbReadTable(con, 'tblLGDMasterCombineExport')
   
   # and disconnect
   DBI::dbDisconnect(con)
