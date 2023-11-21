@@ -24,8 +24,8 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Steelhead"
-yr = 2010
+spc = "Chinook"
+yr = 2023
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
@@ -96,7 +96,7 @@ lgr_after_obs = comp_obs %>%
 if(spc == "Chinook"){
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
-                               max_obs_date = NULL) %>%
+                               max_obs_date = paste0(yr, "1031")) %>%
     mutate(id = 1:n(),
            life_stage = "spawner") %>%
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
