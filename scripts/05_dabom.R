@@ -195,7 +195,7 @@ dabom_output = run_dabom_parallel_v2(model = final_mod_file,
                                      n.iter = n.iter,
                                      thin = n.thin,
                                      filter_ch = filter_ch,
-                                     filename = paste0(dabom_folder, "/lgr_dabom", spc, "_SY", yr, ".rda"))
+                                     filename = NULL)
 
 # save results to dabom_folder
 save(dabom_output,
