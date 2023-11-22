@@ -33,6 +33,8 @@ yr  = 2023
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
 
+# at some point, do i need to consider filtering out fall chinook within valid tag list?
+
 # filter to valid tag list
 valid_df = trap_df %>%
   filter(grepl(paste0('^', spc_code), SRR)) %>% # keep only the desired species
