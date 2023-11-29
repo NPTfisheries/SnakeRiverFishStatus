@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Chinook"
-yr = 2012
+yr = 2013
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -107,10 +107,10 @@ bad_paths = filter_ch %>%
 
 # write default, initial jags model
 init_mod_file = here("model_files/lgr_dabom_jags.txt")
-writeDABOM(file_name = init_mod_file,
-           parent_child = parent_child,
-           configuration = configuration,
-           time_varying = TRUE)
+# writeDABOM(file_name = init_mod_file,
+#            parent_child = parent_child,
+#            configuration = configuration,
+#            time_varying = TRUE)
 
 # write species and year specific jags model
 final_mod_file = here(paste0("model_files/lgr_dabom_jags_", spc, "_SY", yr, ".txt"))
@@ -195,10 +195,10 @@ dabom_output = run_dabom_parallel_v2(model = final_mod_file,
                                      n.iter = n.iter,
                                      thin = n.thin,
                                      filter_ch = filter_ch,
-                                     filename = NULL)
+                                     filename = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
 # save results to dabom_folder
-save(dabom_output,
-     filter_ch,
-     pc_nodes,
-     file = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
+# save(dabom_output,
+#      filter_ch,
+#      pc_nodes,
+#      file = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
