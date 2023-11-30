@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Chinook"
-yr = 2013
+yr = 2023
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -103,8 +103,6 @@ bad_paths = filter_ch %>%
   mutate(error = any(obs_in_path == FALSE)) %>%
   filter(error == TRUE)
 
-# RK included a section here to create smaller models for debugging; skip for the time being
-
 # write default, initial jags model
 init_mod_file = here("model_files/lgr_dabom_jags.txt")
 # writeDABOM(file_name = init_mod_file,
@@ -168,12 +166,12 @@ n.thin   = 10
 # n.thin   = 10
 
 # run on a single core for testing
-library(rjags)
-dabom_output = jags.model(file = final_mod_file,
-                          data = jags_data,
-                          inits = init_fnc,
-                          n.chains = n.chains,
-                          n.adapt = n.adapt)
+# library(rjags)
+# dabom_output = jags.model(file = final_mod_file,
+#                           data = jags_data,
+#                           inits = init_fnc,
+#                           n.chains = n.chains,
+#                           n.adapt = n.adapt)
 
 # create capture history with tag codes for debugging
 # cap_hist = createDABOMcapHist(filter_ch = filter_ch,
@@ -202,3 +200,5 @@ dabom_output = run_dabom_parallel_v2(model = final_mod_file,
 #      filter_ch,
 #      pc_nodes,
 #      file = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
+
+# END SCRIPT
