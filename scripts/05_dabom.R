@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Chinook"
-yr = 2023
+yr = 2015
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
