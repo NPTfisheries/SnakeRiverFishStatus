@@ -496,7 +496,7 @@ model {
 	 omega_HLM[3, (n_branch_HLM + 1)] <- 0; 
 
 	 phi_VC2[1] ~ dbeta(1, 1); 
-	 phi_VC2[1] <- 0 # no upstream detections
+	 phi_VC2[2] <- 0 # no upstream detections
 
 	 psi_ACB[1, 1:n_branch_ACB] ~ ddirch(ACB_dirch_vec[1,]); 
 	 psi_ACB[2, 1:n_branch_ACB] ~ ddirch(ACB_dirch_vec[2,]); 
