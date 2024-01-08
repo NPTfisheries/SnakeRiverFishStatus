@@ -18,10 +18,11 @@ library(sf)
 
 # set species and yr
 spc = "Chinook"
-yr = 2010
+yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
-load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda")) ; rm(pc_nodes, dabom_output)
+load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
+filter_ch = dabom_output$filter_ch
 
 # load configuration and population info
 load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, parent_child, pc_nodes, sites_sf)
