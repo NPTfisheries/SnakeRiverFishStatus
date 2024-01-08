@@ -163,5 +163,58 @@ tag_lh %<>%
   # assign brood year
   mutate(brood_year = as.integer(str_extract(spawn_year, '[:digit:]+')) - total_age)
 
+# sex proportions by population
+sex_df = tag_lh %>%
+  group_by(species, spawn_year, MPG, POP_NAME, TRT_POPID, GenSex) %>%
+  summarise(n_tags = n_distinct(tag_code)) %>%
+  ungroup() %>%
+  filter(GenSex %in% c("F", "M")) %>%
+  spread(GenSex, n_tags, fill = 0) %>%
+  mutate(n_sexed = F + M,
+         prop_f = F / (F + M),
+         prop_m = M / (F + M),
+         prop_f_se = sqrt((prop_f * (1 - prop_f)) / (F + M)),
+         prop_m_se = sqrt((prop_m * (1 - prop_m)) / (F + M))) %>%
+  select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_sexed, everything()) %>%
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
+  adorn_totals("row",,,, -spawn_year)
 
+# total age proportions by population
+age_df = tag_lh %>%
+  filter(!is.na(total_age)) %>%
+  group_by(species, spawn_year, MPG, POP_NAME, TRT_POPID, total_age) %>%
+  summarize(n_tags = n_distinct(tag_code)) %>%
+  ungroup() %>%
+  mutate(total_age = paste0("age_", total_age)) %>%
+  spread(total_age, n_tags, fill = 0) %>%
+  mutate(n_aged = select(., -(species:TRT_POPID)) %>% 
+           rowSums) %>%
+  select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_aged, everything()) %>%
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
+  adorn_totals("row",,,, -spawn_year)
 
+# brood year proportions by population
+brood_df = tag_lh %>%
+  filter(!is.na(brood_year)) %>%
+  group_by(species, spawn_year, MPG, POP_NAME, TRT_POPID, brood_year) %>%
+  summarize(n_tags = n_distinct(tag_code)) %>%
+  ungroup() %>%
+  mutate(brood_year = paste0("BY", brood_year)) %>%
+  spread(brood_year, n_tags, fill = 0) %>%
+  mutate(n_aged = select(., -(species:TRT_POPID)) %>% 
+           rowSums) %>%
+  select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_aged, everything()) %>%
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
+  adorn_totals("row",,,, -spawn_year)
+
+# folder to save life history results
+life_history_path = "output/life_history/"
+
+# save_results
+list(tag_lh = tag_lh,
+     sex_df = sex_df,
+     age_df = age_df,
+     brood_df = brood_df) %>%
+  writexl::write_xlsx(paste0(life_history_path, spc, "_SY", yr, "_lh_summary.xlsx"))
+
+# END SCRIPT
