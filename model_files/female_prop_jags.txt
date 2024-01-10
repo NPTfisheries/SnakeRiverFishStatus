@@ -1,0 +1,19 @@
+
+model {
+
+  for(i in 1:length(f)) {
+    f[i] ~ dbin(p[popNum[i]], tags[i])
+  }
+
+  for(j in 1:max(popNum)) {
+    p[j] <- ilogit(logit_p[j])
+    logit_p[j] ~ dnorm(mu, tau)
+  }
+  # transform overall mean back to proportion scale
+  mu_ilogit <- ilogit(mu)
+
+  mu ~ dnorm(0, 0.001)
+  sig ~ dunif(0, 100)
+  tau <- pow(sig, -2)
+
+}
