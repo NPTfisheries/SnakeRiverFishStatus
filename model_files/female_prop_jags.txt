@@ -2,10 +2,10 @@
 model {
 
   for(i in 1:length(f)) {
-    f[i] ~ dbin(p[popNum[i]], tags[i])
+    f[i] ~ dbin(p[pop_num[i]], tags[i])
   }
 
-  for(j in 1:max(popNum)) {
+  for(j in 1:max(pop_num)) {
     p[j] <- ilogit(logit_p[j])
     logit_p[j] ~ dnorm(mu, tau)
   }

@@ -1,0 +1,48 @@
+
+data {
+  D <- dim(age_mat)
+}
+
+model {
+
+  for(i in 1:D[1]) {
+    age_mat[i,] ~ dmulti(pi[pop_num[i],], tags[i])
+  }
+  
+  # multivariate logistic normal transformation to make it hierarchical
+  for(j in 1:max(pop_num)) {
+    p[j, 1] <- 0
+    p[j,2:D[2]] ~ dmnorm(mu[run_type[j], 1:(D[2] - 1)], Tau[1:(D[2] - 1), 1:(D[2] - 1)])
+    
+    sum_exp_p[j] <- sum(exp_p[j,])
+    
+    for(k in 1:D[2]) {
+      exp_p[j,k] = exp(p[j, k])
+      pi[j, k] <- exp(p[j, k]) / sum_exp_p[j]
+    }
+  }
+  
+  # transform mu back to proportions
+  for(j in 1:max(runType)) {
+    muProp[j,1] = 0
+    for(i in 2:D[2]) {
+      muProp[j,i] = mu[j,i-1]
+    }
+    sum_exp_mu[j] = sum(exp_mu[j,])
+    for(i in 1:D[2]) {
+      exp_mu[j,i] = exp(muProp[j,i])
+      avgPi[j,i] = exp_mu[j,i] / sum_exp_mu[j]
+    }
+  }
+  
+  # Cauchy prior on the MVN mean vector
+  for(i in 1:(D[2] - 1)) {
+    for(j in 1:max(run_type)) {
+      mu[j, i] ~ dt(0, 0.001, 1)
+    }
+  }
+  # Priors on the precision matrix
+  Tau ~ dwish(R, k)
+  k <- D[2] + 1
+
+}
