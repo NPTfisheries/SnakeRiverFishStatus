@@ -25,7 +25,7 @@ lh_folder = "output/life_history/"
 
 # set species and year
 spc = "Chinook"
-yr = 2010
+yr = 2023
 
 #-----------------
 # create JAGS model to estimate female proportion
