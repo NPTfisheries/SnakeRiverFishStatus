@@ -5,8 +5,8 @@
 # Created Date: June 28, 2021
 #   Last Modified: November 20, 2023
 #
-# Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
-# differentiates spawners from kelts??? Consider adding that functionality in at a later date.
+#   Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
+#   differentiates spawners from kelts??? Consider adding that functionality in at a later date.
 
 # clear environment
 rm(list = ls())

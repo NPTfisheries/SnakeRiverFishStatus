@@ -6,8 +6,8 @@
 #   Last Modified: November 20, 2023
 #
 # Notes: I've copied pasted over both the filterLGRtrapDB() and summariseValidTagsLGR.R() functions
-# from PITcleanr. If useful, consider pulling those in sometime. If not, they can likely be
-# deleted from the repo.
+#   from PITcleanr. If useful, consider pulling those in sometime. If not, they can likely be
+#   deleted from the repo.
 
 # clear environment
 rm(list = ls())
