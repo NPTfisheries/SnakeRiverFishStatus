@@ -10,11 +10,10 @@
 # load necessary libraries
 library(tidyverse)
 library(here)
-# remotes::install_github("KevinSee/PITcleanr", head = "develop")
 library(PITcleanr)
 
 # install DABOM, if necessary
-# remotes::install_github("KevinSee/DABOM", head = "npt_develop")
+# remotes::install_github("KevinSee/DABOM", head = "main")
 library(DABOM)
 
 #--------------------
