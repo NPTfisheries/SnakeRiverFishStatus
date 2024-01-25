@@ -175,16 +175,39 @@ parent_child_rkm = parent_child %>%
   rename(child_rkm = "rkm")
 
 # escapement
-trib_summ = calcTribEscape_GRA(dabom_mod = dabom_output$dabom_mod,
-                               stadem_mod = stadem_mod,
-                               stadem_param_nm = "X.tot.new.wild",
-                               parent_child = parent_child_rkm,
-                               summ_results = T,
-                               cred_int_prob = 0.95)
+# trib_summ = calcTribEscape_GRA(dabom_mod = dabom_output$dabom_mod,
+#                                stadem_mod = stadem_mod,
+#                                stadem_param_nm = "X.tot.new.wild",
+#                                parent_child = parent_child_rkm,
+#                                summ_results = T,
+#                                cred_int_prob = 0.95)
 
 # compile transition probabilities
 trans_probs = compileTransProbs(dabom_mod = dabom_output$dabom_mod,
                                 parent_child = parent_child_rkm)
+
+# test summarize escapements
+escp_summ = trans_probs %>%
+  # why are there two origins?
+  filter(origin == 1) %>%
+  mutate(tot_escape = stadem_df %>%
+           filter(origin == "Natural") %>%
+           pull(estimate)) %>%
+  mutate(escape = value * tot_escape) %>%
+  group_by(location = param) %>%
+  summarise(mean = mean(escape),
+            median = median(escape),
+            mode = estMode(escape),
+            sd = sd(escape),
+            skew = moments::skewness(escape),
+            kurtosis = moments::kurtosis(escape),
+            lowerCI = coda::HPDinterval(coda::as.mcmc(escape))[,1],
+            upperCI = coda::HPDinterval(coda::as.mcmc(escape))[,2],
+            .groups = "drop") %>%
+  mutate(across(c(mean, median, mode, sd, matches('CI$')),
+                ~ if_else(. < 0, 0, .))) %>%
+  mutate(across(c(mean, median, mode, sd, skew, kurtosis, matches('CI$')),
+                ~ round(., digits = 2)))
 
 # compile time-varying transition probabilities
 tv_trans_probs = compileTimeVaryTransProbs(dabom_mod = dabom_output$dabom_mod,
