@@ -206,7 +206,7 @@ main_esc_post %>%
   #geom_density(aes(x = value, fill = chain, group = chain), alpha = .5) +
   facet_wrap(~strata_num, scales = 'free_y')
 
-
+# need to now sum across strata to get chain/iter for total at each site.
 
 
 
