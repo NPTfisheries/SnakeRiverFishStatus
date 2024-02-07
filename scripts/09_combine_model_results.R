@@ -167,15 +167,6 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
   arrange(MPG, TRT, node)
 
 
-# add child rkms to parent-child table for arrange in calcTribEscape_GRA
-parent_child_rkm = parent_child %>%
-  left_join(configuration %>% 
-              select(site_code, rkm) %>%
-              distinct(),
-            by = c("child" = "site_code")) %>%
-  rename(child_rkm = "rkm")
-
-# Start of RK's new process
 source('./R/extractDABOMposteriors.R')
 
 dabom_post <- extractDABOMposteriors(dabom_mod = dabom_output$dabom_mod,
@@ -190,92 +181,42 @@ main_trans <- trans_ls$main_trans %>%
   filter(origin == 1)
 
 source('./R/mainBranchEscape.R')
-main_esc_post <- mainBranchEscape(stadem_mod = stadem_mod,
+main_esc <- mainBranchEscape(stadem_mod = stadem_mod,
                              main_trans = main_trans,
-                             stadem_param_nm = 'X.new.wild')
+                             stadem_param_nm = 'X.new.wild',
+                             keep_strata = FALSE)
 
-# plot posterior escapement estimates
-main_site <- 'IR1'
+# plot posterior main branch escapement estimates
+main_site <- 'SFG'
 
-main_esc_post %>% 
+main_esc %>% 
   filter(site == main_site) %>%
   mutate(chain = as.character(chain)) %>%
   filter(origin == 1) %>%
   ggplot() +
-  geom_line(aes(x = iter, y = site_escape, colour = chain, group = chain)) +
-  #geom_density(aes(x = value, fill = chain, group = chain), alpha = .5) +
-  facet_wrap(~strata_num, scales = 'free_y')
-
-# need to now sum across strata to get chain/iter for total at each site.
+  geom_density(aes(x = branch_escape, fill = chain, group = chain), alpha = .5)
+  #geom_line(aes(x = iter, y = branch_escape, colour = chain, group = chain)) +
+  #facet_wrap(~strata_num)
 
 
+branch_trans <- trans_ls$branch_trans %>%
+  filter(origin == 1)
 
-branch_child <- 'IR3'
+source('./R/branchEscape.R')
+site_esc <- branchEscape(main_esc = main_esc,
+                           branch_trans = branch_trans,
+                           parent_child = parent_child)
 
-# output from trans probs MCMC
-branch_trans %>% 
-  filter(child == branch_child) %>%
+branch_site <- 'ZEN'
+
+site_esc %>% 
+  filter(site == branch_site) %>%
   mutate(chain = as.character(chain)) %>%
   filter(origin == 1) %>%
   ggplot() +
-  geom_line(aes(x = iter, y = value, colour = chain, group = chain)) +
-  scale_y_continuous(limits = c(0,1)) +
-  #geom_density(aes(x = value, fill = chain, group = chain), alpha = .5) +
-  facet_wrap(~strata_num, scales = 'free_y')
+  geom_density(aes(x = site_escape, fill = chain, group = chain), alpha = .5)
+  #geom_line(aes(x = iter, y = site_escape, colour = chain, group = chain))
 
-
-# end RK testing
-
-
-# escapement
-trib_summ = calcTribEscape_GRA(dabom_mod = dabom_output$dabom_mod,
-                               stadem_mod = stadem_mod,
-                               stadem_param_nm = "X.new.wild", # not - "X.tot.new.wild",
-                               parent_child = parent_child_rkm,
-                               summ_results = T,
-                               cred_int_prob = 0.95,
-                               configuration = configuration)
-
-# compile transition probabilities this is run inside calcTribEscape_GRA
-# trans_probs = compileTransProbs(dabom_mod = dabom_output$dabom_mod,
-#                                 parent_child = parent_child_rkm[,c("parent", "child")],
-#                                 configuration = configuration) # required
-
-# I changed summ_results = TRUE to FALSE to get out the branch posteriors because
-# an error occurred when using the HPDinterval
-
-
-
-
-
-
-
-# test summarize escapements
-escp_summ = trans_probs %>%
-  # why are there two origins?
-  filter(origin == 1) %>%
-  mutate(tot_escape = stadem_df %>%
-           filter(origin == "Natural") %>%
-           pull(estimate)) %>%
-  mutate(escape = value * tot_escape) %>%
-  group_by(location = param) %>%
-  summarise(mean = mean(escape),
-            median = median(escape),
-            mode = estMode(escape),
-            sd = sd(escape),
-            skew = moments::skewness(escape),
-            kurtosis = moments::kurtosis(escape),
-            lowerCI = coda::HPDinterval(coda::as.mcmc(escape))[,1],
-            upperCI = coda::HPDinterval(coda::as.mcmc(escape))[,2],
-            .groups = "drop") %>%
-  mutate(across(c(mean, median, mode, sd, matches('CI$')),
-                ~ if_else(. < 0, 0, .))) %>%
-  mutate(across(c(mean, median, mode, sd, skew, kurtosis, matches('CI$')),
-                ~ round(., digits = 2)))
-
-# compile time-varying transition probabilities
-tv_trans_probs = compileTimeVaryTransProbs(dabom_mod = dabom_output$dabom_mod,
-                                           parent_child = parent_child_rkm)
-
-# CONTINUE HERE
-
+source('./R/summPosteriors.R')
+site_ests <- bind_rows(summPosteriors(.data = main_esc, value = branch_escape, site),
+                       summPosteriors(.data = site_esc, value = site_escape, site))
