@@ -28,7 +28,7 @@ load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
-yr = 2010
+yr = 2022 #2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -143,7 +143,7 @@ stadem_df = stadem_mod$summary %>%
 #-----------------
 # summarize detection probabilities
 detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
-                                   filter_ch = filter_ch,
+                                   filter_ch = dabom_output$filter_ch,
                                    cred_int_prob = 0.95) %>%
   mutate(species = spc,
          spawn_yr = yr,
@@ -166,7 +166,8 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          upper95CI = upperCI) %>%
   arrange(MPG, TRT, node)
 
-# add child rkms to parent-child table for compileTransProbs()
+
+# add child rkms to parent-child table for arrange in calcTribEscape_GRA
 parent_child_rkm = parent_child %>%
   left_join(configuration %>% 
               select(site_code, rkm) %>%
@@ -174,17 +175,80 @@ parent_child_rkm = parent_child %>%
             by = c("child" = "site_code")) %>%
   rename(child_rkm = "rkm")
 
-# escapement
-# trib_summ = calcTribEscape_GRA(dabom_mod = dabom_output$dabom_mod,
-#                                stadem_mod = stadem_mod,
-#                                stadem_param_nm = "X.tot.new.wild",
-#                                parent_child = parent_child_rkm,
-#                                summ_results = T,
-#                                cred_int_prob = 0.95)
+# Start of RK's new process
+source('./R/extractDABOMposteriors.R')
 
-# compile transition probabilities
-trans_probs = compileTransProbs(dabom_mod = dabom_output$dabom_mod,
-                                parent_child = parent_child_rkm)
+dabom_post <- extractDABOMposteriors(dabom_mod = dabom_output$dabom_mod,
+                                   parent_child = parent_child,
+                                   configuration = configuration)
+
+source('./R/compileBranchTrans.R')
+trans_ls <- compileBranchTrans(dabom_posteriors = dabom_post,
+                               parent_child = parent_child)
+
+main_trans <- trans_ls$main_trans %>%
+  filter(origin == 1)
+
+source('./R/mainBranchEscape.R')
+main_esc_post <- mainBranchEscape(stadem_mod = stadem_mod,
+                             main_trans = main_trans,
+                             stadem_param_nm = 'X.new.wild')
+
+# plot posterior escapement estimates
+main_site <- 'IR1'
+
+main_esc_post %>% 
+  filter(site == main_site) %>%
+  mutate(chain = as.character(chain)) %>%
+  filter(origin == 1) %>%
+  ggplot() +
+  geom_line(aes(x = iter, y = site_escape, colour = chain, group = chain)) +
+  #geom_density(aes(x = value, fill = chain, group = chain), alpha = .5) +
+  facet_wrap(~strata_num, scales = 'free_y')
+
+
+
+
+
+branch_child <- 'IR3'
+
+# output from trans probs MCMC
+branch_trans %>% 
+  filter(child == branch_child) %>%
+  mutate(chain = as.character(chain)) %>%
+  filter(origin == 1) %>%
+  ggplot() +
+  geom_line(aes(x = iter, y = value, colour = chain, group = chain)) +
+  scale_y_continuous(limits = c(0,1)) +
+  #geom_density(aes(x = value, fill = chain, group = chain), alpha = .5) +
+  facet_wrap(~strata_num, scales = 'free_y')
+
+
+# end RK testing
+
+
+# escapement
+trib_summ = calcTribEscape_GRA(dabom_mod = dabom_output$dabom_mod,
+                               stadem_mod = stadem_mod,
+                               stadem_param_nm = "X.new.wild", # not - "X.tot.new.wild",
+                               parent_child = parent_child_rkm,
+                               summ_results = T,
+                               cred_int_prob = 0.95,
+                               configuration = configuration)
+
+# compile transition probabilities this is run inside calcTribEscape_GRA
+# trans_probs = compileTransProbs(dabom_mod = dabom_output$dabom_mod,
+#                                 parent_child = parent_child_rkm[,c("parent", "child")],
+#                                 configuration = configuration) # required
+
+# I changed summ_results = TRUE to FALSE to get out the branch posteriors because
+# an error occurred when using the HPDinterval
+
+
+
+
+
+
 
 # test summarize escapements
 escp_summ = trans_probs %>%
