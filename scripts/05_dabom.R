@@ -13,8 +13,8 @@ library(here)
 library(PITcleanr)
 
 # install DABOM, if necessary
-# remotes::install_github("KevinSee/DABOM", head = "main")
-# remotes::install_github("KevinSee/DABOM", head = "compile_trans_probs")
+# remotes::install_github("KevinSee/DABOM", ref = "main")
+# remotes::install_github("KevinSee/DABOM", ref = "compile_trans_probs")
 library(DABOM)
 
 #--------------------
