@@ -11,9 +11,9 @@
 rm(list = ls())
 
 # install STADEM from GitHub, if not already available
-if(!require(STADEM)) {
-  remotes::install_github("KevinSee/STADEM", build_vignettes = T)
-}
+# remotes::install_github("KevinSee/STADEM",
+#                         ref = "develop",
+#                         build_vignettes = T)
 
 # load packages
 library(tidyverse)
@@ -32,7 +32,7 @@ if(!dir.exists(modelFolder)) {
 }
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
 
 # run only a single species x year at a time
 spc = "Chinook"
