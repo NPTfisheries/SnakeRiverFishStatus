@@ -118,9 +118,8 @@ brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY"
 
 #-----------------
 # STADEM estimates
-stadem_df = stadem_mod$summary %>%
-  as_tibble(rownames = "param") %>%
-  filter(grepl("X.tot.new", param)) %>%
+stadem_df = STADEM::extractPost(stadem_mod,
+                                param_nms = c("X.tot.new")) %>%
   mutate(species = spc,
          spawn_yr = yr,
          origin = case_when(
@@ -129,20 +128,25 @@ stadem_df = stadem_mod$summary %>%
            grepl("hatch", param) ~ "Hatchery Clip",
            grepl('hnc', param) ~ "Hatchery No-Clip"
          )) %>%
-  select(spawn_yr,
-         species,
+  summarisePost(value = tot_abund,
+                # columns to group by
+                species,
+                spawn_yr,
+                origin) %>%
+  select(species,
+         spawn_yr,
          origin,
-         estimate = `50%`,
-         lower95CI = `2.5%`,
-         upper95CI = `97.5%`,
+         estimate = median,
+         lower95ci = lower_ci,
+         upper95ci = upper_ci,
          mean,
          sd)
-
+  
 #-----------------
-# summarize detection probabilities
+# summarize detection probabilities (p)
 detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
                                    filter_ch = dabom_output$filter_ch,
-                                   cred_int_prob = 0.95) %>%
+                                   .cred_int_prob = 0.95) %>%
   mutate(species = spc,
          spawn_yr = yr,
          cv = sd / median) %>%
@@ -160,61 +164,126 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          estimate = median,
          sd,
          cv,
-         lower95CI = lowerCI,
-         upper95CI = upperCI) %>%
+         lower95CI = lower_ci,
+         upper95CI = upper_ci) %>%
   arrange(MPG, TRT, node)
 
+#-----------------
+# examine movement posteriors (phi and psi)
 
-source('./R/extractDABOMposteriors.R')
+# pull out posterior draws of all movement parameters
+trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
+                              parent_child = parent_child,
+                              configuration = configuration) %>%
+  # exclude non-sensical hatchery transition probs
+  filter(origin == 1) # 1 = natural-origin
 
-dabom_post <- extractDABOMposteriors(dabom_mod = dabom_output$dabom_mod,
-                                   parent_child = parent_child,
-                                   configuration = configuration)
+# compile main branch movement parameters, which are time-varying
+main_post = compileTransProbs(trans_post = trans_post,
+                              parent_child = parent_child,
+                              time_vary_only = T,                # should only time-varying parameters be compiled?
+                              time_vary_param_nm = "strata_num") # column containing time-varying strata
 
-source('./R/compileBranchTrans.R')
-trans_ls <- compileBranchTrans(dabom_posteriors = dabom_post,
-                               parent_child = parent_child)
+# posteriors of STADEM abundance by strata_num
+abund_post = STADEM::extractPost(stadem_mod,
+                                 param_nms = "X.new.wild") %>%
+  mutate(origin = case_when(str_detect(param, "wild") ~ 1,
+                            .default = NA_real_)) %>%
+  rename(abund_param = param)
 
-main_trans <- trans_ls$main_trans %>%
-  filter(origin == 1)
+# escapement to each main branch across entire season
+main_escp_post = calcAbundPost(move_post = main_post,
+                               abund_post = abund_post,
+                               time_vary_param_nm = "strata_num") 
 
-source('./R/mainBranchEscape.R')
-main_esc <- mainBranchEscape(stadem_mod = stadem_mod,
-                             main_trans = main_trans,
-                             stadem_param_nm = 'X.new.wild',
-                             keep_strata = FALSE)
+# summarize escapement to main branches
+main_escp_summ = summarisePost(.data = main_escp_post,
+                               value = abund,
+                               # grouping variables
+                               param,
+                               origin,
+                               .cred_int_prob = 0.95)
 
-# plot posterior main branch escapement estimates
-main_site <- 'SFG'
-
-main_esc %>% 
-  filter(site == main_site) %>%
+# plot posteriors for a single, main branch
+my_site = "SFG"
+main_escp_post %>%
+  filter(param == my_site) %>%
   mutate(chain = as.character(chain)) %>%
-  filter(origin == 1) %>%
   ggplot() +
-  geom_density(aes(x = branch_escape, fill = chain, group = chain), alpha = .5)
-  #geom_line(aes(x = iter, y = branch_escape, colour = chain, group = chain)) +
-  #facet_wrap(~strata_num)
+  geom_density(aes(x = abund,
+                   fill = chain,
+                   group = chain),
+               alpha = 0.5) +
+  labs(title = my_site)
 
+# grab main branch sites with tags detected
+some_fish_sites = main_escp_post %>%
+  group_by(param) %>%
+  summarise(n_draws = n(),
+            n_zero = sum(abund == 0),
+            .groups = "drop") %>%
+  filter(n_draws > n_zero) %>%
+  pull(param)
 
-branch_trans <- trans_ls$branch_trans %>%
-  filter(origin == 1)
-
-source('./R/branchEscape.R')
-site_esc <- branchEscape(main_esc = main_esc,
-                           branch_trans = branch_trans,
-                           parent_child = parent_child)
-
-branch_site <- 'ZEN'
-
-site_esc %>% 
-  filter(site == branch_site) %>%
+# plot posteriors for all main branch sites with tags detected
+main_escp_post %>%
+  filter(param %in% some_fish_sites) %>%
   mutate(chain = as.character(chain)) %>%
-  filter(origin == 1) %>%
   ggplot() +
-  geom_density(aes(x = site_escape, fill = chain, group = chain), alpha = .5)
-  #geom_line(aes(x = iter, y = site_escape, colour = chain, group = chain))
+  geom_density(aes(x = abund,
+                   fill = chain,
+                   group = chain),
+               alpha = 0.5) +
+  facet_wrap(~ param,
+             scales = "free")
 
-source('./R/summPosteriors.R')
-site_ests <- bind_rows(summPosteriors(.data = main_esc, value = branch_escape, site),
-                       summPosteriors(.data = site_esc, value = site_escape, site))
+# compile tributary branch movement parameters, which are not time-varying
+trib_post = compileTransProbs(trans_post = trans_post,
+                              parent_child = parent_child,
+                              time_vary_only = F)
+
+# estimate escapement to all tributary sites
+trib_escp_post = calcAbundPost(move_post = trib_post,
+                               abund_post = main_escp_post %>%
+                                 rename(main_branch = param,
+                                        tot_abund = abund),
+                               .move_vars = c("origin",
+                                              "main_branch",
+                                              "param"),
+                               .abund_vars = c("origin",
+                                               "main_branch"))
+
+# summarize tributary escapement results
+trib_escp_summ = summarisePost(.data = trib_escp_post,
+                               value = abund,
+                               # grouping variables,
+                               param,
+                               origin,
+                               .cred_int_prob = 0.95)
+
+# plot posterior trib escapement estimates
+trib_site = "ZEN"
+trib_escp_post %>%
+  filter(param == trib_site) %>%
+  mutate(chain = as.character(chain)) %>%
+  ggplot() +
+  geom_density(aes(x = abund,
+                   fill = chain,
+                   group = chain),
+               alpha = 0.5) +
+  labs(title = trib_site)
+
+# combine main branch and tributary sites
+site_esc_post = main_escp_post %>%
+  bind_rows(trib_escp_post %>%
+              select(any_of(names(main_escp_post))))
+
+# generate summary statistics of escapement estimates for all sites
+site_esc_summ = summarisePost(.data = site_esc_post,
+                              value = abund,
+                              # grouping variables,
+                              param,
+                              origin,
+                              .cred_int_prob = 0.95) 
+
+

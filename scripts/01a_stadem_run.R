@@ -11,9 +11,7 @@
 rm(list = ls())
 
 # install STADEM from GitHub, if not already available
-# remotes::install_github("KevinSee/STADEM",
-#                         ref = "develop",
-#                         build_vignettes = T)
+# remotes::install_github("KevinSee/STADEM", ref = "develop")
 
 # load packages
 library(tidyverse)
