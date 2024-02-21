@@ -1,12 +1,12 @@
 # -----------------------
-# Author(s): Ryan N. Kinzer and Mike Ackerman 
+# Author(s): Mike Ackerman, Ryan N. Kinzer, and Kevin See 
 # Purpose: Load DABOM and STADEM model results and combine posteriors to
 #   estimate abundance at each DABOM site. Population abundance posteriors
 #   are then combined with sex and age proportions to estimate the 
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: January 11, 2024
+#   Last Modified: February 21, 2024
 #
 # Notes: 
 
@@ -28,7 +28,7 @@ load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
-yr = 2022
+yr = 2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -62,7 +62,7 @@ node_pops = configuration %>%
                    chnk_GSI_Group = GSI_Group)) %>%
   select(node, starts_with(spc_prefix)) %>%
   rename_with(~str_remove(., spc_prefix)) %>%
-  select(-ESU, -GSI_Group, TRT = TRT_POPID) %>%
+  select(-ESU, -GSI_Group) %>%
   distinct(node, .keep_all = TRUE) %>%
   mutate(site = str_remove(node, "_U|_D")) %>%
   left_join(node_branches) %>%
@@ -71,50 +71,20 @@ node_pops = configuration %>%
 # remove a couple objects
 rm(sth_pop, spsm_pop)
 
-# populations and branches for each site
-site_pops = node_pops %>%
+# df of trt populations
+trt_df = node_pops %>%
   select(-node) %>%
   arrange(MPG, POP_NAME, site) %>%
-  distinct(site, .keep_all = TRUE)
-
-# df of trt populations
-trt_df = site_pops %>%
+  distinct(site, .keep_all = TRUE) %>%
   sf::st_set_geometry(NULL) %>%
   select(-site, -branch) %>%
   filter(!is.na(MPG)) %>%
-  distinct(TRT, .keep_all = TRUE)
+  distinct(TRT_POPID, .keep_all = TRUE)
 
 #-----------------
-# load various datasets
-
-# STADEM results
+# load DABOM and STADEM results
 load(paste0(here(), "/output/stadem_results/LGR_STADEM_", spc, "_", yr, ".rda"))
-
-# DABOM results
 load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
-
-# sex model results
-load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
-
-# age model results
-load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
-
-# tag life history summary
-tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                            "tag_lh",
-                            progress = F)
-# sex summary
-sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                            "sex_df",
-                            progress = F)
-# age summary
-age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                            "age_df",
-                            progress = F)
-# brood year summary
-brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                              "brood_df",
-                              progress = F)
 
 #-----------------
 # STADEM estimates
@@ -156,7 +126,7 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
   select(species,
          spawn_yr,
          MPG,
-         TRT,
+         TRT_POPID,
          POP_NAME,
          branch,
          node,
@@ -166,7 +136,7 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          cv,
          lower95CI = lower_ci,
          upper95CI = upper_ci) %>%
-  arrange(MPG, TRT, node)
+  arrange(MPG, TRT_POPID, node)
 
 #-----------------
 # examine movement posteriors (phi and psi)
@@ -285,5 +255,72 @@ site_esc_summ = summarisePost(.data = site_esc_post,
                               param,
                               origin,
                               .cred_int_prob = 0.95) 
+
+# source definePopulations()
+source(here("R/definePopulations.R"))
+pop_abund_groups = definePopulations(spc = spc)
+
+# trt population escapement summaries
+pop_esc_summ = site_esc_post %>%
+  left_join(pop_abund_groups,
+            by = c("param" = "site")) %>%
+  filter(!is.na(TRT_POPID)) %>%
+  summarisePost(value = abund,
+                # grouping variables,
+                TRT_POPID,
+                origin,
+                .cred_int_prob = 0.95) %>%
+  left_join(trt_df) %>%
+  select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
+  arrange(MPG, TRT_POPID)
+
+#-----------------
+# sex and age estimates
+
+# sex model results
+load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
+
+# age model results
+load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
+
+# tag life history summary
+tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+                            "tag_lh",
+                            progress = F)
+# sex summary
+sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+                           "sex_df",
+                           progress = F)
+# age summary
+age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+                           "age_df",
+                           progress = F)
+# brood year summary
+brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+                             "brood_df",
+                             progress = F)
+
+# CONTINUE HERE
+sex_post = sex_mod$sims.list$p %>%
+ as_tibble() %>%
+ gather(key = "pop_num",
+        value = p) %>%
+ mutate(pop_num = as.integer(gsub("V", "", pop_num))) %>%
+ group_by(pop_num) %>%
+ mutate(iter = 1:n()) %>%
+ left_join(mod_sex_df %>%
+             filter(TRT_POPID != "Not Observed") %>%
+             filter(species == spc) %>%
+             mutate(pop_num = sex_jags_data$pop_num)) %>%
+ rename(spawn_yr = spawn_year) %>%
+ select(species,
+        spawn_yr,
+        TRT_POPID,
+        iter,
+        p)
+
+### END SCRIPT
+
+
 
 

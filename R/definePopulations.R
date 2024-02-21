@@ -15,7 +15,7 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
   
   spc = match.arg(spc)
   
-  if(spc = "Chinook") {
+  if(spc == "Chinook") {
     
     report_df = list(
       # Upper Salmon River MPG
@@ -61,7 +61,6 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       "GRCAT" = "CCU", # should this instead just be "CATHEW"?
       "GRMIN" = "MR1",
       "GRLOS" = "WR2",
-      "GRLOS/GRMIN" = c("WR1_bb", "WR2"),
       "GRLOO" = "LGW",
       "GRWEN" = "WEN",
       "Joseph"= "JOC",
