@@ -4,7 +4,7 @@
 #   and save table as a .csv
 # 
 # Created Date: Unknown
-#   Last Modified: June 20, 2023
+#   Last Modified: February 24, 2024
 #
 # Notes:
 
@@ -22,7 +22,7 @@ if(.Platform$OS.type != "unix") { # includes windows machines
   source(here("R/loadLGTrappingDBase.R"))
   
   # set path to LGTrappingDB Access database
-  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2023-11-20.accdb")
+  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-02-21.accdb")
   
   # connect to LGTrappingDB
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)
@@ -39,11 +39,3 @@ if(.Platform$OS.type != "unix") { # includes windows machines
 write_csv(trap_dbase, file = paste0(here("data/LGTrappingDB/LGTrappingDB_/"), Sys.Date(), ".csv"))
 
 # END SCRIPT
-
-# this works for Mac, or any system really
-# if(.Platform$OS.type == "unix") {
-#   trap_filepath <- './data/TrappingDBase/LGTrappingExportJodyW.accdb'
-#   trap_filepath = here("/data/TrappingDBase/tblLGDMasterCombineExportJodyW.csv")
-#   trap_dbase = readLGRtrapDB(trap_filepath)
-# }
-

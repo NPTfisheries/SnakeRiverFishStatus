@@ -28,7 +28,7 @@ load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
-yr = 2022 #2010
+yr = 2022
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -103,7 +103,6 @@ load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda")
 tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                             "tag_lh",
                             progress = F)
-
 # sex summary
 sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                             "sex_df",
@@ -112,7 +111,6 @@ sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", 
 age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                             "age_df",
                             progress = F)
-
 # brood year summary
 brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                               "brood_df",
