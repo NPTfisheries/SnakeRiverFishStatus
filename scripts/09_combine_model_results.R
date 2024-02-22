@@ -146,7 +146,8 @@ trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
                               parent_child = parent_child,
                               configuration = configuration) %>%
   # exclude non-sensical hatchery transition probs
-  filter(origin == 1) # 1 = natural-origin
+  filter(origin == 1) %>% # 1 = natural-origin
+  mutate(origin = recode(origin, `1` = "wild"))
 
 # compile main branch movement parameters, which are time-varying
 main_post = compileTransProbs(trans_post = trans_post,
@@ -157,8 +158,8 @@ main_post = compileTransProbs(trans_post = trans_post,
 # posteriors of STADEM abundance by strata_num
 abund_post = STADEM::extractPost(stadem_mod,
                                  param_nms = "X.new.wild") %>%
-  mutate(origin = case_when(str_detect(param, "wild") ~ 1,
-                            .default = NA_real_)) %>%
+  mutate(origin = case_when(str_detect(param, "wild") ~ "wild",
+                            .default = NA_character_)) %>%
   rename(abund_param = param)
 
 # escapement to each main branch across entire season
@@ -167,12 +168,12 @@ main_escp_post = calcAbundPost(move_post = main_post,
                                time_vary_param_nm = "strata_num") 
 
 # summarize escapement to main branches
-main_escp_summ = summarisePost(.data = main_escp_post,
-                               value = abund,
-                               # grouping variables
-                               param,
-                               origin,
-                               .cred_int_prob = 0.95)
+# main_escp_summ = summarisePost(.data = main_escp_post,
+#                                value = abund,
+#                                # grouping variables
+#                                param,
+#                                origin,
+#                                .cred_int_prob = 0.95)
 
 # plot posteriors for a single, main branch
 my_site = "SFG"
@@ -224,12 +225,12 @@ trib_escp_post = calcAbundPost(move_post = trib_post,
                                                "main_branch"))
 
 # summarize tributary escapement results
-trib_escp_summ = summarisePost(.data = trib_escp_post,
-                               value = abund,
-                               # grouping variables,
-                               param,
-                               origin,
-                               .cred_int_prob = 0.95)
+# trib_escp_summ = summarisePost(.data = trib_escp_post,
+#                                value = abund,
+#                                # grouping variables,
+#                                param,
+#                                origin,
+#                                .cred_int_prob = 0.95)
 
 # plot posterior trib escapement estimates
 trib_site = "ZEN"
@@ -260,11 +261,16 @@ site_esc_summ = summarisePost(.data = site_esc_post,
 source(here("R/definePopulations.R"))
 pop_abund_groups = definePopulations(spc = spc)
 
-# trt population escapement summaries
-pop_esc_summ = site_esc_post %>%
+# trt population escapement posteriors
+pop_esc_post = site_esc_post %>%
   left_join(pop_abund_groups,
             by = c("param" = "site")) %>%
   filter(!is.na(TRT_POPID)) %>%
+  group_by(TRT_POPID, chain, iter, origin) %>%
+  summarise(abund = sum(abund))
+
+# trt population escapement summaries
+pop_esc_summ = pop_esc_post %>%
   summarisePost(value = abund,
                 # grouping variables,
                 TRT_POPID,
@@ -273,54 +279,83 @@ pop_esc_summ = site_esc_post %>%
   left_join(trt_df) %>%
   select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
   arrange(MPG, TRT_POPID)
-
+  
 #-----------------
 # sex and age estimates
 
-# sex model results
+# load sex and age model results
 load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
-
-# age model results
 load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
 
-# tag life history summary
-tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                            "tag_lh",
-                            progress = F)
-# sex summary
-sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                           "sex_df",
-                           progress = F)
-# age summary
-age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                           "age_df",
-                           progress = F)
-# brood year summary
-brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-                             "brood_df",
-                             progress = F)
+# # tag life history summary
+# tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+#                             "tag_lh",
+#                             progress = F)
+# # sex summary
+# sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+#                            "sex_df",
+#                            progress = F)
+# # age summary
+# age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+#                            "age_df",
+#                            progress = F)
+# # brood year summary
+# brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+#                              "brood_df",
+#                              progress = F)
 
-# CONTINUE HERE
+# get posteriors of female proportions by pop
 sex_post = sex_mod$sims.list$p %>%
- as_tibble() %>%
- gather(key = "pop_num",
-        value = p) %>%
- mutate(pop_num = as.integer(gsub("V", "", pop_num))) %>%
- group_by(pop_num) %>%
- mutate(iter = 1:n()) %>%
- left_join(mod_sex_df %>%
-             filter(TRT_POPID != "Not Observed") %>%
-             filter(species == spc) %>%
-             mutate(pop_num = sex_jags_data$pop_num)) %>%
- rename(spawn_yr = spawn_year) %>%
- select(species,
-        spawn_yr,
-        TRT_POPID,
-        iter,
-        p)
+  as_tibble() %>%
+  gather(key = "pop_num",
+         value = p) %>%
+  mutate(pop_num = as.integer(gsub("V", "", pop_num))) %>%
+  group_by(pop_num) %>%
+  mutate(iter = 1:n()) %>%
+  left_join(mod_sex_df %>%
+              filter(TRT_POPID != "Not Observed") %>%
+              filter(species == spc) %>%
+              mutate(pop_num = sex_jags_data$pop_num)) %>%
+  select(TRT_POPID,
+         pop_num,
+         iter,
+         p)
+
+# a table of possible ages with indexes (age_fct)
+poss_ages = mod_age_df %>%
+  filter(species == spc) %>%
+  filter(TRT_POPID != "Not Observed") %>%
+  select(starts_with("age")) %>%
+  # remove columns with no ages
+  select(which(colSums(.) != 0)) %>%
+  names() %>%
+  as_tibble() %>%
+  mutate(age_fct = as.integer(as.factor(value))) %>%
+  rename(age = value)
+
+# get posteriors of age proportions by pop
+age_post = age_mod$sims.list$pi %>%
+  as.data.frame.table() %>%
+  as_tibble() %>%
+  rename(iter = Var1,
+         pop_num = Var2,
+         age_fct = Var3,
+         age_prop = Freq) %>%
+  mutate_at(vars(iter, pop_num, age_fct),
+            list(as.integer)) %>%
+  left_join(poss_ages, by = "age_fct") %>%
+  select(-age_fct) %>%
+  left_join(mod_age_df %>%
+              filter(TRT_POPID != "Not Observed") %>%
+              filter(species == spc) %>%
+              mutate(pop_num = age_jags_data$pop_num) %>%
+              select(TRT_POPID, pop_num) %>% 
+              distinct(),
+            by = "pop_num") %>%
+  select(TRT_POPID, 
+         pop_num, 
+         iter, 
+         age, 
+         p = age_prop)
 
 ### END SCRIPT
-
-
-
-
