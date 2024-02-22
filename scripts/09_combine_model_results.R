@@ -358,4 +358,31 @@ age_post = age_mod$sims.list$pi %>%
          age, 
          p = age_prop)
 
+# combine population abundance, sex, and age posteriors
+combined_post = pop_esc_post %>%
+  group_by(TRT_POPID, iter, origin) %>%
+  summarise(abund = mean(abund)) %>%
+  left_join(sex_post,
+            by = c("TRT_POPID", "iter")) %>%
+  rename(p_fem = p) %>%
+  left_join(age_post %>%
+              pivot_wider(names_from = age,
+                          names_prefix = "p_",
+                          values_from = p)) %>%
+  mutate(N_fem = abund * p_fem,
+         N_male = abund - N_fem) %>%
+  mutate(across(starts_with("p_"), ~ . * abund, .names = "N_{gsub('p_', '', .col)}")) %>%
+  pivot_longer(cols = starts_with("p_") | starts_with("N_") | abund,
+               names_to = "param",
+               values_to = "value") %>%
+  mutate(species = spc,
+         spawn_yr = yr) %>%
+  select(species,
+         spawn_yr,
+         TRT_POPID,
+         origin,
+         iter,
+         param,
+         value)
+
 ### END SCRIPT
