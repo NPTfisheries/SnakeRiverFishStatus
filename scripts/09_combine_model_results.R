@@ -19,9 +19,6 @@ library(tidyverse)
 library(sf)
 library(DABOM)
 
-# set up folder structure
-abundance_folder = here("output/abundance_results/")
-
 # load configuration files
 load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
@@ -134,8 +131,8 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          estimate = median,
          sd,
          cv,
-         lower95CI = lower_ci,
-         upper95CI = upper_ci) %>%
+         lower95ci = lower_ci,
+         upper95ci = upper_ci) %>%
   arrange(MPG, TRT_POPID, node)
 
 #-----------------
@@ -149,12 +146,6 @@ trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
   filter(origin == 1) %>% # 1 = natural-origin
   mutate(origin = recode(origin, `1` = "wild"))
 
-# compile main branch movement parameters, which are time-varying
-main_post = compileTransProbs(trans_post = trans_post,
-                              parent_child = parent_child,
-                              time_vary_only = T,                # should only time-varying parameters be compiled?
-                              time_vary_param_nm = "strata_num") # column containing time-varying strata
-
 # posteriors of STADEM abundance by strata_num
 abund_post = STADEM::extractPost(stadem_mod,
                                  param_nms = "X.new.wild") %>%
@@ -162,51 +153,16 @@ abund_post = STADEM::extractPost(stadem_mod,
                             .default = NA_character_)) %>%
   rename(abund_param = param)
 
+# compile main branch movement parameters, which are time-varying
+main_post = compileTransProbs(trans_post = trans_post,
+                              parent_child = parent_child,
+                              time_vary_only = T,                # should only time-varying parameters be compiled?
+                              time_vary_param_nm = "strata_num") # column containing time-varying strata
+
 # escapement to each main branch across entire season
 main_escp_post = calcAbundPost(move_post = main_post,
                                abund_post = abund_post,
-                               time_vary_param_nm = "strata_num") 
-
-# summarize escapement to main branches
-# main_escp_summ = summarisePost(.data = main_escp_post,
-#                                value = abund,
-#                                # grouping variables
-#                                param,
-#                                origin,
-#                                .cred_int_prob = 0.95)
-
-# plot posteriors for a single, main branch
-my_site = "SFG"
-main_escp_post %>%
-  filter(param == my_site) %>%
-  mutate(chain = as.character(chain)) %>%
-  ggplot() +
-  geom_density(aes(x = abund,
-                   fill = chain,
-                   group = chain),
-               alpha = 0.5) +
-  labs(title = my_site)
-
-# grab main branch sites with tags detected
-some_fish_sites = main_escp_post %>%
-  group_by(param) %>%
-  summarise(n_draws = n(),
-            n_zero = sum(abund == 0),
-            .groups = "drop") %>%
-  filter(n_draws > n_zero) %>%
-  pull(param)
-
-# plot posteriors for all main branch sites with tags detected
-main_escp_post %>%
-  filter(param %in% some_fish_sites) %>%
-  mutate(chain = as.character(chain)) %>%
-  ggplot() +
-  geom_density(aes(x = abund,
-                   fill = chain,
-                   group = chain),
-               alpha = 0.5) +
-  facet_wrap(~ param,
-             scales = "free")
+                               time_vary_param_nm = "strata_num")
 
 # compile tributary branch movement parameters, which are not time-varying
 trib_post = compileTransProbs(trans_post = trans_post,
@@ -224,58 +180,97 @@ trib_escp_post = calcAbundPost(move_post = trib_post,
                                .abund_vars = c("origin",
                                                "main_branch"))
 
-# summarize tributary escapement results
-# trib_escp_summ = summarisePost(.data = trib_escp_post,
-#                                value = abund,
-#                                # grouping variables,
-#                                param,
-#                                origin,
-#                                .cred_int_prob = 0.95)
-
-# plot posterior trib escapement estimates
-trib_site = "ZEN"
-trib_escp_post %>%
-  filter(param == trib_site) %>%
-  mutate(chain = as.character(chain)) %>%
-  ggplot() +
-  geom_density(aes(x = abund,
-                   fill = chain,
-                   group = chain),
-               alpha = 0.5) +
-  labs(title = trib_site)
-
 # combine main branch and tributary sites
-site_esc_post = main_escp_post %>%
+site_escp_post = main_escp_post %>%
   bind_rows(trib_escp_post %>%
               select(any_of(names(main_escp_post))))
 
-# generate summary statistics of escapement estimates for all sites
-site_esc_summ = summarisePost(.data = site_esc_post,
-                              value = abund,
-                              # grouping variables,
-                              param,
-                              origin,
-                              .cred_int_prob = 0.95) 
+# grab sites with tags detected
+sites_w_tags = site_escp_post %>%
+  group_by(param) %>%
+  summarise(n_draws = n(),
+            n_zero = sum(abund == 0),
+            .groups = "drop") %>%
+  filter(n_draws > n_zero) %>%
+  pull(param)
 
-# source definePopulations()
+# plot posterior abundance estimates for a single site
+# site = sites_w_tags[1]
+# site_escp_post %>%
+#   filter(param == site) %>%
+#   mutate(chain = as.character(chain)) %>%
+#   ggplot() +
+#   geom_density(aes(x = abund,
+#                    fill = chain,
+#                    group = chain),
+#                alpha = 0.5) +
+#   labs(title = site)
+
+# plot posterior abundance estimates for multiple sites
+# site_escp_post %>%
+#   filter(param %in% sites_w_tags) %>%
+#   mutate(chain = as.character(chain)) %>%
+#   ggplot() +
+#   geom_density(aes(x = abund,
+#                    fill = chain,
+#                    group = chain),
+#                alpha = 0.5) +
+#   facet_wrap(~ param,
+#              scales = "free") +
+#   labs(title = paste0("SY", yr, " ", spc))
+
+# save abundance posteriors for all sites with tags detected
+plot_list = list()
+for(site in sites_w_tags) {
+  site_p = subset(site_escp_post, param == site) %>%
+    ggplot() +
+    geom_density(aes(x = abund,
+                     fill = as.factor(chain),
+                     group = as.factor(chain)),
+                 alpha = 0.5) +
+    labs(title = site) +
+    theme(legend.position = "none")
+  
+  plot_list[[site]] = site_p
+}
+multi_site_p = gridExtra::marrangeGrob(plot_list, nrow = 5, ncol = 3)
+ggsave(paste0(here("output/figures/site_N_posteriors"), "/SY", yr, "_", spc, "_site_N_posteriors.pdf"),
+       multi_site_p,
+       width = 8.5,
+       height = 14,
+       units = "in")
+
+# generate summary statistics of escapement estimates for all sites
+site_escp_summ = summarisePost(.data = site_escp_post,
+                               value = abund,
+                               # grouping variables,
+                               param,
+                               origin,
+                               .cred_int_prob = 0.95) %>%
+  rename(lower95ci = lower_ci,
+         upper95ci = upper_ci)
+
+# use definePopulations() to define which sites are grouped for population estimates
 source(here("R/definePopulations.R"))
-pop_abund_groups = definePopulations(spc = spc)
+pop_sites = definePopulations(spc = spc)
 
 # trt population escapement posteriors
-pop_esc_post = site_esc_post %>%
-  left_join(pop_abund_groups,
+pop_escp_post = site_escp_post %>%
+  left_join(pop_sites,
             by = c("param" = "site")) %>%
   filter(!is.na(TRT_POPID)) %>%
   group_by(TRT_POPID, chain, iter, origin) %>%
   summarise(abund = sum(abund))
 
 # trt population escapement summaries
-pop_esc_summ = pop_esc_post %>%
+pop_escp_summ = pop_escp_post %>%
   summarisePost(value = abund,
                 # grouping variables,
                 TRT_POPID,
                 origin,
                 .cred_int_prob = 0.95) %>%
+  rename(lower95ci = lower_ci,
+         upper95ci = upper_ci) %>%
   left_join(trt_df) %>%
   select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
   arrange(MPG, TRT_POPID)
@@ -288,28 +283,16 @@ load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda")
 load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
 
 # # tag life history summary
-# tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-#                             "tag_lh",
-#                             progress = F)
-# # sex summary
-# sex_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-#                            "sex_df",
-#                            progress = F)
-# # age summary
-# age_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-#                            "age_df",
-#                            progress = F)
-# # brood year summary
-# brood_df = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
-#                              "brood_df",
-#                              progress = F)
+tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+                            "tag_lh",
+                            progress = F)
 
 # get posteriors of female proportions by pop
 sex_post = sex_mod$sims.list$p %>%
-  as_tibble() %>%
+  as_tibble(.name_repair = "universal") %>%
   gather(key = "pop_num",
          value = p) %>%
-  mutate(pop_num = as.integer(gsub("V", "", pop_num))) %>%
+  mutate(pop_num = as.integer(gsub("...", "", pop_num))) %>%
   group_by(pop_num) %>%
   mutate(iter = 1:n()) %>%
   left_join(mod_sex_df %>%
@@ -359,21 +342,19 @@ age_post = age_mod$sims.list$pi %>%
          p = age_prop)
 
 # combine population abundance, sex, and age posteriors
-combined_post = pop_esc_post %>%
+combined_post = pop_escp_post %>%
   group_by(TRT_POPID, iter, origin) %>%
-  summarise(abund = mean(abund)) %>%
-  #filter(abund != 0) %>%
+  summarise(N = mean(abund)) %>%
   left_join(sex_post,
             by = c("TRT_POPID", "iter")) %>%
   rename(p_fem = p) %>%
+  mutate(p_male = 1 - p_fem) %>%
   left_join(age_post %>%
               pivot_wider(names_from = age,
                           names_prefix = "p_",
                           values_from = p)) %>%
-  mutate(N_fem = abund * p_fem,
-         N_male = abund - N_fem) %>%
-  mutate(across(starts_with("p_"), ~ . * abund, .names = "N_{gsub('p_', '', .col)}")) %>%
-  pivot_longer(cols = starts_with("p_") | starts_with("N_") | abund,
+  mutate(across(starts_with("p_"), ~ . * N, .names = "N_{gsub('p_', '', .col)}")) %>%
+  pivot_longer(cols = starts_with("p_") | starts_with("N_") | N,
                names_to = "param",
                values_to = "value") %>%
   mutate(species = spc,
@@ -388,7 +369,7 @@ combined_post = pop_esc_post %>%
 
 # summarise the combined posteriors
 combined_summ = combined_post %>%
-  filter(!is.na(value) & value != 0) %>%
+  filter(!is.na(value)) %>% 
   summarisePost(.data = .,
                 value = value,
                 # grouping variables,
@@ -398,7 +379,35 @@ combined_summ = combined_post %>%
                 origin,
                 param,
                 .cred_int_prob = 0.95) %>%
-  rename(lower_95ci = lower_ci,
-         upper_95ci = upper_ci)
+  rename(lower95ci = lower_ci,
+         upper95ci = upper_ci)
+
+#-----------------
+# save results
+
+# stadem escapement summary
+write_csv(stadem_df,
+          file = paste0(here("output/stadem_results/escapement_summaries"),
+                        "/SY", yr, "_", spc, "_stadem_escapement.csv"))
+
+# detection probabilities
+save(detect_summ,
+     file = paste0(here("output/dabom_results/detection_probabilities"),
+                   "/SY", yr, "_", spc, "_node_detect_probs.rda"))
+
+# posteriors
+save(trans_post,  
+     trib_escp_post,
+     site_escp_post,
+     pop_escp_post,
+     combined_post,
+     file = paste0(here("output/abundance_results/posteriors"),
+                   "/SY", yr, "_", spc, "_posteriors.rda"))
+
+# abundance summaries
+save(site_esc_summ,
+     combined_summ,
+     file = paste0(here("output/abundance_results/summaries"),
+                   "/SY", yr, "_", spc, "_summaries.rda"))
 
 ### END SCRIPT
