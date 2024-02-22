@@ -78,8 +78,8 @@ jags_params = c("p", "mu", "sig", "mu_ilogit")
 sex_mod = jags(data = sex_jags_data,
                parameters.to.save = jags_params,
                model.file = sex_model_nm,
-               n.chains = 3,
-               n.iter = 10000,
+               n.chains = 4,
+               n.iter = 15000,
                n.burnin = 5000,
                n.thin = 20,
                verbose = F)
@@ -241,9 +241,9 @@ if(model == "hierarchical"){
 age_mod = jags(data = age_jags_data,
                parameters.to.save = jags_params,
                model.file = age_model_nm,
-               n.chains = 3,
-               n.iter = 20000,
-               n.burnin = 10000,
+               n.chains = 4,
+               n.iter = 15000,
+               n.burnin = 5000,
                n.thin = 20,
                verbose = T)
 
