@@ -362,6 +362,7 @@ age_post = age_mod$sims.list$pi %>%
 combined_post = pop_esc_post %>%
   group_by(TRT_POPID, iter, origin) %>%
   summarise(abund = mean(abund)) %>%
+  #filter(abund != 0) %>%
   left_join(sex_post,
             by = c("TRT_POPID", "iter")) %>%
   rename(p_fem = p) %>%
@@ -384,5 +385,20 @@ combined_post = pop_esc_post %>%
          iter,
          param,
          value)
+
+# summarise the combined posteriors
+combined_summ = combined_post %>%
+  filter(!is.na(value) & value != 0) %>%
+  summarisePost(.data = .,
+                value = value,
+                # grouping variables,
+                species, 
+                spawn_yr,
+                TRT_POPID,
+                origin,
+                param,
+                .cred_int_prob = 0.95) %>%
+  rename(lower_95ci = lower_ci,
+         upper_95ci = upper_ci)
 
 ### END SCRIPT
