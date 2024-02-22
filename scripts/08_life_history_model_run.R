@@ -176,15 +176,15 @@ cat(model_code, file = age_mod_hier_nm)
 #-----------------
 # run age model
 
-if(spc == "Chinook") { model = "simple" }
+if(spc == "Chinook")   { model = "simple" }
 if(spc == "Steelhead") { model = "hierarchical" }
 
 if(model == "simple") {
   age_model_nm = age_mod_simp_nm
-  jags_param = "pi"
+  jags_params = "pi"
 } else {
   age_model_nm = age_mod_hier_nm
-  jags_param = c("pi", "mu", "Tau", "avgPi")
+  jags_params = c("pi", "mu", "Tau", "avgPi")
 }
 
 # read in data
