@@ -13,6 +13,7 @@ rm(list = ls())
 
 # load necessary libraries
 library(here)
+library(tidyverse)
 
 # set species and year
 spc = "Chinook"
