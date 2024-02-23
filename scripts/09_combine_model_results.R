@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: February 21, 2024
+#   Last Modified: February 23, 2024
 #
 # Notes: 
 
@@ -25,7 +25,7 @@ load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
-yr = 2010
+yr = 2023
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -194,52 +194,6 @@ sites_w_tags = site_escp_post %>%
   filter(n_draws > n_zero) %>%
   pull(param)
 
-# plot posterior abundance estimates for a single site
-# site = sites_w_tags[1]
-# site_escp_post %>%
-#   filter(param == site) %>%
-#   mutate(chain = as.character(chain)) %>%
-#   ggplot() +
-#   geom_density(aes(x = abund,
-#                    fill = chain,
-#                    group = chain),
-#                alpha = 0.5) +
-#   labs(title = site)
-
-# plot posterior abundance estimates for multiple sites
-# site_escp_post %>%
-#   filter(param %in% sites_w_tags) %>%
-#   mutate(chain = as.character(chain)) %>%
-#   ggplot() +
-#   geom_density(aes(x = abund,
-#                    fill = chain,
-#                    group = chain),
-#                alpha = 0.5) +
-#   facet_wrap(~ param,
-#              scales = "free") +
-#   labs(title = paste0("SY", yr, " ", spc))
-
-# save abundance posteriors for all sites with tags detected
-plot_list = list()
-for(site in sites_w_tags) {
-  site_p = subset(site_escp_post, param == site) %>%
-    ggplot() +
-    geom_density(aes(x = abund,
-                     fill = as.factor(chain),
-                     group = as.factor(chain)),
-                 alpha = 0.5) +
-    labs(title = site) +
-    theme(legend.position = "none")
-  
-  plot_list[[site]] = site_p
-}
-multi_site_p = gridExtra::marrangeGrob(plot_list, nrow = 5, ncol = 3)
-ggsave(paste0(here("output/figures/site_N_posteriors"), "/SY", yr, "_", spc, "_site_N_posteriors.pdf"),
-       multi_site_p,
-       width = 8.5,
-       height = 14,
-       units = "in")
-
 # generate summary statistics of escapement estimates for all sites
 site_escp_summ = summarisePost(.data = site_escp_post,
                                value = abund,
@@ -384,7 +338,6 @@ combined_summ = combined_post %>%
 
 #-----------------
 # save results
-
 # stadem escapement summary
 write_csv(stadem_df,
           file = paste0(here("output/stadem_results/escapement_summaries"),
@@ -396,18 +349,16 @@ save(detect_summ,
                    "/SY", yr, "_", spc, "_node_detect_probs.rda"))
 
 # posteriors
-save(trans_post,  
-     trib_escp_post,
-     site_escp_post,
-     pop_escp_post,
-     combined_post,
-     file = paste0(here("output/abundance_results/posteriors"),
-                   "/SY", yr, "_", spc, "_posteriors.rda"))
+post_list = list(main_escp_post = main_escp_post,
+                 trib_escp_post = trib_escp_post,
+                 combined_post = combined_post) %>%
+  save(file = paste0(here("output/abundance_results/posteriors"),
+                     "/SY", yr, "_", spc, "_posteriors.rda"))
 
 # abundance summaries
-save(site_esc_summ,
-     combined_summ,
-     file = paste0(here("output/abundance_results/summaries"),
-                   "/SY", yr, "_", spc, "_summaries.rda"))
+abund_list = list(site_escp_summ = site_escp_summ,
+                  combined_summ = combined_summ) %>%
+  save(file = paste0(here("output/abundance_results/summaries"),
+                     "/SY", yr, "_", spc, "_summaries.rda"))
 
 ### END SCRIPT
