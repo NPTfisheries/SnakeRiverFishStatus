@@ -159,6 +159,20 @@ main_post = compileTransProbs(trans_post = trans_post,
                               time_vary_only = T,                # should only time-varying parameters be compiled?
                               time_vary_param_nm = "strata_num") # column containing time-varying strata
 
+# plot time-varying posteriors for a single site
+# main_site = "SFG"
+# main_post %>%
+#   filter(param == main_site) %>%
+#   mutate(chain = as.character(chain)) %>%
+#   group_by(param, chain, strata_num) %>%
+#   mutate(iter = 1:n()) %>%
+#   ggplot() +
+#   geom_line(aes(x = iter,
+#                 y = value,
+#                 color = chain)) +
+#   facet_wrap(~ strata_num) +
+#   labs(title = paste0("SY", yr, " ", spc, " ", main_site))
+
 # escapement to each main branch across entire season
 main_escp_post = calcAbundPost(move_post = main_post,
                                abund_post = abund_post,
@@ -184,15 +198,6 @@ trib_escp_post = calcAbundPost(move_post = trib_post,
 site_escp_post = main_escp_post %>%
   bind_rows(trib_escp_post %>%
               select(any_of(names(main_escp_post))))
-
-# grab sites with tags detected
-sites_w_tags = site_escp_post %>%
-  group_by(param) %>%
-  summarise(n_draws = n(),
-            n_zero = sum(abund == 0),
-            .groups = "drop") %>%
-  filter(n_draws > n_zero) %>%
-  pull(param)
 
 # generate summary statistics of escapement estimates for all sites
 site_escp_summ = summarisePost(.data = site_escp_post,
