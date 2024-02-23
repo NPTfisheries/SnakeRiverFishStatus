@@ -351,14 +351,16 @@ save(detect_summ,
 # posteriors
 post_list = list(main_escp_post = main_escp_post,
                  trib_escp_post = trib_escp_post,
-                 combined_post = combined_post) %>%
-  save(file = paste0(here("output/abundance_results/posteriors"),
-                     "/SY", yr, "_", spc, "_posteriors.rda"))
+                 combined_post = combined_post)
+save(post_list,
+     file = paste0(here("output/abundance_results/posteriors"),
+                   "/SY", yr, "_", spc, "_posteriors.rda"))
 
 # abundance summaries
 abund_list = list(site_escp_summ = site_escp_summ,
-                  combined_summ = combined_summ) %>%
-  save(file = paste0(here("output/abundance_results/summaries"),
-                     "/SY", yr, "_", spc, "_summaries.rda"))
+                  combined_summ = combined_summ)
+save(abund_list,
+     file = paste0(here("output/abundance_results/summaries"),
+                   "/SY", yr, "_", spc, "_summaries.rda")) 
 
 ### END SCRIPT
