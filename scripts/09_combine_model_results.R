@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: February 23, 2024
+#   Last Modified: February 28, 2024
 #
 # Notes: 
 
@@ -206,6 +206,8 @@ site_escp_summ = summarisePost(.data = site_escp_post,
                                param,
                                origin,
                                .cred_int_prob = 0.95) %>%
+  mutate(species = spc,
+         spawn_yr = yr) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci)
 
