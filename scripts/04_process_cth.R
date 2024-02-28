@@ -1,9 +1,9 @@
 # -----------------------
-# Author(s): Ryan N. Kinzer, and Mike Ackerman
+# Author(s): Ryan N. Kinzer and Mike Ackerman
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: November 20, 2023
+#   Last Modified: February 28, 2024
 #
 #   Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
 #   differentiates spawners from kelts??? Consider adding that functionality in at a later date.
@@ -24,11 +24,11 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2023
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, sites_sf, parent_child, node_paths)
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
@@ -51,7 +51,7 @@ cth_qc$orphan_tags %>%
   save(file = paste0(here(orphan_folder), "/SY", yr, "_", spc, "_orphan_tags.rda"))
 
 # compress observations
-comp_obs = compress(cth_file = cth_df,      # RK noted here that he would like to keep site_code, too, which makes some sense
+comp_obs = compress(cth_file = cth_df,
                     file_type = "PTAGIS",   
                     max_minutes = NA,
                     configuration = configuration,
@@ -103,6 +103,10 @@ if(spc == "Chinook"){
            node, direction, everything())
 }
 
+# THE BELOW MAY EVENTUALLY GET ADDED FUNCTIONALITY TO IDENTIFY AND PARSE
+# KELT AND REPEAT SPAWNER OBSERVATIONS. CAN WE USE EstimateFinalLoc() OR 
+# steelheadLifeStage() TO ASSIST THIS PROCESS? CURRENTLY THE SAME AS CHINOOK
+
 # Steelhead
 if(spc == "Steelhead"){
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
@@ -115,40 +119,10 @@ if(spc == "Steelhead"){
   #                                spawn_year = yr,
   #                                max_spawn_month = 3) %>%
     mutate(id = 1:n(),
-           life_stage = "spawner") %>% # get rid of at later date
+           life_stage = "spawner") %>%
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
 }
-
-# THE ABOVE, INCLUDING steelheadLifeStage(), STILL NEEDS SIGNFICANT REVIEW AND WORK
-# I ALSO NEED TO DETERMINE WHERE AND HOW TO SET-ASIDE DETECTION FOR KELTS AND REPEAT SPAWNERS
-# CAN WE USE EstimateFinalLoc() to assist this process?
-
-# Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
-# GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and
-# also another branch b/c they will be flagged as multiple branches
-# reascenders = dabom_obs %>%
-#   filter(life_stage == "spawner") %>%
-#   filter(node %in% c("LGR", "GRS")) %>%
-#   # what is the latest detection for each fish at either "LGR" or "GRS"?
-#   group_by(tag_code) %>%
-#   slice(which.max(min_det)) %>%
-#   select(tag_code,
-#          last_LGR = node)
-# 
-# dabom_obs = dabom_obs %>%
-#   left_join(reascenders) %>%
-#   mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
-#                                 NA,
-#                                 if_else(node == "GRS" & last_LGR == "LGR",
-#                                         FALSE,
-#                                         auto_keep_obs)),
-#          user_keep_obs = ifelse(is.na(user_keep_obs),
-#                                 NA,
-#                                 ifelse(node == "GRS" & last_LGR == "LGR",
-#                                        FALSE,
-#                                        user_keep_obs))) %>%
-#   select(-last_LGR)
 
 # write to excel file
 write_xlsx(dabom_obs,
