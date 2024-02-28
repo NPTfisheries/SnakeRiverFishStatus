@@ -17,7 +17,7 @@ library(tidyverse)
 library(readxl)
 library(writexl)
 
-# set species and year
+# set species
 spc = "Chinook"
 
 #-----------------
