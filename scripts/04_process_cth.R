@@ -25,7 +25,7 @@ if(!dir.exists(PITcleanr_folder)) {
 
 # set species and year
 spc = "Steelhead"
-yr = 2023
+yr = 2010
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, sites_sf, parent_child, node_paths)
@@ -109,17 +109,23 @@ if(spc == "Chinook"){
 
 # Steelhead
 if(spc == "Steelhead"){
+  kelt_sites = c("GRS", "GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON")
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
                                max_obs_date = str_remove_all(sy_end_date, "-")) %>%
-
-  # source steelheadLifeStage()
-  # source(here("R/steelheadLifeStage.R"))
-  # dabom_obs = steelheadLifeStage(obs_df = tmp,
-  #                                spawn_year = yr,
-  #                                max_spawn_month = 3) %>%
-    mutate(id = 1:n(),
-           life_stage = "spawner") %>%
+    mutate(id = 1:n()) %>%
+    mutate(life_stage = case_when(
+      # KELTS
+      min_det > lubridate::ymd(paste0(yr, "0515")) & node %in% kelt_sites ~ "kelt",
+      min_det > lubridate::ymd(paste0(yr, "0515")) & direction == "backward" ~ "kelt",
+      # REPEAT SPAWNERS
+      min_det > lubridate::ymd(paste0(yr, "0801")) & !node %in% kelt_sites ~ "repeat spawner",
+      # SPAWNERS
+      TRUE ~ "spawner")) %>%
+    mutate(auto_keep_obs = ifelse(life_stage %in% c("kelt", "repeat spawner"), FALSE, auto_keep_obs)) %>%
+    group_by(tag_code) %>%
+    mutate(user_keep_obs = ifelse(any(life_stage %in% c("kelt", "repeat spawner")), NA, user_keep_obs)) %>%
+    ungroup() %>%
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
 }
