@@ -124,7 +124,11 @@ if(spc == "Steelhead"){
       TRUE ~ "spawner")) %>%
     mutate(auto_keep_obs = ifelse(life_stage %in% c("kelt", "repeat spawner"), FALSE, auto_keep_obs)) %>%
     group_by(tag_code) %>%
-    mutate(user_keep_obs = ifelse(any(life_stage %in% c("kelt", "repeat spawner")), NA, user_keep_obs)) %>%
+    mutate(user_keep_obs = 
+             case_when(
+               any(life_stage %in% c("kelt", "repeat spawner")) ~ NA,
+               TRUE ~ user_keep_obs
+             )) %>%
     ungroup() %>%
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
            node, direction, everything())
@@ -144,16 +148,10 @@ reascenders = dabom_obs %>%
 
 dabom_obs = dabom_obs %>%
   left_join(reascenders) %>%
-  mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
-                                NA,
-                                ifelse(node == "GRS" & last_LGR == "LGR",
-                                       FALSE,
-                                       auto_keep_obs)),
-         user_keep_obs = ifelse(is.na(user_keep_obs),
-                                NA,
-                                ifelse(node == "GRS" & last_LGR == "LGR",
-                                       FALSE,
-                                       user_keep_obs))) %>%
+  mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs), NA,
+                                ifelse(node == "GRS" & last_LGR == "LGR", FALSE, auto_keep_obs)),
+         user_keep_obs = ifelse(is.na(user_keep_obs), NA,
+                                ifelse(node == "GRS" & last_LGR == "LGR", FALSE, user_keep_obs))) %>%
   select(-last_LGR)
 
 # write to excel file
