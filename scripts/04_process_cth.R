@@ -124,6 +124,32 @@ if(spc == "Steelhead"){
            node, direction, everything())
 }
 
+# Re-ascenders: Finally, correct some calls for re-ascenders i.e., were seen at LGR (adult ladder and trap),
+# then GRS (juvenile spillway, bypass, etc.), and LGR again. We don't want these fish assigned to GRS and also
+# a re-ascension and/or another branch b/c they will be flagged as multiple branches
+reascenders = dabom_obs %>%
+  # filter(life_stage == "spawner") %>%
+  filter(node %in% c("LGR", "GRS")) %>%
+  # what is the latest detection for each fish; "LGR" or "GRS"?
+  group_by(tag_code) %>%
+  slice(which.max(min_det)) %>%
+  select(tag_code,
+         last_LGR = node)
+
+dabom_obs = dabom_obs %>%
+  left_join(reascenders) %>%
+  mutate(auto_keep_obs = ifelse(is.na(auto_keep_obs),
+                                NA,
+                                ifelse(node == "GRS" & last_LGR == "LGR",
+                                       FALSE,
+                                       auto_keep_obs)),
+         user_keep_obs = ifelse(is.na(user_keep_obs),
+                                NA,
+                                ifelse(node == "GRS" & last_LGR == "LGR",
+                                       FALSE,
+                                       user_keep_obs))) %>%
+  select(-last_LGR)
+
 # write to excel file
 write_xlsx(dabom_obs,
            paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
