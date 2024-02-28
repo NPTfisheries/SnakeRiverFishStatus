@@ -3,11 +3,9 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: November 20, 2023
+#   Last Modified: February 28, 2024
 #
-# Notes: I've copied pasted over both the filterLGRtrapDB() and summariseValidTagsLGR.R() functions
-#   from PITcleanr. If useful, consider pulling those in sometime. If not, they can likely be
-#   deleted from the repo.
+# Notes:
 
 # clear environment
 rm(list = ls())
@@ -24,10 +22,10 @@ if(!dir.exists(tags_folder)) {
 }
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
 
 # set species and spawn year
-spc = "Chinook"
+spc = "Steelhead"
 yr  = 2023
 
 if(spc == "Chinook")   { spc_code = 1 }
@@ -48,10 +46,9 @@ valid_df = trap_df %>%
   filter(!is.na(LGDNumPIT))
 
 # write valid tag list to .txt
-valid_tag_file_nm = paste0(tags_folder, "/LGR_", spc, "_SY", yr, ".txt")
 tag_list = valid_df %>%
   select(LGDNumPIT) %>%
-  write.table(valid_tag_file_nm,
+  write.table(file = paste0(tags_folder, "/LGR_", spc, "_SY", yr, ".txt"),
               quote = F,
               row.names = F,
               col.names = F,

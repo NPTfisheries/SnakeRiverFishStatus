@@ -4,10 +4,10 @@
 # processing and the DABOM model
 # 
 # Created Date: October 10, 2023
-#   Last Modified: October 25, 2023
+#   Last Modified: February 28, 2024
 #
-# Notes: The output and saved file from this script is used for processing tag
-# observations and for visualizing infrastructure.
+# Notes: The output and saved files from this script are used for processing tag
+#   observations and for visualizing infrastructure.
 
 #----------------------
 # clear environment
@@ -75,7 +75,7 @@ ptagis_sf = org_config %>%
            .keep_all = T) 
 
 #----------------------
-# Create list of Snake River INT sites
+# create list of Snake River INT sites
 sr_int_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
   st_join(sr_sthd_pops) %>%
@@ -83,10 +83,7 @@ sr_int_sites_sf = ptagis_sf %>%
   # grab only INT sites for now 
   filter(site_type == "INT") %>%
   # remove some dam sites; we'll deal with those later
-  filter(!str_detect(site_name, "Lower Granite")) %>%
-  filter(!str_detect(site_name, "LOWER GRANITE")) %>%
-  filter(!str_detect(site_name, "Little Goose")) %>%
-  filter(!str_detect(site_name, "Lower Monumental")) %>%
+  filter(!str_detect(site_name, "Lower Granite|LOWER GRANITE|Little Goose|Lower Monumental")) %>%
   # remove unnecessary INT sites we don't want
   filter(!site_code %in% c("0HR", # Henry's Inreach Array, Lemhi
                            "CCP", # Catherine Creek Acclimation Pond
@@ -112,11 +109,11 @@ sr_int_sites_sf = ptagis_sf %>%
                            "DWL"))# Dworshak NFH Adult Ladder
 
 #----------------------
-# Create list of Snake River MRR Sites
+# create list of Snake River MRR Sites
 # read in complete tag histories since SY2010
 tags_by_site = list.files(path = here("data/complete_tag_histories/"),
-                    pattern = "\\.csv$",
-                    full.names = T) %>%
+                          pattern = "\\.csv$",
+                          full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(.x), .id = "file_name") %>%
   # add species and spawn year
@@ -340,8 +337,7 @@ downriver_config = org_config %>%
 # merge into a single configuration file
 configuration = bind_rows(sr_config,
                           dam_config,
-                          downriver_config)
-rm(sr_config, dam_config, downriver_config)
+                          downriver_config) ; rm(sr_config, dam_config, downriver_config)
 
 # convert configuration into a sites_sf
 sites_sf = configuration %>%
@@ -365,7 +361,7 @@ nhd_list = queryFlowlines(sites_sf = sites_sf,
 
 # compile the upstream and downstream flowlines
 flowlines = nhd_list$flowlines
-if(dwn_flw) {
+if(dwn_flw == T) {
   flowlines %<>%
     rbind(nhd_list$dwn_flowlines)
 }
