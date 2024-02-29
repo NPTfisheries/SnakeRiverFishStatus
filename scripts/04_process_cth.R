@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: February 28, 2024
+#   Last Modified: February 29, 2024
 #
 #   Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
 #   differentiates spawners from kelts??? Consider adding that functionality in at a later date.
@@ -28,7 +28,7 @@ spc = "Steelhead"
 yr = 2010
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, sites_sf, parent_child, node_paths)
+load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, sites_sf, parent_child)
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
@@ -109,20 +109,32 @@ if(spc == "Chinook"){
 
 # Steelhead
 if(spc == "Steelhead"){
+  
   kelt_sites = c("GRS", "GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON")
+  # main_gates = node_paths %>%
+  #   filter(node_order == 2) %>%
+  #   pull(node)
+  repeat_spawn_date = paste0(yr, "0801")
+  
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
                                max_obs_date = str_remove_all(sy_end_date, "-")) %>%
     mutate(id = 1:n()) %>%
+    # flag some observations as kelt or spawners
     mutate(life_stage = case_when(
       # KELTS
-      min_det > lubridate::ymd(paste0(yr, "0515")) & node %in% kelt_sites ~ "kelt",
-      min_det > lubridate::ymd(paste0(yr, "0515")) & direction == "backward" ~ "kelt",
+      min_det > lubridate::ymd(paste0(yr, "0415")) & min_det < lubridate::ymd(repeat_spawn_date) & node %in% kelt_sites ~ "kelt",
+      min_det > lubridate::ymd(paste0(yr, "0415")) & min_det < lubridate::ymd(repeat_spawn_date) & !node %in% kelt_sites & direction == "backward" ~ "kelt",
+      #min_det > lubridate::ymd(paste0(yr, "0401")) & !node %in% kelt_sites & direction == "backward" ~ "kelt",
       # REPEAT SPAWNERS
-      min_det > lubridate::ymd(paste0(yr, "0801")) & !node %in% kelt_sites ~ "repeat spawner",
+      min_det >= lubridate::ymd(repeat_spawn_date) ~ "repeat spawner",
+      #min_det >= lubridate::ymd(paste0(yr, "0801")) & !node %in% kelt_sites ~ "repeat spawner",
+      #min_det >= lubridate::ymd(repeat_spawn_date) & node %in% kelt_sites ~ "repeat spawner",
       # SPAWNERS
       TRUE ~ "spawner")) %>%
+    # for kelts and repeat spawner detections, set auto_keep_obs to FALSE
     mutate(auto_keep_obs = ifelse(life_stage %in% c("kelt", "repeat spawner"), FALSE, auto_keep_obs)) %>%
+    # and for any tag with kelt or repeat spawner observations, set all user_keep_obs to NA
     group_by(tag_code) %>%
     mutate(user_keep_obs = 
              case_when(
