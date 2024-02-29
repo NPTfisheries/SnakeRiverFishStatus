@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: November 15, 2023
+#   Last Modified: February 29, 2024
 #
 # Notes: 
 
@@ -23,7 +23,7 @@ library(DABOM)
 load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
 
 # load trap_df to get origin
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-11-20.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -32,8 +32,8 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 #--------------------
 # start analysis
 # set species and spawn year
-spc = "Chinook"
-yr = 2017
+spc = "Steelhead"
+yr = 2010
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -45,10 +45,11 @@ inc_hatchery = FALSE
 pitcleanr_folder = here("output/PITcleanr/human_reviewed/")
 dabom_obs = readxl::read_excel(paste0(pitcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx" ))
 
-# if(spc == "Steelhead") {
-#   dabom_obs = dabom_obs %>%
-#     filter(life_stage == "spawner")
-# }
+# for steelhead, remove kelt and repeat spawner observations
+if(spc == "Steelhead") {
+  dabom_obs = dabom_obs %>%
+    filter(life_stage == "spawner")
+}
 
 # remove FALSE obs for DABOM from processed dataset
 filter_ch = dabom_obs %>%
