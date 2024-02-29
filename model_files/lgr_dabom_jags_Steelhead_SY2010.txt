@@ -289,7 +289,7 @@ model {
 	 phi_SC1[2] ~ dbeta(1, 1); 
 
 	 phi_SC2[1] ~ dbeta(1, 1); 
-	 phi_SC2[1] <- 0 # no upstream detections
+	 phi_SC2[2] <- 0 # no upstream detections
 
 	 psi_SFG[1, 1:n_branch_SFG] ~ ddirch(SFG_dirch_vec[1,]); 
 	 psi_SFG[2, 1:n_branch_SFG] ~ ddirch(SFG_dirch_vec[2,]); 
