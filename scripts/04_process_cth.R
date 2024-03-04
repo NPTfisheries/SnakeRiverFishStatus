@@ -25,10 +25,10 @@ if(!dir.exists(PITcleanr_folder)) {
 
 # set species and year
 spc = "Steelhead"
-yr = 2020
+yr = 2023
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines, sites_sf, parent_child)
+load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
 
 # read in complete tag history
 cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
