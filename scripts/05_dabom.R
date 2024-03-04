@@ -20,7 +20,7 @@ library(DABOM)
 #--------------------
 # some initial setup
 # load configuration
-load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 
 # load trap_df to get origin
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Steelhead"
-yr = 2010
+yr = 2020
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
