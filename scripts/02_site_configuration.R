@@ -462,7 +462,7 @@ save(configuration,
      parent_child,
      pc_nodes,
      node_paths,
-     file = here("data/configuration_files/site_config_LGR_20240204.rda"))
+     file = here("data/configuration_files/site_config_LGR_20240304.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
