@@ -406,6 +406,8 @@ parent_child = sites_sf %>%
                          c("LBS", "HEC", "LRW"),
                          c("LBS", "BTL", "LRW"),
                          c("LBS", "CAC", "LRW"),
+                         # Potlatch River
+                         c("HLM", "EPR", "EFPW"),
                          # Imnaha River
                          c("IR3", "IML", "IR4"),
                          c("IR4", "IR5", "IML"))) %>%
@@ -460,7 +462,7 @@ save(configuration,
      parent_child,
      pc_nodes,
      node_paths,
-     file = here("data/configuration_files/site_config_LGR_20231117.rda"))
+     file = here("data/configuration_files/site_config_LGR_20240204.rda"))
 
 # write sites_sf and flowlines out to shapefiles, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
