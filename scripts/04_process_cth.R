@@ -5,8 +5,7 @@
 # Created Date: June 28, 2021
 #   Last Modified: March 5, 2024
 #
-#   Ryan has a file ../SR_Steelhead/R/identifyFishType.R which appears to contain a function steelhead_lifestage() which maybe
-#   differentiates spawners from kelts??? Consider adding that functionality in at a later date.
+#   Notes: 
 
 # clear environment
 rm(list = ls())
@@ -25,7 +24,7 @@ if(!dir.exists(PITcleanr_folder)) {
 
 # set species and year
 spc = "Steelhead"
-yr = 2011
+yr = 2013
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
