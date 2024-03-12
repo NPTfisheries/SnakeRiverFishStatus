@@ -20,7 +20,7 @@ library(janitor)
 
 # set species and yr
 spc = "Steelhead"
-yr = 2010
+yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
 load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
