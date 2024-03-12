@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: January 10, 2024
+#   Last Modified: March 12, 2024
 #
 # Notes: 
 
@@ -16,16 +16,17 @@ library(here)
 library(readxl)
 library(jagsUI)
 
+# set species and year
+spc = "Steelhead"
+yr = 2010
+
 # set up folder structure for output
 sex_folder = "output/sex_results/"
 age_folder = "output/age_results/"
+if(spc == "Steelhead") { size_folder = "output/size_results/"}
 
 # file path where life history summaries are stored
 lh_folder = "output/life_history/"
-
-# set species and year
-spc = "Chinook"
-yr = 2023
 
 #-----------------
 # create JAGS model to estimate female proportion
@@ -91,6 +92,72 @@ save(sex_mod,
      file = paste0(here(), "/", sex_folder, "SY", yr, "_", spc, "_pop_sex_prop.rda"))
 
 #-----------------
+# for steelhead, create JAGS model to estimate a-run proportions
+if(spc == "Steelhead") {
+  size_model_nm = here("model_files/a_run_prop_jags.txt")
+  
+  model_code = "
+model {
+
+  for(i in 1:length(a)) {
+    a[i] ~ dbin(p[pop_num[i]], tags[i])
+  }
+
+  for(j in 1:max(pop_num)) {
+    p[j] <- ilogit(logit_p[j])
+    logit_p[j] ~ dnorm(mu, tau)
+  }
+  # transform overall mean back to proportion scale
+  mu_ilogit <- ilogit(mu)
+
+  mu ~ dnorm(0, 0.001)
+  sig ~ dunif(0, 100)
+  tau <- pow(sig, -2)
+
+}"
+  
+  cat(model_code, file = size_model_nm)
+  
+  #-----------------
+  # run size model
+  
+  # read in data
+  mod_size_df = read_excel(paste0(here(), "/", lh_folder, spc, "_SY", yr, "_lh_summary.xlsx"),
+                           "size_df",
+                           progress = F)
+  
+  # pull out relevant bits for JAGS, and name them appropriately
+  size_jags_data = mod_size_df %>%
+    filter(TRT_POPID != "Not Observed") %>%
+    filter(species != "Total") %>%
+    mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
+    select(a = fl_a,
+           tags = n_measured,
+           pop_num) %>%
+    as.list()
+  
+  # set parameters to save
+  jags_params = c("p", "mu", "sig", "mu_ilogit")
+  
+  # run JAGS model
+  size_mod = jags(data = size_jags_data,
+                  parameters.to.save = jags_params,
+                  model.file = size_model_nm,
+                  n.chains = 4,
+                  n.iter = 15000,
+                  n.burnin = 5000,
+                  n.thin = 20,
+                  verbose = F)
+  
+  # save results
+  save(size_mod,
+       size_jags_data,
+       mod_size_df,
+       file = paste0(here(), "/", size_folder, "SY", yr, "_", spc, "_pop_size_prop.rda"))
+
+} # end steelhead size model
+
+#-----------------
 # create JAGS model to estimate age proportions
 
 # simple model to be used for Chinook
@@ -147,7 +214,7 @@ model {
   }
   
   # transform mu back to proportions
-  for(j in 1:max(runType)) {
+  for(j in 1:max(run_type)) {
     muProp[j,1] = 0
     for(i in 2:D[2]) {
       muProp[j,i] = mu[j,i-1]
@@ -233,7 +300,7 @@ if(model == "hierarchical"){
            run_type = as.integer(run)) %>%
     pull(run_type)
   
-  age_jags_data$r = diag(1, ncol(age_jags_data$age_mat) - 1)
+  age_jags_data$R = diag(1, ncol(age_jags_data$age_mat) - 1)
   
 }
 

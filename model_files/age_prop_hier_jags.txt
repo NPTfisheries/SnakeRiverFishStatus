@@ -23,7 +23,7 @@ model {
   }
   
   # transform mu back to proportions
-  for(j in 1:max(runType)) {
+  for(j in 1:max(run_type)) {
     muProp[j,1] = 0
     for(i in 2:D[2]) {
       muProp[j,i] = mu[j,i-1]
