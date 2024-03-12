@@ -24,7 +24,7 @@ if(!dir.exists(PITcleanr_folder)) {
 
 # set species and year
 spc = "Steelhead"
-yr = 2019
+yr = 2022
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
