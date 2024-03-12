@@ -24,7 +24,7 @@ if(!dir.exists(PITcleanr_folder)) {
 
 # set species and year
 spc = "Steelhead"
-yr = 2015
+yr = 2017
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
@@ -108,25 +108,19 @@ if(spc == "Chinook"){
 
 # Steelhead
 if(spc == "Steelhead"){
-  source("R/steelhead/steelheadLifeStage.R")
-  # Turn the following into a function and break chunks into arguments on whether to deal with each issue or not, because I'm 
-  # over-writing user_keep_obs in many cases. Someone may choose to not deal w/ an issue and over-write user_keep_obs.
   
-  # some setup items for parsing kelts and repeat spawners
-  dam_kelt_sites = c("GRS", "GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON")
-  kelt_date = lubridate::ymd(paste0(yr, "0420")) # after which date do we consider detections likely to be from kelts?
-  repeat_spawn_date = lubridate::ymd(paste0(yr, "0801")) # after which date do we consider detections likely to be from repeat spawners?
-  days_to_spawn = 5 # how many days between a "forward" or "no movement" event and a "backward" event after kelt_date might we suspect a spawning event occurred?
+  # function to deal w kelts and repeat spawners
+  source("R/steelhead/steelheadLifeStage.R")
 
-  # deal w kelts and repeat spawners
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
                                max_obs_date = str_remove_all(sy_end_date, "-")) %>%
     mutate(id = 1:n()) %>%
+    # deal w kelts and repeat spawners
     steelheadLifeStage(obs_df = .,
                        spawn_yr = yr,
                        dam_kelt_sites = c("GRS", "GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON"),
-                       kelt_date = "0420",         # after which date do we consider detections likely to be from kelts?
+                       kelt_date = "0415",         # after which date do we consider detections likely to be from kelts?
                        repeat_spawn_date = "0801", # after which date do we consider detections likely to be from repeat spawners?
                        days_to_spawn = 5)          # how many days between a "forward" or "no movement" event and a "backward" event after kelt_date might we suspect a spawning event occurred?
 
