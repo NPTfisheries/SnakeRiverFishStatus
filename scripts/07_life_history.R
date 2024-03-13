@@ -190,8 +190,7 @@ sex_df = tag_lh %>%
          prop_f_se = sqrt((prop_f * (1 - prop_f)) / (F + M)),
          prop_m_se = sqrt((prop_m * (1 - prop_m)) / (F + M))) %>%
   select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_sexed, everything()) %>%
-  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
-  adorn_totals("row",,,, -spawn_year)
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .)))
 
 # total age proportions by population
 age_df = tag_lh %>%
@@ -204,8 +203,7 @@ age_df = tag_lh %>%
   mutate(n_aged = select(., -(species:TRT_POPID)) %>% 
            rowSums) %>%
   select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_aged, everything()) %>%
-  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
-  adorn_totals("row",,,, -spawn_year)
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .)))
 
 # brood year proportions by population
 brood_df = tag_lh %>%
@@ -218,8 +216,7 @@ brood_df = tag_lh %>%
   mutate(n_aged = select(., -(species:TRT_POPID)) %>% 
            rowSums) %>%
   select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_aged, everything()) %>%
-  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
-  adorn_totals("row",,,, -spawn_year)
+  mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .)))
 
 # a- vs b-size proportions by population
 if(spc == "Steelhead") {
@@ -235,8 +232,7 @@ if(spc == "Steelhead") {
            prop_a_se = sqrt((prop_a * (1 - prop_a)) / (fl_a + fl_b)),
            prop_b_se = sqrt((prop_b * (1 - prop_b)) / (fl_a + fl_b))) %>%
     select(species, spawn_year, MPG, POP_NAME, TRT_POPID, n_measured, everything()) %>%
-    mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .))) %>%
-    adorn_totals("row",,,, -spawn_year)
+    mutate(across(c(MPG, POP_NAME, TRT_POPID), ~if_else(is.na(.), 'Not Observed', .)))
 }
 
 # folder to save life history results
