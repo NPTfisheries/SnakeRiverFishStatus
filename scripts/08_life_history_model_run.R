@@ -18,12 +18,12 @@ library(jagsUI)
 
 # set species and year
 spc = "Steelhead"
-yr = 2023
+yr = 2012
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
 age_folder = "output/age_results/"
-if(spc == "Steelhead") { size_folder = "output/size_results/"}
+if(spc == "Steelhead") { size_folder = "output/size_results/" }
 
 # file path where life history summaries are stored
 lh_folder = "output/life_history/"
@@ -65,7 +65,6 @@ mod_sex_df = read_excel(paste0(here(), "/", lh_folder, spc, "_SY", yr, "_lh_summ
 # pull out relevant bits for JAGS, and name them appropriately
 sex_jags_data = mod_sex_df %>%
   filter(TRT_POPID != "Not Observed") %>%
-  filter(species != "Total") %>%
   mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
   select(f = F,
          tags = n_sexed,
@@ -129,7 +128,6 @@ model {
   # pull out relevant bits for JAGS, and name them appropriately
   size_jags_data = mod_size_df %>%
     filter(TRT_POPID != "Not Observed") %>%
-    filter(species != "Total") %>%
     mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
     select(a = fl_a,
            tags = n_measured,
@@ -262,7 +260,6 @@ mod_age_df = read_excel(paste0(here(), "/", lh_folder, spc, "_SY", yr, "_lh_summ
 # pull out relevant bits for JAGS, and name them appropriately
 age_jags_data = mod_age_df %>%
   filter(TRT_POPID != "Not Observed") %>%
-  filter(species != "Total") %>%
   mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
   select(tags = n_aged,
          pop_num) %>%
