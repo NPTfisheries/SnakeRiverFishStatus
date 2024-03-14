@@ -33,7 +33,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 # start analysis
 # set species and spawn year
 spc = "Steelhead"
-yr = 2014
+yr = 2018
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
@@ -166,22 +166,6 @@ n.thin   = 10
 # n.iter   = 100
 # n.thin   = 10
 
-# run on a single core for testing
-# library(rjags)
-# dabom_output = jags.model(file = final_mod_file,
-#                           data = jags_data,
-#                           inits = init_fnc,
-#                           n.chains = n.chains,
-#                           n.adapt = n.adapt)
-
-# create capture history with tag codes for debugging
-# cap_hist = createDABOMcapHist(filter_ch = filter_ch,
-#                               parent_child = pc_nodes,
-#                               configuration = configuration,
-#                               split_matrices = F)
-# cap_hist[950, ] %>%
-#   select(where(~ any(. == 1)))
-
 # or run using parallel cores
 source(here("R/run_dabom_parallel_v2.R"))
 dabom_output = run_dabom_parallel_v2(model = final_mod_file,
@@ -195,6 +179,22 @@ dabom_output = run_dabom_parallel_v2(model = final_mod_file,
                                      thin = n.thin,
                                      filter_ch = filter_ch,
                                      filename = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
+
+# create capture history with tag codes for debugging
+# cap_hist = createDABOMcapHist(filter_ch = filter_ch,
+#                               parent_child = pc_nodes,
+#                               configuration = configuration,
+#                               split_matrices = F)
+# cap_hist[950, ] %>%
+#   select(where(~ any(. == 1)))
+
+# run on a single core for testing
+# library(rjags)
+# dabom_output = jags.model(file = final_mod_file,
+#                           data = jags_data,
+#                           inits = init_fnc,
+#                           n.chains = n.chains,
+#                           n.adapt = n.adapt)
 
 # save results to dabom_folder
 # save(dabom_output,
