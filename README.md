@@ -1,2 +1,2 @@
-# SnakeRiverPopStatus
-Snake River basin Chinook salmon and steelhead remote population monitoring.
+# SnakeRiverFishStatus
+Welcome to the `SnakeRiverFishStatus` repo!
