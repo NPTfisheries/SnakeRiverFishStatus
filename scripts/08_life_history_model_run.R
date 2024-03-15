@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: March 12, 2024
+#   Last Modified: March 15, 2024
 #
 # Notes: 
 
@@ -18,7 +18,7 @@ library(jagsUI)
 
 # set species and year
 spc = "Steelhead"
-yr = 2018
+yr = 2022
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"

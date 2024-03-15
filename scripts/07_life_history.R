@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: January 8, 2024
+#   Last Modified: March 15, 2024
 #
 # Notes: 
 
@@ -20,7 +20,7 @@ library(janitor)
 
 # set species and yr
 spc = "Steelhead"
-yr = 2018
+yr = 2022
 
 # load tag summaries from PITcleanr and used in the DABOM model
 load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
