@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: February 28, 2024
+#   Last Modified: March 15, 2024
 #
 # Notes: 
 
@@ -18,13 +18,14 @@ library(here)
 library(tidyverse)
 library(sf)
 library(DABOM)
+library(magrittr)
 
 # load configuration files
-load(here("data/configuration_files/site_config_LGR_20231117.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2023
 
 # set prefix
@@ -46,20 +47,20 @@ node_pops = configuration %>%
                       "latitude"),
            crs = 4326) %>%
   st_join(st_as_sf(sth_pop) %>%
-            select(sthd_DPS = ESU_DPS,
+            select(sthd_ESU_DPS = ESU_DPS,
                    sthd_MPG = MPG, 
                    sthd_POP_NAME = POP_NAME, 
                    sthd_TRT_POPID = TRT_POPID, 
                    sthd_GSI_Group = GSI_Group)) %>%
   st_join(st_as_sf(spsm_pop) %>%
-            select(chnk_ESU = ESU_DPS,
+            select(chnk_ESU_DPS = ESU_DPS,
                    chnk_MPG = MPG,
                    chnk_POP_NAME = POP_NAME,
                    chnk_TRT_POPID = TRT_POPID,
                    chnk_GSI_Group = GSI_Group)) %>%
   select(node, starts_with(spc_prefix)) %>%
   rename_with(~str_remove(., spc_prefix)) %>%
-  select(-ESU, -GSI_Group) %>%
+  select(-ESU_DPS, -GSI_Group) %>%
   distinct(node, .keep_all = TRUE) %>%
   mutate(site = str_remove(node, "_U|_D")) %>%
   left_join(node_branches) %>%
@@ -237,11 +238,12 @@ pop_escp_summ = pop_escp_post %>%
   arrange(MPG, TRT_POPID)
   
 #-----------------
-# sex and age estimates
+# sex, age, and size estimates
 
 # load sex and age model results
 load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
 load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
+if(spc == "Steelhead") { load(paste0(here(), "/output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
 
 # # tag life history summary
 tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
@@ -302,6 +304,23 @@ age_post = age_mod$sims.list$pi %>%
          age, 
          p = age_prop)
 
+# if steelhead, get posteriors of size proportions by pop
+size_post = size_mod$sims.list$p %>%
+  as_tibble(.name_repair = "universal") %>%
+  gather(key = "pop_num",
+         value = p) %>%
+  mutate(pop_num = as.integer(gsub("...", "", pop_num))) %>%
+  group_by(pop_num) %>%
+  mutate(iter = 1:n()) %>%
+  left_join(mod_size_df %>%
+              filter(TRT_POPID != "Not Observed") %>%
+              filter(species == spc) %>%
+              mutate(pop_num = size_jags_data$pop_num)) %>%
+  select(TRT_POPID,
+         pop_num,
+         iter,
+         p)
+
 # combine population abundance, sex, and age posteriors
 combined_post = pop_escp_post %>%
   group_by(TRT_POPID, iter, origin) %>%
@@ -313,7 +332,17 @@ combined_post = pop_escp_post %>%
   left_join(age_post %>%
               pivot_wider(names_from = age,
                           names_prefix = "p_",
-                          values_from = p)) %>%
+                          values_from = p))
+
+if(spc == "Steelhead") {
+  combined_post %<>%
+    left_join(size_post,
+              by = c("TRT_POPID", "pop_num", "iter")) %>%
+    rename(p_a = p) %>%
+    mutate(p_b = 1 - p_a)
+}
+  
+combined_post %<>%  
   mutate(across(starts_with("p_"), ~ . * N, .names = "N_{gsub('p_', '', .col)}")) %>%
   pivot_longer(cols = starts_with("p_") | starts_with("N_") | N,
                names_to = "param",
