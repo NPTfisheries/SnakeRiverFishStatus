@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   
+#   Last Modified: March 15, 2024
 #
 # Notes: 
 
@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 #-----------------
 # STADEM estimates
@@ -48,7 +48,7 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
   })
 
 # read df of which estimates are valid
-valid_est = read_csv(here("data/valid_trt_estimates.csv"))
+valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240315.csv"))
 
 # compile tag life history data
 tag_df = list.files(path = paste0(here(), "/output/life_history/"),
@@ -70,6 +70,30 @@ tag_df = list.files(path = paste0(here(), "/output/life_history/"),
             n_sexed = sum(GenSex %in% c("F", "M")),
             n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
             .groups = "drop")
+
+if(spc == "Steelhead"){
+  tag_df = list.files(path = paste0(here(), "/output/life_history/"),
+                      pattern = "\\.xlsx$",
+                      full.names = T) %>%
+    .[grepl(spc, .)] %>%
+    map_dfr(~ read_xlsx(.x, sheet = "tag_lh")) %>%
+    select(species,
+           spawn_yr = spawn_year,
+           TRT_POPID,
+           tag_code,
+           GenSex,
+           total_age,
+           a_or_b) %>%
+    filter(!is.na(TRT_POPID)) %>%
+    group_by(species,
+             spawn_yr,
+             TRT_POPID) %>%
+    summarize(n_tags = n_distinct(tag_code),
+              n_sexed = sum(GenSex %in% c("F", "M")),
+              n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
+              n_measured = sum(a_or_b %in% c("fl_a", "fl_b")),
+              .groups = "drop")  
+}
 
 #-----------------
 # population abundance
@@ -183,6 +207,56 @@ age_p_synth = dabom_synth %>%
          cv)
 
 #-----------------
+# if steelhead, population size abundance
+if(spc == "Steelhead") {
+  size_N_synth = dabom_synth %>%
+    filter(param %in% c("N_a", "N_b")) %>%
+    #filter(grepl("N_a|N_b", param)) %>%
+    left_join(valid_est,
+              by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
+    left_join(tag_df,
+              by = c("species", "spawn_yr", "TRT_POPID")) %>%
+    mutate(cv = sd / median) %>%
+    select(species,
+           spawn_yr,
+           MPG,
+           TRT_POPID,
+           param,
+           valid_est,
+           n_tags,
+           n_measured,
+           median,
+           lower95ci,
+           upper95ci,
+           mean,
+           mode,
+           sd,
+           cv,
+           notes)
+}
+
+#-----------------
+# if steelhead, population size proportions
+if(spc == "Steelhead") {
+  size_p_synth = dabom_synth %>%
+    filter(param %in% c("p_a", "p_b")) %>%
+    #filter(grepl("p_a|p_b", param)) %>%
+    mutate(cv = sd / median) %>%
+    select(species,
+           spawn_yr,
+           TRT_POPID,
+           param,
+           median,
+           lower95ci,
+           upper95ci,
+           mean,
+           mode,
+           sd,
+           cv)
+  
+}
+
+#-----------------
 # DABOM site escapement summaries
 site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summaries/"),
                           full.names = T) %>%
@@ -204,14 +278,29 @@ site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summa
          cv)
 
 # write all DABOM results to excel
-list("LGR_Esc" = stadem_synth,
-     "Pop_Tot_Esc" = N_synth,
-     "Pop_Sex_Esc" = sex_N_synth,
-     "Pop_Sex_Props" = sex_p_synth,
-     "Pop_Age_Esc" = age_N_synth,
-     "Pop_Age_Props" = age_p_synth,
-     "Node_Det_Probs" = detect_synth,
-     "Site_Esc" = site_N_synth) %>%
-  write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
-  
+if(spc == "Chinook") {
+  list("LGR_Esc" = stadem_synth,
+       "Pop_Tot_Esc" = N_synth,
+       "Pop_Sex_Esc" = sex_N_synth,
+       "Pop_Sex_Props" = sex_p_synth,
+       "Pop_Age_Esc" = age_N_synth,
+       "Pop_Age_Props" = age_p_synth,
+       "Node_Det_Probs" = detect_synth,
+       "Site_Esc" = site_N_synth) %>%
+    write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
+}
+if(spc == "Steelhead") {
+  list("LGR_Esc" = stadem_synth,
+       "Pop_Tot_Esc" = N_synth,
+       "Pop_Sex_Esc" = sex_N_synth,
+       "Pop_Sex_Props" = sex_p_synth,
+       "Pop_Age_Esc" = age_N_synth,
+       "Pop_Age_Props" = age_p_synth,
+       "Pop_Size_Esc" = size_N_synth,
+       "Pop_Size_Props" = size_p_synth,
+       "Node_Det_Probs" = detect_synth,
+       "Site_Esc" = site_N_synth) %>%
+    write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
+}
+
 ### END SCRIPT, FOR NOW
