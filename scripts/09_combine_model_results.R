@@ -305,23 +305,25 @@ age_post = age_mod$sims.list$pi %>%
          p = age_prop)
 
 # if steelhead, get posteriors of size proportions by pop
-size_post = size_mod$sims.list$p %>%
-  as_tibble(.name_repair = "universal") %>%
-  gather(key = "pop_num",
-         value = p) %>%
-  mutate(pop_num = as.integer(gsub("...", "", pop_num))) %>%
-  group_by(pop_num) %>%
-  mutate(iter = 1:n()) %>%
-  left_join(mod_size_df %>%
-              filter(TRT_POPID != "Not Observed") %>%
-              filter(species == spc) %>%
-              mutate(pop_num = size_jags_data$pop_num)) %>%
-  select(TRT_POPID,
-         pop_num,
-         iter,
-         p)
+if(spc == "Steelhead") {
+  size_post = size_mod$sims.list$p %>%
+    as_tibble(.name_repair = "universal") %>%
+    gather(key = "pop_num",
+           value = p) %>%
+    mutate(pop_num = as.integer(gsub("...", "", pop_num))) %>%
+    group_by(pop_num) %>%
+    mutate(iter = 1:n()) %>%
+    left_join(mod_size_df %>%
+                filter(TRT_POPID != "Not Observed") %>%
+                filter(species == spc) %>%
+                mutate(pop_num = size_jags_data$pop_num)) %>%
+    select(TRT_POPID,
+           pop_num,
+           iter,
+           p)
+}
 
-# combine population abundance, sex, and age posteriors
+# combine population abundance, sex, age, and size posteriors
 combined_post = pop_escp_post %>%
   group_by(TRT_POPID, iter, origin) %>%
   summarise(N = mean(abund)) %>%
