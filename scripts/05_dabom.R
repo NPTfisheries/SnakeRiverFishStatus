@@ -32,7 +32,7 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 #--------------------
 # start analysis
 # set species and spawn year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2018
 
 if(spc == "Chinook")   { spc_code = 1 }
@@ -149,7 +149,6 @@ if(time_varying) {
 } # end if time_varying
 
 # tell JAGS which parameters in the model that it should save
-# test_mod_file = here(paste0("model_files/lgr_dabom_jags_", spc, "_SY", yr, "_test.txt"))
 jags_params = setSavedParams(model_file = final_mod_file)
 
 # set mcmc parameters (full run)
