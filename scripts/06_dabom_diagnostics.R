@@ -3,7 +3,7 @@
 # Purpose: Diagnostics for DABOM MCMC runs
 # 
 # Created Date: October 7, 2019
-#   Last Modified: January 8, 2024
+#   Last Modified: March 20, 2024
 #
 # Notes: postpack package can be installed by typing "devtools::install_github("bstaton1/postpack")"
 
@@ -15,7 +15,7 @@ library(tidyverse)
 library(here)
 
 # set species and year
-spc = c("Chinook", "Steelhead")[1]
+spc = c("Chinook", "Steelhead")[2]
 yr = 2023
 
 # where are the dabom results stored?
@@ -35,8 +35,8 @@ det_prob_summ = post_summ(my_mod, params = "_p$") %>%
   t() %>%
   as_tibble(rownames = "param")
 
-# transition probability (_phi) summary statistics. Is this correct?
-trans_prob_summ = post_summ(my_mod, params = "^phi_") %>%
+# transition probability (phi_ or psi_) summary statistics. Is this correct?
+trans_prob_summ = post_summ(my_mod, params = "^phi_|^psi_") %>%
   t() %>%
   as_tibble(rownames = "param")
 
@@ -53,7 +53,8 @@ rhat_df = rhat(my_mcmcr,
   mutate(type = if_else(grepl("_p$", parameter),
                         "Detection",
                         if_else(grepl("^p_pop", parameter) | 
-                                  grepl("^phi", parameter),
+                                  grepl("^phi", parameter) |
+                                  grepl("^psi", parameter),
                                 "Movement",
                                 "Other")))
 
@@ -81,27 +82,23 @@ param_chk = convg_df %>%
   filter(parameter != "psi_LGR") %>%
   pull(parameter)
 
-# use character vector of different parameters here if you want
-param_chk = "WEN_D_p"
-param_chk = c("WEN_D_p", "WEN_U_p")
-
 # diagnostic plots with postpack package
 diag_plots(post = my_mod,
            p = param_chk)
+
+# examples to look at different parameters
+# param_chk = "_p$"              # detection probs
+# param_chk = "^phi_|^psi"       # transition probs
+# param_chk = c("JOSEPC", "JOC")
+# 
+# diag_plots(post = my_mod,
+#            p = param_chk)
 
 # example to save plots
 # diag_plots(post = my_mod,
 #            p = param_chk,
 #            save = T,
 #            file = paste0(here("output/figures/mcmc_diagnostic_plots/SY"), yr, "_", spc, "_diagnostic_plots.pdf"))
-
-# family name of parameters to plot diagnostics for
-param_fam = "_p$"         # detection probs
-param_fam = "^phi_"        # transition probs
-param_fam = c("JOSEPC", "JOC")
-
-diag_plots(my_mod,
-           param_fam)
 
 #-----------------
 # other diagnostic plots with ggmcmc
