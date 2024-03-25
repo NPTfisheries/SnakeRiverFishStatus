@@ -51,22 +51,22 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       #"NCLMA" = NA,
       # Dry Clearwater MPG
       "SCUMA" = "SC1",
-      "SCLAW" = c("SIX", "LAW", "CLC"),
-      "CRLAP" = c("LAP", "JA1"),
+      "SCLAW" = c("SIX", "LAW", "CLC"),  
+      "CRLAP" = c("LAP", "JA1"),           # add BED in SY2024
       "CRPOT" = "JUL",
       # Grande Ronde / Imnaha MPG
-      "IRMAI" = c("COC", "IR1_bb", "IR3"),
-      "IRBSH" = c("CMP", "LSC", "BSC"),
+      "IRMAI" = c("COC", "IR1_bb", "IR2_bb", "IR3"), # COC is not operated for Chinook, but keeping here for record keeping and bc it is all 0s
+      "IRBSH" = c("CMP", "LSC", "BSC"), # CMP and LSC are not operated for Chinook, but keeping here for record keeping and because they are all 0s
       "GRUMA" = "UGS",
-      "GRCAT" = "CCU", # should this instead just be "CATHEW"?
+      "GRCAT" = "CCU",
+      "GRLOS" = c("WR1_bb", "WR2"),
       "GRMIN" = "MR1",
-      "GRLOS" = "WR2",
       "GRLOO" = "LGW",
       "GRWEN" = "WEN",
       "Joseph"= "JOC",
       # Lower Snake MPG
-      "SNASO" = c("ACM", "ALMOTC", "ALPOWC", "TENMC2"),
-      "SNTUC" = c("LTR", "PWA")
+      "SNASO" = "ACM",
+      "SNTUC" = "LTR"
       ) %>%
       stack() %>%
       as_tibble() %>%
@@ -79,12 +79,12 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       # Salmon River MPG
       "SRUMA-s" = c("YFK", "VC2", "RFL", "STL"),
       "SREFS-s" = c("USI_bb", "SALEFT"),
-      "SRPAH-s" = "PAHH",
+      "SRPAH-s" = c("USE_bb", "PAHH"),
       "SRLEM-s" = c("CRC", "LLR"),
       "SRNFS-s" = "NFS",
       "SRPAN-s" = "PCA",
       #"SRCHA-s" = NA,
-      "MFUMA-s" = c("BRC", "MAR"),
+      "MFUMA-s" = c("BRC", "MAR"), # BRC is only operated for Chinook, but keeping it here for record-keeping and all estimates to BRC are 0.
       "MFBIG-s" = "TAY",
       "SFMAI-s" = c("SFG_bb", "KRS", "ESS"),
       "SFSEC-s" = "ZEN",
@@ -95,7 +95,7 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       "CRLOC-s" = "LRL",
       "CRLOL-s" = "LC1",
       #"CRNFC-s" = NA,
-      "CRLMA-s" = c("JUL", "LAP", "JA1", "SIX", "LAW", "CLC"),
+      "CRLMA-s" = c("JUL", "LAP", "JA1", "SIX", "LAW", "CLC"), # add BED in SY2024
       # Hells Canyon MPG
       #"SNHCT-s" = NA,
       # Imnaha River MPG
