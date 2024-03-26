@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 #-----------------
 # STADEM estimates
