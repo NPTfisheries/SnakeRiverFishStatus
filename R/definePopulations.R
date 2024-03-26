@@ -61,6 +61,7 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       "GRCAT" = "CCU",
       "GRLOS" = c("WR1_bb", "WR2"),
       "GRMIN" = "MR1",
+      "GRLOS/GRMIN" = "WR1",
       "GRLOO" = "LGW",
       "GRWEN" = "WEN",
       "Joseph"= "JOC",

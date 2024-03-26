@@ -25,7 +25,7 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2023
 
 # set prefix
@@ -161,18 +161,18 @@ main_post = compileTransProbs(trans_post = trans_post,
                               time_vary_param_nm = "strata_num") # column containing time-varying strata
 
 # plot time-varying posteriors for a single site
-# main_site = "SFG"
-# main_post %>%
-#   filter(param == main_site) %>%
-#   mutate(chain = as.character(chain)) %>%
-#   group_by(param, chain, strata_num) %>%
-#   mutate(iter = 1:n()) %>%
-#   ggplot() +
-#   geom_line(aes(x = iter,
-#                 y = value,
-#                 color = chain)) +
-#   facet_wrap(~ strata_num) +
-#   labs(title = paste0("SY", yr, " ", spc, " ", main_site))
+main_site = "LLR"
+main_post %>%
+  filter(param == main_site) %>%
+  mutate(chain = as.character(chain)) %>%
+  group_by(param, chain, strata_num) %>%
+  mutate(iter = 1:n()) %>%
+  ggplot() +
+  geom_line(aes(x = iter,
+                y = value,
+                color = chain)) +
+  facet_wrap(~ strata_num) +
+  labs(title = paste0("SY", yr, " ", spc, " ", main_site))
 
 # escapement to each main branch across entire season
 main_escp_post = calcAbundPost(move_post = main_post,
