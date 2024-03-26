@@ -798,13 +798,13 @@ spawn_yr,species,MPG,TRT,valid_est,notes
 2023,Steelhead,Lower Snake,SNASO-s,1,"ACM site lost connection to 5 of 6 antennas on 4/30/2023; however, still had detections afterwards including upstream to estimate detection probabilities."
 2023,Steelhead,Lower Snake,SNTUC-s,0,Population located downstream of LGR; not a valid abundance estimate.
 2023,Steelhead,Salmon River,MFBIG-s,1,
-2023,Steelhead,Salmon River,MFUMA-s,1,
+2023,Steelhead,Salmon River,MFUMA-s,1,Abundance estimate reflects estimate from MAR.
 2023,Steelhead,Salmon River,SFMAI-s,1,
 2023,Steelhead,Salmon River,SFSEC-s,1,
-2023,Steelhead,Salmon River,SREFS-s,0,SALEFT changed names to SALWEF.  No recaptures reported in 2023.  Should we contact the Hatchery?
+2023,Steelhead,Salmon River,SREFS-s,1,"Estimate reflects USI_bb i.e., abundance upstream not detected in tributaries (e.g., PAHH, YFK, VC2, RFL, STL)."
 2023,Steelhead,Salmon River,SRLEM-s,1,
-2023,Steelhead,Salmon River,SRLSR-s,1,WB1 was not operated in 2023.  RAPH is still valid
+2023,Steelhead,Salmon River,SRLSR-s,1,Estimate reflects abundance to RAPH.
 2023,Steelhead,Salmon River,SRNFS-s,1,
-2023,Steelhead,Salmon River,SRPAH-s,1,
+2023,Steelhead,Salmon River,SRPAH-s,1,"Estimate includes USE_bb i.e., locations between USI and USE."
 2023,Steelhead,Salmon River,SRPAN-s,1,
 2023,Steelhead,Salmon River,SRUMA-s,1,

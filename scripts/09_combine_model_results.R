@@ -25,8 +25,8 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Steelhead"
-yr = 2023
+spc = "Chinook"
+yr = 2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
