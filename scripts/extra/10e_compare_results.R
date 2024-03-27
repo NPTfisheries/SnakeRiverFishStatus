@@ -12,20 +12,19 @@
 rm(list = ls())
 
 # load necessary libraries
-# library(here)
-# library(tidyverse)
-# library(readxl)
-# library(writexl)
+library(here)
+library(tidyverse)
+library(readxl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 # read in MA results
-ma_results = read_xlsx(path = paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_2024-02-28.xlsx"),
+ma_results = read_xlsx(path = paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_2024-03-26.xlsx"),
                        sheet = "Pop_Tot_Esc")
 
 # read in RK results
-rk_results = read_xlsx(path = "C:/Git/SnakeBasinFishStatus/Abundance_results/LGR_AllSummaries_Chinook.xlsx",
+rk_results = read_xlsx(path = "C:/Git/SnakeBasinFishStatus/Abundance_results/LGR_AllSummaries_Steelhead.xlsx",
                        sheet = "Pop Total Esc")
 
 # compile results to compare
