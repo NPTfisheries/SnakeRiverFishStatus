@@ -38,8 +38,7 @@ abundance estimates. Synthesized results including site abundance and
 detection probabilities and population abundances including parsed by
 sex, age, and size can be found
 [here](https://github.com/NPTfisheries/SnakeRiverFishStatus/tree/main/output/syntheses),
-but please see the [Disclaimer](##%20Disclaimer) before accessing
-results.
+but please see the [Disclaimer](#disclaimer) before accessing results.
 
 ## Disclaimer
 
