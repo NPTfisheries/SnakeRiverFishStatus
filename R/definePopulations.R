@@ -23,7 +23,7 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       "SRVAL" = "VC2",
       "SRYFS" = "YFK",
       "SREFS" = "SALEFT",
-      "SRLMA" = "USI_bb",
+      "SRLMA" = c("USE_bb", "USI_bb"),
       "SRPAH" = "PAHH",
       "SRLEM" = c("CRC", "LLR"),
       "SRNFS" = "NFS",

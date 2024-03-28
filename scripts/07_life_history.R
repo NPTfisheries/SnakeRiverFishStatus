@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
@@ -58,8 +58,18 @@ if(spc == "Steelhead") { spc_prefix = "sthd_" }
 
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
 if(spc == "Chinook") {
-  # need to still do this
-}
+  site_pops %<>%
+    select(spawn_site = site_code, paste0(spc_prefix, "TRT_POPID")) %>%
+    mutate(chnk_TRT_POPID = case_when(
+      spawn_site %in% c("SC1", "SC2") ~ "SCUMA",
+      spawn_site %in% c("IR1", "IR2") ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
+      spawn_site %in% "JOC"           ~ "Joseph",
+      TRUE ~ chnk_TRT_POPID
+    )) %>%
+    left_join(spsm_pop %>%
+                select(MPG, POP_NAME, chnk_TRT_POPID = TRT_POPID) %>%
+                st_drop_geometry())
+} # end Chinook fixes
 if(spc == "Steelhead") {
   site_pops %<>% 
     select(spawn_site = site_code, paste0(spc_prefix, "TRT_POPID")) %>%
@@ -74,7 +84,7 @@ if(spc == "Steelhead") {
     left_join(sth_pop %>%
                 select(MPG, POP_NAME, sthd_TRT_POPID = TRT_POPID) %>%
                 st_drop_geometry())
-}
+} # end steelhead fixes
 rm(sth_pop, spsm_pop)
 
 # estimate final spawning location
