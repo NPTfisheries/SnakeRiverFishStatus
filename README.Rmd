@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+# SnakeRiverFishStatus <a href='https://github.com/NPTfisheries/SnakeRiverFishStatus'><img src='DFRM.png' align="right" width="110" /></a>
+
 ## Description
 
 Welcome to the `SnakeRiverFishStatus` repo! Test.
