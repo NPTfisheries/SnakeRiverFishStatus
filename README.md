@@ -36,6 +36,11 @@ sites and populations. Finally, sex, age, and size information from
 adults sampled at LGR and detected within populations are used to parse
 abundance estimates.
 
+## Disclaimer
+
+Please contact the primary maintainer of this repo, Mike Ackerman,
+before using any data or reporting or distributing any results.
+
 ## Authors
 
 The `SnakeRiverFishStatus` is a collaborative project, with the primary
@@ -50,3 +55,10 @@ contributors being:
 ### Licenses
 
 See the [LICENSE](LICENSE) file.
+
+## Questions
+
+Please feel free to post an issue to this repository
+[here](https://github.com/NPTfisheries/SnakeRiverFishStatus/issues) with
+any questions, feature requests, errors in documentation, etc. and we
+will reply at our earliest convenience.
