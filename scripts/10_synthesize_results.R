@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: March 15, 2024
+#   Last Modified: March 28, 2024
 #
 # Notes: 
 
@@ -51,26 +51,27 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
 valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240315.csv"))
 
 # compile tag life history data
-tag_df = list.files(path = paste0(here(), "/output/life_history/"),
-                          pattern = "\\.xlsx$",
-                          full.names = T) %>%
-  .[grepl(spc, .)] %>%
-  map_dfr(~ read_xlsx(.x, sheet = "tag_lh")) %>%
-  select(species,
-         spawn_yr = spawn_year,
-         TRT_POPID,
-         tag_code,
-         GenSex,
-         total_age) %>%
-  filter(!is.na(TRT_POPID)) %>%
-  group_by(species,
-           spawn_yr,
-           TRT_POPID) %>%
-  summarize(n_tags = n_distinct(tag_code),
-            n_sexed = sum(GenSex %in% c("F", "M")),
-            n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
-            .groups = "drop")
-
+if(spc == "Chinook"){
+  tag_df = list.files(path = paste0(here(), "/output/life_history/"),
+                      pattern = "\\.xlsx$",
+                      full.names = T) %>%
+    .[grepl(spc, .)] %>%
+    map_dfr(~ read_xlsx(.x, sheet = "tag_lh")) %>%
+    select(species,
+           spawn_yr = spawn_year,
+           TRT_POPID,
+           tag_code,
+           GenSex,
+           total_age) %>%
+    filter(!is.na(TRT_POPID)) %>%
+    group_by(species,
+             spawn_yr,
+             TRT_POPID) %>%
+    summarize(n_tags = n_distinct(tag_code),
+              n_sexed = sum(GenSex %in% c("F", "M")),
+              n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
+              .groups = "drop")
+}
 if(spc == "Steelhead"){
   tag_df = list.files(path = paste0(here(), "/output/life_history/"),
                       pattern = "\\.xlsx$",
