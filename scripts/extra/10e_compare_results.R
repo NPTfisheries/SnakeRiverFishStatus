@@ -17,14 +17,14 @@ library(tidyverse)
 library(readxl)
 
 # set species
-spc = "Steelhead"
+# spc = "Steelhead"
 
 # read in latest SnakeRiverFishStatus results
-date_chnk = "2024-03-26"
+date_chnk = "2024-03-29"
 date_sthd = "2024-03-26"
 sr_chnk = read_xlsx(path = paste0(here(), "/output/syntheses/LGR_Chinook_all_summaries_", date_chnk, ".xlsx"),
                     sheet = "Pop_Tot_Esc")
-sr_sthd = read_xlsx(path = paste0(here(), "/output/syntheses/LGR_Steelhead_all_summaries_", date_chnk, ".xlsx"),
+sr_sthd = read_xlsx(path = paste0(here(), "/output/syntheses/LGR_Steelhead_all_summaries_", date_sthd, ".xlsx"),
                     sheet = "Pop_Tot_Esc")
 
 # read in SnakeBasinFishStatus results
@@ -50,8 +50,8 @@ pop_esc_df = rbind(sr_chnk, sr_sthd) %>%
 
 # comparison plot
 pop_esc_p = pop_esc_df %>%
-  ggplot(aes(x = sr_est,
-             y = sb_est,
+  ggplot(aes(x = sb_est,
+             y = sr_est,
              color = TRT_POPID)) +
   geom_point(shape = 19,
              size = 3) +
@@ -60,9 +60,16 @@ pop_esc_p = pop_esc_df %>%
               linetype = "dashed") +
   facet_wrap(~species) +
   scale_color_discrete(name = "TRT_POPID") +
-  labs(x = "RK Estimate",
-       y = "MA Estimate") +
-  theme_classic() 
+  labs(x = "Previous Estimate",
+       y = "Updated Estimate") +
+  theme_classic() +
+  theme(legend.position = "bottom")
 pop_esc_p
+
+# save the plot
+ggsave(here("output/figures/population_abundance_comparisons.png"),
+       width = 14,
+       height = 9,
+       units = "in")
 
 ### END SCRIPT
