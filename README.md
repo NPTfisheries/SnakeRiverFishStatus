@@ -60,10 +60,11 @@ contributors being:
 
 The project relies on data, hard work, and discussions from many
 collaborators and we’d like to thank our colleagues at Biomark, Inc.,
-Columbia River Inter-Tribal Fish Commission, Idaho Department of Fish
-and Game, National Oceanic and Atmospheric Administration, Oregon
-Department of Fish and Wildlife, Shoshone-Bannock Tribes Fish and
-Wildlife Department, and Washington Department of Fish and Wildlife.
+Columbia River Inter-Tribal Fish Commission, Confederated Tribes of the
+Umatilla Indian Reservation, Idaho Department of Fish and Game, National
+Oceanic and Atmospheric Administration, Oregon Department of Fish and
+Wildlife, Shoshone-Bannock Tribes Fish and Wildlife Department, and
+Washington Department of Fish and Wildlife.
 
 ### Licenses
 
