@@ -26,7 +26,7 @@ load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
-yr = 2023
+yr = 2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -161,18 +161,18 @@ main_post = compileTransProbs(trans_post = trans_post,
                               time_vary_param_nm = "strata_num") # column containing time-varying strata
 
 # plot time-varying posteriors for a single site
-main_site = "LLR"
-main_post %>%
-  filter(param == main_site) %>%
-  mutate(chain = as.character(chain)) %>%
-  group_by(param, chain, strata_num) %>%
-  mutate(iter = 1:n()) %>%
-  ggplot() +
-  geom_line(aes(x = iter,
-                y = value,
-                color = chain)) +
-  facet_wrap(~ strata_num) +
-  labs(title = paste0("SY", yr, " ", spc, " ", main_site))
+# main_site = "LLR"
+# main_post %>%
+#   filter(param == main_site) %>%
+#   mutate(chain = as.character(chain)) %>%
+#   group_by(param, chain, strata_num) %>%
+#   mutate(iter = 1:n()) %>%
+#   ggplot() +
+#   geom_line(aes(x = iter,
+#                 y = value,
+#                 color = chain)) +
+#   facet_wrap(~ strata_num) +
+#   labs(title = paste0("SY", yr, " ", spc, " ", main_site))
 
 # escapement to each main branch across entire season
 main_escp_post = calcAbundPost(move_post = main_post,
@@ -329,12 +329,15 @@ combined_post = pop_escp_post %>%
   summarise(N = mean(abund)) %>%
   left_join(sex_post,
             by = c("TRT_POPID", "iter")) %>%
+  select(-pop_num) %>%
   rename(p_fem = p) %>%
   mutate(p_male = 1 - p_fem) %>%
   left_join(age_post %>%
               pivot_wider(names_from = age,
                           names_prefix = "p_",
-                          values_from = p))
+                          values_from = p),
+            by = c("TRT_POPID", "iter")) %>%
+  select(-pop_num)
 
 if(spc == "Steelhead") {
   combined_post %<>%

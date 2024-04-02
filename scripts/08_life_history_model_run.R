@@ -18,7 +18,7 @@ library(jagsUI)
 
 # set species and year
 spc = "Chinook"
-yr = 2023
+yr = 2014
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
