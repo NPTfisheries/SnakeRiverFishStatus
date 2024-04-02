@@ -25,8 +25,8 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Chinook"
-yr = 2010
+spc = "Steelhead"
+yr = 2023
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -342,7 +342,7 @@ combined_post = pop_escp_post %>%
 if(spc == "Steelhead") {
   combined_post %<>%
     left_join(size_post,
-              by = c("TRT_POPID", "pop_num", "iter")) %>%
+              by = c("TRT_POPID", "iter")) %>%
     rename(p_a = p) %>%
     mutate(p_b = 1 - p_a)
 }
