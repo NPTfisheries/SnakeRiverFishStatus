@@ -1,6 +1,6 @@
-#' @title Define Population Groups - LGD
+#' @title Define Population Groups - LGR
 #'
-#' @description Define which main branches or detection sites fall into TRT populations.
+#' @description Define which main branches or detection sites are summed for TRT populations.
 #'
 #' @author Ryan Kinzer and Mike Ackerman
 #'

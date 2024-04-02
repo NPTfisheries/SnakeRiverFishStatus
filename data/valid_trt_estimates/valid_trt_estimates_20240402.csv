@@ -451,7 +451,7 @@ spawn_yr,species,MPG,TRT,valid_est,notes
 2022,Chinook,Wet Clearwater,CRLOL,1,
 2022,Chinook,Wet Clearwater,SEUMA/SEMEA/SEMOO,0,Didn't operate well
 2022,Chinook,,Joseph,0,
-2023,Chinook,Dry Clearwater,CRLAP,1,
+2023,Chinook,Dry Clearwater,CRLAP,1,JA1 operated for steelhead; 0 Chinook detections at LAP.
 2023,Chinook,Dry Clearwater,CRPOT,0,JUL is decommissioned and other sites in Potlatch are largely operated for steelhead.
 2023,Chinook,Dry Clearwater,SCLAW,0,CLC is decommissioned and SIX and LAW are seasonal IPTDS for steelhead.
 2023,Chinook,Dry Clearwater,SCUMA,1,
@@ -461,9 +461,9 @@ spawn_yr,species,MPG,TRT,valid_est,notes
 2023,Chinook,Grande Ronde/Imnaha,GRLOS/GRMIN,1,
 2023,Chinook,Grande Ronde/Imnaha,GRMIN,1,
 2023,Chinook,Grande Ronde/Imnaha,GRUMA,0,UGS site not in operation.
-2023,Chinook,Grande Ronde/Imnaha,GRWEN,1,
-2023,Chinook,Grande Ronde/Imnaha,IRBSH,1,
-2023,Chinook,Grande Ronde/Imnaha,IRMAI,1,
+2023,Chinook,Grande Ronde/Imnaha,GRWEN,0,Only 7 detections at WEN; detection probability paramaters for WEN_D and WEN_U did not converge in DABOM model run.
+2023,Chinook,Grande Ronde/Imnaha,IRBSH,1,Reflects abundance past BSC; CMP and LSC are not operated for Chinook.
+2023,Chinook,Grande Ronde/Imnaha,IRMAI,1,"Abundance includes IR2_bb, which can include some escapement into IRBSH not past BSC."
 2023,Chinook,Lower Snake,SNASO,1,ACM site near the mouth of Asotin Creek lost connection to 5 of 6 antennas 4/30/2023
 2023,Chinook,Lower Snake,SNTUC,0,Population located downstream of LGR; not a valid abundance estimate.
 2023,Chinook,Middle Fork Salmon,MFBEA,1,
@@ -472,20 +472,20 @@ spawn_yr,species,MPG,TRT,valid_est,notes
 2023,Chinook,South Fork Salmon River,SFEFS,1,
 2023,Chinook,South Fork Salmon River,SFSEC,1,
 2023,Chinook,South Fork Salmon River,SFSMA,1,
-2023,Chinook,South Fork Salmon River,SRLSR,1,WB1 was not operated in 2023.  RAPH is still valid
-2023,Chinook,Upper Salmon,SREFS,0,SALEFT changed names to SALWEF.  No recaptures reported in 2023.  Should we contact the Hatchery?
+2023,Chinook,South Fork Salmon River,SRLSR,1,"WB1 was not operated in 2023.  RAPH is valid, but based on only a single detection."
+2023,Chinook,Upper Salmon,SREFS,1,No recaptures reported for SALEFT or SALREF in 2023.
 2023,Chinook,Upper Salmon,SRLEM,1,LRW last detection was August 19.  Limited Chinook detections.
-2023,Chinook,Upper Salmon,SRLMA,0,USI site was down in 2023
+2023,Chinook,Upper Salmon,SRLMA,0,USI not operated in 2023.
 2023,Chinook,Upper Salmon,SRNFS,1,
 2023,Chinook,Upper Salmon,SRPAH,1,
 2023,Chinook,Upper Salmon,SRPAN,1,
 2023,Chinook,Upper Salmon,SRUMA,1,
 2023,Chinook,Upper Salmon,SRVAL,1,
-2023,Chinook,Upper Salmon,SRYFS,1,YFK site down 6/28 through 7/6.  Likely missed a few detections.
+2023,Chinook,Upper Salmon,SRYFS,1,YFK site down June 28 through July 6.
 2023,Chinook,Wet Clearwater,CRLOC,1,
 2023,Chinook,Wet Clearwater,CRLOL,1,
 2023,Chinook,Wet Clearwater,SEUMA/SEMEA/SEMOO,1,
-2023,Chinook,,Joseph,0,
+2023,Chinook,,Joseph,1,Based on a single detection.
 2010,Steelhead,Clearwater,CRLMA-s,1,
 2010,Steelhead,Clearwater,CRLOC-s,0,
 2010,Steelhead,Clearwater,CRLOL-s,0,

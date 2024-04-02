@@ -15,7 +15,7 @@ library(tidyverse)
 library(here)
 
 # set species and year
-spc = c("Chinook", "Steelhead")[2]
+spc = c("Chinook", "Steelhead")[1]
 yr = 2023
 
 # where are the dabom results stored?
