@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 #-----------------
 # STADEM estimates
@@ -48,7 +48,7 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
   })
 
 # read df of which estimates are valid
-valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240315.csv"))
+valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240402.csv"))
 
 # compile tag life history data
 if(spc == "Chinook"){
