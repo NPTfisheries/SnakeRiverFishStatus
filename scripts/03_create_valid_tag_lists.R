@@ -26,7 +26,7 @@ trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
 
 # set species and spawn year
 spc = "Steelhead"
-yr  = 2023
+yr  = 2024
 
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Steelhead") { spc_code = 3 }
