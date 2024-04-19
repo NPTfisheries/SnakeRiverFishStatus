@@ -51,7 +51,7 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       #"NCLMA" = NA,
       # Dry Clearwater MPG
       "SCUMA" = "SC1",
-      "SCLAW" = c("SIX", "LAW", "CLC"),  
+      "SCLAW" = c("SIX", "LAW", "CLC"), 
       "CRLAP" = c("LAP", "JA1"),           # add BED in SY2024
       "CRPOT" = "JUL",
       # Grande Ronde / Imnaha MPG
@@ -79,8 +79,10 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
     report_df = list(
       # Salmon River MPG
       "SRUMA-s" = c("YFK", "VC2", "RFL", "STL"),
-      "SREFS-s" = c("USI_bb", "SALEFT"),
-      "SRPAH-s" = c("USE_bb", "PAHH"),
+      #"SREFS-s" = c("USI_bb", "SALEFT"),
+      "SREFS-s" = "SALEFT",
+      #"SRPAH-s" = c("USE_bb", "PAHH"),
+      "SRPAH-s" = "PAHH",
       "SRLEM-s" = c("CRC", "LLR"),
       "SRNFS-s" = "NFS",
       "SRPAN-s" = "PCA",
