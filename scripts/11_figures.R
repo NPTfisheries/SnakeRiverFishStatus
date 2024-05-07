@@ -105,3 +105,7 @@ trt_chnk_p = trt_chnk_df %>%
        y = "Population Escapement") +
   theme_bw() 
 trt_chnk_p
+
+# save .png
+ggsave(here("output/figures/trt_escapements/trt_chnk_escapement.png"))
+
