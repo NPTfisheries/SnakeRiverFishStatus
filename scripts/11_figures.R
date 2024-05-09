@@ -267,4 +267,8 @@ trt_sthd_age_p
 # save .png
 ggsave(here("output/figures/age_proportions/trt_sthd_total_age_proportions.png"))
 
+#--------------------------------
+# TRT Population Saltware Age and Size Proportions (steelhead only)
+
+
 ### END SCRIPT
