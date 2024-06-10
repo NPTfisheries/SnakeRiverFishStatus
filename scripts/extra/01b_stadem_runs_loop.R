@@ -13,7 +13,8 @@ rm(list = ls())
 
 # install STADEM from GitHub, if not already available
 if(!require(STADEM)) {
-  remotes::install_github("KevinSee/STADEM", build_vignettes = T)
+  remotes::install_github("mackerman44/STADEM", ref = "npt_coho")
+  #remotes::install_github("KevinSee/STADEM", build_vignettes = T)
 }
 
 # load packages
@@ -33,21 +34,23 @@ if(!dir.exists(modelFolder)) {
 }
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2023-06-20.csv"))
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
 
 # set species and spawn years
-species = c("Chinook", "Steelhead")
+species = c("Chinook", "Steelhead", "Coho")
 
 # loop over species
 for(spc in species) {
   
   # set years
-  if(spc == "Chinook")   { years = c(2010:2019, 2021:2022) }
-  if(spc == "Steelhead") { years = 2010:2022 }
+  if(spc == "Chinook")   { years = c(2010:2019, 2021:2023) }
+  if(spc == "Steelhead") { years = 2010:2023 }
+  if(spc == "Coho")      { years = 2010:2023 }
   
-  # for Chinook, include jacks
+  # for Chinook and coho, include jacks
   if(spc == "Chinook")   { incl_jacks = TRUE  } 
   if(spc == "Steelhead") { incl_jacks = FALSE }
+  if(spc == "Coho")      { incl_jacks = TRUE  } 
   
   # start year loop
   for(yr in years) {
@@ -60,6 +63,10 @@ for(spc in species) {
     if(spc == "Steelhead") {
       start_date = paste0(yr-1, "0701")
       end_date = paste0(yr, "0630")
+    }
+    if(spc == "Coho") { # it appears August 7 (2017) is the earliest date a coho has been observed at the window
+      start_date = paste0(yr, "0801")
+      end_date = paste0(yr, "1231")
     }
     
     # compile data

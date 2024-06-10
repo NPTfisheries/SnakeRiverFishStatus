@@ -12,6 +12,7 @@ rm(list = ls())
 
 # install STADEM from GitHub, if not already available
 remotes::install_github("mackerman44/STADEM", ref = "npt_coho")
+#remotes::install_github("KevinSee/STADEM", ref = "main")
 
 # load packages
 library(tidyverse)
