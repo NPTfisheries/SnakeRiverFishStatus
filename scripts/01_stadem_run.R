@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: June 21, 2023
+#   Last Modified: June 10, 2024
 #
 # Notes:
 
@@ -11,7 +11,7 @@
 rm(list = ls())
 
 # install STADEM from GitHub, if not already available
-# remotes::install_github("KevinSee/STADEM", ref = "develop")
+remotes::install_github("mackerman44/STADEM", ref = "npt_coho")
 
 # load packages
 library(tidyverse)
@@ -33,12 +33,13 @@ if(!dir.exists(modelFolder)) {
 LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
 
 # run only a single species x year at a time
-spc = "Chinook"
-yr = 2020
+spc = "Coho"
+yr = 2023
 
-# for Chinook, include jacks
-if(spc == "Chinook")   { incl_jacks = TRUE } 
-if(spc == "Steelhead") { incl_jacks = FALSE } 
+# for Chinook and Coho, include jacks
+if(spc == "Chinook")   { incl_jacks = TRUE  } 
+if(spc == "Steelhead") { incl_jacks = FALSE }
+if(spc == "Coho")      { incl_jacks = TRUE  }
 
 # set spawn year dates
 if(spc == "Chinook") {
@@ -48,6 +49,10 @@ if(spc == "Chinook") {
 if(spc == "Steelhead") {
   start_date = paste0(yr-1, "0701")
   end_date = paste0(yr, "0630")
+}
+if(spc == "Coho") { # it appears August 7 (2017) is the earliest date a coho has been observed at the window
+  start_date = paste0(yr, "0801")
+  end_date = paste0(yr, "1231")
 }
 
 # compile data
