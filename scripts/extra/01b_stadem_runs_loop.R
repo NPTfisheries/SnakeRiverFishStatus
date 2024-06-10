@@ -45,7 +45,7 @@ for(spc in species) {
   # set years
   if(spc == "Chinook")   { years = c(2010:2019, 2021:2023) }
   if(spc == "Steelhead") { years = 2010:2023 }
-  if(spc == "Coho")      { years = 2010:2023 }
+  if(spc == "Coho")      { years = 2012:2023 }
   
   # for Chinook and coho, include jacks
   if(spc == "Chinook")   { incl_jacks = TRUE  } 
