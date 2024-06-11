@@ -97,4 +97,8 @@ save(stadem_mod,
      stadem_list,
      file = paste0(here(stademFolder), "/LGR_STADEM_", spc, "_", yr, ".rda"))
 
+# plot weekly STADEM results (consider saving at later date)
+plotTimeSeries(stadem_mod = stadem_mod,
+               weeklyData = stadem_list$weeklyData)
+
 # END SCRIPT
