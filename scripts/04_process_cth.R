@@ -23,7 +23,7 @@ if(!dir.exists(PITcleanr_folder)) {
 }
 
 # set species and year
-spc = "Chinook"
+spc = "Coho"
 yr = 2023
 
 # load configuration and site and node parent-child data frames
@@ -66,6 +66,10 @@ if(spc == "Steelhead") {
   sy_start_date = lubridate::ymd(paste0(yr - 1,'0701'))
   sy_end_date = lubridate::ymd(paste0(yr,'0630'))
 }
+if(spc == "Coho") {
+  sy_start_date = lubridate::ymd(paste0(yr,'0801'))
+  sy_end_date = lubridate::ymd(paste0(yr,'1231'))
+}
 
 # clean observations to only include the first observation at LGR after the start of the spawn year and after...
 lgr_after_obs = comp_obs %>%
@@ -91,11 +95,13 @@ lgr_after_obs = comp_obs %>%
 # i.e., moving in a single direction. Note: the function first runs addDirection() which determines movement
 # based on relationships in the provided parent-child table.
 
-# Chinook salmon
-if(spc == "Chinook"){
+# Chinook or coho salmon
+if(spc == "Chinook") { max_obs_date = paste0(yr, "1031")   }
+if(spc == "Coho")    { max_obs_date = paste0(yr+1, "0228") } # may need to reconsider this at some point
+if(spc == "Chinook" | spc == "Coho"){
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
-                               max_obs_date = paste0(yr, "1031")) %>%
+                               max_obs_date = max_obs_date) %>%
     mutate(id = 1:n(),
            life_stage = "spawner") %>%
     select(id, tag_code, life_stage, auto_keep_obs, user_keep_obs,
