@@ -4,7 +4,7 @@
 #   and save table as a .csv
 # 
 # Created Date: Unknown
-#   Last Modified: February 24, 2024
+#   Last Modified: June 12, 2024
 #
 # Notes:
 
@@ -22,7 +22,7 @@ if(.Platform$OS.type != "unix") { # includes windows machines
   source(here("R/loadLGTrappingDBase.R"))
   
   # set path to LGTrappingDB Access database
-  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-05-21.accdb")
+  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-06-12.accdb")
   
   # connect to LGTrappingDB
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)

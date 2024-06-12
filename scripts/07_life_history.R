@@ -19,8 +19,8 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Chinook"
-yr = 2014
+spc = "Steelhead"
+yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
 load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
@@ -107,7 +107,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
 names(tag_final_loc) = gsub(spc_prefix, "", names(tag_final_loc))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
 
 # combine trap database info
 tag_lh = tag_final_loc %>%
