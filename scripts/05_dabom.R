@@ -22,7 +22,7 @@ library(DABOM)
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 
 # load trap_df to get origin
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-02-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -31,10 +31,11 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 #--------------------
 # start analysis
 # set species and spawn year
-spc = "Chinook"
-yr = 2018
+spc = "Coho"
+yr = 2023
 
 if(spc == "Chinook")   { spc_code = 1 }
+if(spc == "Coho")      { spc_code = 2 }
 if(spc == "Steelhead") { spc_code = 3 }
 
 # include hatchery fish?
@@ -70,6 +71,21 @@ origin_df = trap_df %>%
   mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
   select(tag_code = LGDNumPIT, origin) %>%
   distinct()
+
+# temporary chunk for coho until spawn years get included in the LGTrappingDB
+if(spc == "Coho") {
+  origin_df = trap_df %>%
+    mutate(SpawnYear = paste0("SY", lubridate::year(CollectionDate))) %>% # temporary fix to create Spawn Year based on collection date
+    filter(SpawnYear == paste0("SY", yr)) %>%
+    # and just PIT tags in our valid tag list
+    filter(LGDNumPIT %in% tags) %>%
+    # and exclude those with no BioSamplesID
+    #filter(!is.na(BioSamplesID)) %>%
+    # append "origin" based on SRR
+    mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
+    select(tag_code = LGDNumPIT, origin) %>%
+    distinct()
+}
 
 # number of hatchery vs. wild adults
 origin_df %>% 
@@ -144,6 +160,12 @@ if(time_varying) {
                   addTimeVaryData(filter_ch = filter_ch,
                                   start_date = paste0(yr,'0301'), 
                                   end_date = paste0(yr,'0817')))
+  }
+  if(spc == "Coho") {
+    jags_data = c(jags_data,
+                  addTimeVaryData(filter_ch = filter_ch,
+                                  start_date = paste0(yr,'0801'), 
+                                  end_date = paste0(yr+1,'0228')))
   }
 } # end if time_varying
 
