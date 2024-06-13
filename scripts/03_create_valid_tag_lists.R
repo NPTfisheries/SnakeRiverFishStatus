@@ -3,7 +3,7 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: June 11, 2024
+#   Last Modified: June 13, 2024
 #
 # Notes:
 
@@ -22,17 +22,16 @@ if(!dir.exists(tags_folder)) {
 }
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
 
 # set species and spawn year
-spc = "Coho"
+spc = "Chinook"
 yr  = 2023
 
+# set species code
 if(spc == "Chinook")   { spc_code = 1 }
 if(spc == "Coho")      { spc_code = 2 }
 if(spc == "Steelhead") { spc_code = 3 }
-
-# at some point, do i need to consider filtering out fall chinook within valid tag list?
 
 # filter to valid tag list
 valid_df = trap_df %>%
@@ -56,6 +55,28 @@ if(spc == "Coho") {
     filter(LGDValid == 1) %>% 
     filter(LGDMarkAD == "AI") %>%
     filter(!is.na(LGDNumPIT))
+}
+
+if(spc == "Chinook") {
+  # for Chinook, verify that no Chinook after 8/17 (i.e., fall Chinook run) are included
+  valid_df %>%
+    mutate(chnk_season = ifelse(CollectionDate <= paste0(yr, "-08-17"), "sp/sum", "fall")) %>%
+    tabyl(chnk_season, SRR) %>%
+    print()
+  
+  # for Chinook, what is the proportion of fall Chinook within valid tag list during sp/sum trapping season?
+  trap_df %>%
+    filter(grepl(paste0('^', spc_code), SRR)) %>% # keep only the desired species
+    filter(LGDLifeStage == "RF") %>%              # keep only adults (returning fish)
+    filter(LGDValid == 1) %>% 
+    filter(LGDMarkAD == "AI") %>%
+    filter(!is.na(LGDNumPIT)) %>%
+    select(SpawnYear, SRR) %>%
+    filter(substr(SpawnYear, 1, 2) != "MY") %>%
+    mutate(fall_chnk = substr(SRR, 1, 2) == "13") %>%
+    group_by(SpawnYear) %>%
+    summarise(p_fall = mean(fall_chnk, na.rm = T),
+              .groups = "drop")
 }
 
 # write valid tag list to .txt
