@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: March 14, 2024
+#   Last Modified: June 13, 2024
 #
 # Notes: 
 
@@ -21,8 +21,8 @@ library(DABOM)
 # load configuration
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 
-# load trap_df to get origin
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
+# load trap_df to get origins
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -39,49 +39,43 @@ if(spc == "Coho")      { spc_code = 2 }
 if(spc == "Steelhead") { spc_code = 3 }
 
 # include hatchery fish?
-inc_hatchery = FALSE
+incl_hatchery = FALSE
 
 # load compressed, cleaned observations for use in DABOM
 pitcleanr_folder = here("output/PITcleanr/human_reviewed/")
 dabom_obs = readxl::read_excel(paste0(pitcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx" ))
 
-# for steelhead, remove kelt and repeat spawner observations
-if(spc == "Steelhead") {
-  dabom_obs = dabom_obs %>%
-    filter(life_stage == "spawner")
-}
-
-# remove FALSE obs for DABOM from processed dataset
+# remove kelts and repeat spawner obs (steelhead) and user_keep_obs == FALSE from DABOM for "human reviewed" PITcleanr output
 filter_ch = dabom_obs %>%
-  filter(user_keep_obs) %>%
+  filter(life_stage == "spawner",
+         user_keep_obs) %>%
   rename(start_date = tag_start_date)
 
 # get unique tags for species and sy
 tags = unique(filter_ch$tag_code)
 
-# get valid tags and origin
+# get origin for each tag based on SRR
 origin_df = trap_df %>%
-  # filter LGTrappingDB down to the spawn year
+  # filter LGTrappingDB down to the species and spawn year
+  filter(grepl(paste0('^', spc_code), SRR)) %>%
   filter(SpawnYear == paste0("SY", yr)) %>%
-  # and just PIT tags in our valid tag list
+  # and to just PIT tags in our observations for dabom
   filter(LGDNumPIT %in% tags) %>%
-  # and exclude those with no BioSamplesID
+  # now exclude samples w/o a BioSamplesID
   filter(!is.na(BioSamplesID)) %>%
   # append "origin" based on SRR
   mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
   select(tag_code = LGDNumPIT, origin) %>%
   distinct()
-
+  
 # temporary chunk for coho until spawn years get included in the LGTrappingDB
 if(spc == "Coho") {
   origin_df = trap_df %>%
+    filter(grepl(paste0('^', spc_code), SRR)) %>%
     mutate(SpawnYear = paste0("SY", lubridate::year(CollectionDate))) %>% # temporary fix to create Spawn Year based on collection date
     filter(SpawnYear == paste0("SY", yr)) %>%
-    # and just PIT tags in our valid tag list
     filter(LGDNumPIT %in% tags) %>%
-    # and exclude those with no BioSamplesID
-    #filter(!is.na(BioSamplesID)) %>%
-    # append "origin" based on SRR
+    #filter(!is.na(BioSamplesID)) %>%                                     # coho aren't biosampled at LGR, at least yet
     mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
     select(tag_code = LGDNumPIT, origin) %>%
     distinct()
@@ -97,15 +91,15 @@ duplicates = origin_df$tag_code[duplicated(origin_df$tag_code)]
 # If yes, something needs to be done. I think I largely resolved by filtering trap_df down to the specific spawn
 # year first and excluding samples with no BioSamplesID
 
-# DABOM is capable of fitting a model w/ both H and W; filter if inc_hatchery = FALSE
-if(inc_hatchery == FALSE) {
+# DABOM is capable of fitting a model w/ both H and W; filter if incl_hatchery = FALSE
+if(incl_hatchery == FALSE) {
   origin_df = filter(origin_df, origin == "W")
   filter_ch = filter_ch %>%
     filter(tag_code %in% origin_df$tag_code)
 }
 
 # an error check of migration paths; find any observations remaining that are not in the path to the 
-# "final location. Can this be improved using estimateFinalLoc?
+# "final" location. Can this be improved using estimateFinalLoc?
 bad_paths = filter_ch %>%
   group_by(tag_code) %>%
   slice_max(node_order) %>%
@@ -118,6 +112,9 @@ bad_paths = filter_ch %>%
   group_by(tag_code) %>%
   mutate(error = any(obs_in_path == FALSE)) %>%
   filter(error == TRUE)
+
+# should be 0; if not, bad_paths needs to be examined and migration histories resolved
+nrow(bad_paths)
 
 # write default, initial jags model
 init_mod_file = here("model_files/lgr_dabom_jags.txt")
@@ -146,26 +143,26 @@ jags_data = createJAGSinputs(filter_ch = filter_ch,
                              configuration = configuration,
                              fish_origin = origin_df)
 
-# add data for time-varying models
+# add data for time-varying models; these should be equal to the start and end dates used for STADEM
 time_varying = T
 if(time_varying) {
   if(spc == "Steelhead") {
     jags_data = c(jags_data,
                   addTimeVaryData(filter_ch = filter_ch,
-                                  start_date = paste0(yr-1,'0701'), 
-                                  end_date = paste0(yr,'0630')))
+                                  start_date = paste0(yr-1,"0701"), 
+                                  end_date = paste0(yr,"0630")))
   }
   if(spc == "Chinook") {
     jags_data = c(jags_data,
                   addTimeVaryData(filter_ch = filter_ch,
-                                  start_date = paste0(yr,'0301'), 
-                                  end_date = paste0(yr,'0817')))
+                                  start_date = paste0(yr,"0301"), 
+                                  end_date = paste0(yr,"0817")))
   }
   if(spc == "Coho") {
     jags_data = c(jags_data,
                   addTimeVaryData(filter_ch = filter_ch,
-                                  start_date = paste0(yr,'0801'), 
-                                  end_date = paste0(yr+1,'0228')))
+                                  start_date = paste0(yr,"0801"), 
+                                  end_date = paste0(yr,"1231")))
   }
 } # end if time_varying
 
