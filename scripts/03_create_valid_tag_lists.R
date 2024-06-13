@@ -14,6 +14,7 @@ rm(list = ls())
 library(tidyverse)
 library(here)
 library(lubridate)
+library(janitor)
 
 # set up folder structure
 tags_folder = here("output/valid_tag_lists")
