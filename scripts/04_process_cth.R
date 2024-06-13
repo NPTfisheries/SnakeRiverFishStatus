@@ -1,9 +1,9 @@
 # -----------------------
-# Author(s): Ryan N. Kinzer and Mike Ackerman
+# Author(s): Mike Ackerman and Ryan N. Kinzer
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: March 12, 2024
+#   Last Modified: June 13, 2024
 #
 #   Notes: 
 
@@ -25,6 +25,9 @@ if(!dir.exists(PITcleanr_folder)) {
 # set species and year
 spc = "Coho"
 yr = 2023
+
+# apply shading to output?
+shade_tags = T
 
 # load configuration and site and node parent-child data frames
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
@@ -57,10 +60,9 @@ comp_obs = compress(cth_file = cth_df,
                     units = "days",
                     ignore_event_vs_release = TRUE)
 
-# set start and end dates
+# set start and end dates; no end dates needed for Chinook and coho, max_obs_date is set separately to trim late observations (i.e., shed tags)
 if(spc == "Chinook") {
   sy_start_date = lubridate::ymd(paste0(yr,'0301'))
-  sy_end_date = lubridate::ymd(paste0(yr,'0817'))
 }
 if(spc == "Steelhead") {
   sy_start_date = lubridate::ymd(paste0(yr - 1,'0701'))
@@ -68,7 +70,6 @@ if(spc == "Steelhead") {
 }
 if(spc == "Coho") {
   sy_start_date = lubridate::ymd(paste0(yr,'0801'))
-  sy_end_date = lubridate::ymd(paste0(yr,'1231'))
 }
 
 # clean observations to only include the first observation at LGR after the start of the spawn year and after...
@@ -96,8 +97,8 @@ lgr_after_obs = comp_obs %>%
 # based on relationships in the provided parent-child table.
 
 # Chinook or coho salmon
-if(spc == "Chinook") { max_obs_date = paste0(yr, "1031")   }
-if(spc == "Coho")    { max_obs_date = paste0(yr+1, "0228") } # may need to reconsider this at some point
+if(spc == "Chinook") { max_obs_date = paste0(yr, "1031")     } # use to filter errant detections e.g., shed tags
+if(spc == "Coho")    { max_obs_date = paste0(yr + 1, "0228") } 
 if(spc == "Chinook" | spc == "Coho"){
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
@@ -155,6 +156,34 @@ dabom_obs = dabom_obs %>%
 # write to excel file
 write_xlsx(dabom_obs,
            paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
-# consider applying formatting to this excel file, at some point, to separate tag_codes
+
+# do i want to apply shading to every other tag code in the output
+if(shade_tags == T) {
+  library (openxlsx)
+  # load existing excel workbook
+  wb = loadWorkbook(paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
+  
+  # list of every other tag
+  gray_tags = unique(dabom_obs$tag_code) %>%
+    .[seq(1, length(.), 2)]
+  
+  # apply shading (only apply to first 10 columns, applying shading to date-time columns converts them to numeric)
+  for(tag in gray_tags) {
+    rows_to_shade = which(dabom_obs$tag_code == tag) + 1
+    addStyle(
+      wb,
+      sheet = 1,
+      style = createStyle(fgFill = "gray70"),
+      rows = rows_to_shade,
+      cols = 1:10,
+      gridExpand = TRUE
+    )
+  }
+  
+  # overwrite file with shaded version
+  saveWorkbook(wb,
+               paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"),
+               overwrite = T)
+} # end if shade_tags == T
 
 # END SCRIPT
