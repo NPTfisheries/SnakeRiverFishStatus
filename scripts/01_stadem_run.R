@@ -96,8 +96,14 @@ save(stadem_mod,
      stadem_list,
      file = paste0(here(stademFolder), "/LGR_STADEM_", spc, "_", yr, ".rda"))
 
-# plot weekly STADEM results (consider saving at later date)
-plotTimeSeries(stadem_mod = stadem_mod,
-               weeklyData = stadem_list$weeklyData)
+# plot weekly STADEM results
+week_esc_p = plotTimeSeries(stadem_mod = stadem_mod,
+                            weeklyData = stadem_list$weeklyData)
+
+# save weekly escapement plot
+ggsave(paste0(here("output/figures/stadem_weekly_esc"), "/weekly_esc_", spc, "_", yr, ".png"),
+       week_esc_p,
+       width = 14,
+       height = 8.5)
 
 # END SCRIPT
