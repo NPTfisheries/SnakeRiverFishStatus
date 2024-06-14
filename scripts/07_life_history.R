@@ -107,26 +107,68 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
 names(tag_final_loc) = gsub(spc_prefix, "", names(tag_final_loc))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-05-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
 
-# combine trap database info
+# set species code
+if(spc == "Chinook")   { spc_code = 1 }
+if(spc == "Coho")      { spc_code = 2 }
+if(spc == "Steelhead") { spc_code = 3 }
+
+# clean and trim data from the LGTrappingDB to join to tag_final_loc
+bio_df = trap_df %>%
+  rename(tag_code = LGDNumPIT) %>%
+  filter(grepl(paste0('^', spc_code), SRR)) %>% # keep only the desired species
+  filter(SpawnYear == paste0("SY", yr)) %>%     # keep only the desired spawn year
+  filter(LGDLifeStage == "RF") %>%              # keep only returning fish (adults)
+  filter(!is.na(tag_code)) %>%                  # keep only fish with PIT tags
+  filter(!is.na(BioSamplesID)) %>%              # keep only fish with BioSamplesID
+  filter(tag_code %in% tag_final_loc$tag_code) %>%  # keep only fish in tag_final_loc
+  group_by(tag_code) %>%
+  arrange(tag_code, CollectionDate) %>%
+  filter(CollectionDate == min(CollectionDate)) %>%
+  ungroup() %>%
+  select(tag_code,
+         SRR,
+         CollectionDate,
+         BioSamplesID,
+         LGDFLmm,
+         GenSex,
+         LGDSex,
+         BioScaleFinalAge,
+         GenStock,
+         GenStockProb,
+         GenParentHatchery,
+         GenBY)
+
+# join trap database to tag_final_loc
 tag_lh = tag_final_loc %>%
-  left_join(trap_df %>%
-              select(tag_code = LGDNumPIT,
-                     CollectionDate,
-                     BioSamplesID,
-                     LGDFLmm,
-                     SRR,
-                     GenSex,
-                     GenStock,
-                     GenStockProb,
-                     GenParentHatchery,
-                     GenBY,
-                     BioScaleFinalAge)) %>%
+  left_join(bio_df) %>%
   left_join(node_paths,
             by = c("final_node" = "node")) %>%
   mutate(branch = str_split(path, " ", simplify = TRUE)[,2],
          branch = ifelse(path == "LGR", "Black-Box", branch))
+
+# are there any duplicate tags in tag_lh
+dup_tags = tag_lh %>%
+  group_by(tag_code) %>%
+  filter(n() > 1) %>%
+  ungroup()
+nrow(dup_tags) # should be zero
+
+# deal with duplicated tags (should no longer be needed)
+# dup_tags_keep = dup_tags %>%
+#   arrange(tag_code, CollectionDate) %>%
+#   # keep the record with the later CollectionDate; this might need to be better refined.
+#   group_by(tag_code) %>%
+#   slice(which.min(CollectionDate))
+# 
+# # remove duplicate records we don't want to keep
+# tag_lh %<>%
+#   anti_join(dup_tags_keep %>%
+#               select(tag_code)) %>%
+#   bind_rows(dup_tags_keep) %>%
+#   # and trim off n_rec column
+#   select(-n_rec)
 
 # get week using STADEM::weeklyStrata()
 if(spc == "Chinook") {
@@ -141,37 +183,18 @@ if(spc == "Steelhead") {
                                       strata_beg = "Mon",
                                       last_strata_min = 3)
 }
+if(spc == "Coho") {
+  week_strata <- STADEM::weeklyStrata(paste0(yr, "0801"), 
+                                      paste0(yr, "1231"),
+                                      strata_beg = "Mon",
+                                      last_strata_min = 3)
+}
 
 # assign week for each tag
 tag_lh$week_num = NA
 for(i in 1:length(week_strata)) {
   tag_lh$week_num[with(tag_lh, which(CollectionDate %within% week_strata[i]))] = i
 }
-
-# how many records for each tag?
-tag_lh %<>%
-  group_by(tag_code) %>%
-  mutate(n_rec = n()) %>%
-  ungroup() %>%
-  mutate_if(is.factor, as.character) %>%
-  arrange(CollectionDate,
-          tag_code)
-
-# deal with duplicated tags
-dup_tags_keep = tag_lh %>%
-  filter(n_rec > 1) %>%
-  arrange(tag_code, CollectionDate) %>%
-  # keep the record with the later CollectionDate; this might need to be better refined.
-  group_by(tag_code) %>%
-  slice(which.max(CollectionDate))
-
-# remove duplicate records we don't want to keep
-tag_lh %<>%
-  anti_join(dup_tags_keep %>%
-              select(tag_code)) %>%
-  bind_rows(dup_tags_keep) %>%
-  # and trim off n_rec column
-  select(-n_rec)
 
 # clean and parse age information
 tag_lh %<>%
@@ -184,17 +207,20 @@ tag_lh %<>%
   mutate(fw_age = as.numeric(fw_age)) %>%
   # create sw_age column which includes the salwater age assigned to each fish; salwater age is on the right side of the colon in the BioScaleFinalAge column
   mutate(sw_age = gsub(".*:", "", BioScaleFinalAge)) %>%
-  # for repeat spawners, I may need to make an adjustment to add one year for a year in the ocean between spawning
   mutate(sw_age = case_when(
-    species == "Chinook" & sw_age == "MJ" ~ "0",
+    species == "Chinook" & sw_age == "MG" ~ "0",
     sw_age %in% c("A", "?", "") ~ NA_character_,
-    is.na(fw_age) ~ NA_character_,                 # if fw_age is NA, change sw_age to NA
-    sw_age %in% c("S", "s") ~ "R",                 # replace "s" and "S" with "R" for repeat spawners
+    is.na(fw_age) ~ NA_character_,
+    sw_age %in% c("S", "s") ~ "S",
     TRUE ~ sw_age
   )) %>%
-  mutate(sw_age = as.numeric(sw_age)) %>%
+  # calculate saltwater age accounting for spawn checks for steelhead
+  mutate(sw_age = str_extract_all(sw_age, "\\d+") %>%  
+           lapply(as.numeric) %>%            
+           sapply(sum) +                     
+           str_count(sw_age, "S")) %>%
   # create total_age column
-  mutate(total_age = fw_age + sw_age + 1) %>%
+  mutate(total_age = fw_age + sw_age + 1) %>% # add 1. For Chinook, winter spent in gravel. For steelhead, extra winter in freshwater before spawning.
   # assign brood year
   mutate(brood_year = as.integer(str_extract(spawn_year, '[:digit:]+')) - total_age)
 
