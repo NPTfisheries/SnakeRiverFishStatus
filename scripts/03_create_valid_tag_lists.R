@@ -23,10 +23,10 @@ if(!dir.exists(tags_folder)) {
 }
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 
 # set species and spawn year
-spc = "Chinook"
+spc = "Coho"
 yr  = 2023
 
 # set species code
@@ -45,18 +45,6 @@ valid_df = trap_df %>%
   filter(LGDValid == 1) %>% 
   filter(LGDMarkAD == "AI") %>%
   filter(!is.na(LGDNumPIT))
-
-# temporary chunk for coho until spawn years get included in the LGTrappingDB
-if(spc == "Coho") {
-  valid_df = trap_df %>%
-    filter(grepl(paste0('^', spc_code), SRR)) %>% # keep only the desired species
-    mutate(SpawnYear = paste0("SY", lubridate::year(CollectionDate))) %>% # temporary fix to create Spawn Year based on collection date
-    filter(SpawnYear == paste0("SY", yr)) %>%     # keep only the desired spawn year
-    filter(LGDLifeStage == "RF") %>%              # keep only adults (returning fish)
-    filter(LGDValid == 1) %>% 
-    filter(LGDMarkAD == "AI") %>%
-    filter(!is.na(LGDNumPIT))
-}
 
 if(spc == "Chinook") {
   # for Chinook, verify that no Chinook after 8/17 (i.e., fall Chinook run) are included
