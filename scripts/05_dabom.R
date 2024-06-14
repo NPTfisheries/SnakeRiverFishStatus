@@ -22,7 +22,7 @@ library(DABOM)
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -61,25 +61,12 @@ origin_df = trap_df %>%
   filter(SpawnYear == paste0("SY", yr)) %>%
   # and to just PIT tags in our observations for dabom
   filter(LGDNumPIT %in% tags) %>%
-  # now exclude samples w/o a BioSamplesID
-  filter(!is.na(BioSamplesID)) %>%
+  # conditionally exclude samples w/o a BioSamplesID if spc is not "Coho"
+  { if (spc != "Coho") filter(., !is.na(BioSamplesID)) else . } %>%
   # append "origin" based on SRR
   mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
   select(tag_code = LGDNumPIT, origin) %>%
   distinct()
-  
-# temporary chunk for coho until spawn years get included in the LGTrappingDB
-if(spc == "Coho") {
-  origin_df = trap_df %>%
-    filter(grepl(paste0('^', spc_code), SRR)) %>%
-    mutate(SpawnYear = paste0("SY", lubridate::year(CollectionDate))) %>% # temporary fix to create Spawn Year based on collection date
-    filter(SpawnYear == paste0("SY", yr)) %>%
-    filter(LGDNumPIT %in% tags) %>%
-    #filter(!is.na(BioSamplesID)) %>%                                     # coho aren't biosampled at LGR, at least yet
-    mutate(origin = ifelse(grepl("W", SRR), "W", "H")) %>%
-    select(tag_code = LGDNumPIT, origin) %>%
-    distinct()
-}
 
 # number of hatchery vs. wild adults
 origin_df %>% 
