@@ -26,7 +26,7 @@ if(!dir.exists(PITcleanr_folder)) {
 spc = "Coho"
 yr = 2023
 
-# apply shading to output?
+# apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
