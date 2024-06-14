@@ -5,7 +5,7 @@
 # Created Date: July 1, 2019
 #   Last Modified: June 14, 2024
 #
-# Notes: 
+# Notes: Next step, update to accommodate coho
 
 # clear environment
 rm(list = ls())
