@@ -30,7 +30,7 @@ if(!dir.exists(modelFolder)) {
 }
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 
 # run only a single species x year at a time
 spc = "Coho"
