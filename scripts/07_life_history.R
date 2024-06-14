@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: March 25, 2024
+#   Last Modified: June 14, 2024
 #
 # Notes: 
 
@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
@@ -55,6 +55,7 @@ site_pops = configuration %>%
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
 if(spc == "Steelhead") { spc_prefix = "sthd_" }
+if(spc == "Coho")      { spc_prefix = "coho_" }
 
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
 if(spc == "Chinook") {
@@ -86,6 +87,12 @@ if(spc == "Steelhead") {
                 st_drop_geometry())
 } # end steelhead fixes
 rm(sth_pop, spsm_pop)
+
+# if spc == "Coho", use custom population designations
+if(spc == "Coho") {
+  library(readxl)
+  site_pops = read_excel(here("data/coho_populations/coho_populations.xlsx"))
+}
 
 # estimate final spawning location
 tag_final_loc = estimateFinalLoc(filter_ch) %>%
