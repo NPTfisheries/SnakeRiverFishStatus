@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: March 25, 2024
+#   Last Modified: June 20, 2024
 #
 # Notes: 
 
@@ -25,7 +25,7 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # set prefix
