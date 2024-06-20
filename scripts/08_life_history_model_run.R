@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: March 28, 2024
+#   Last Modified: June 20, 2024
 #
 # Notes: 
 
@@ -17,12 +17,12 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
-age_folder = "output/age_results/"
+if(spc == "Chinook" | spc == "Steelhead") { age_folder = "output/age_results/" }
 if(spc == "Steelhead") { size_folder = "output/size_results/" }
 
 # file path where life history summaries are stored
