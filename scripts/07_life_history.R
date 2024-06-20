@@ -114,7 +114,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
 names(tag_final_loc) = gsub(spc_prefix, "", names(tag_final_loc))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-13.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 
 # set species code
 if(spc == "Chinook")   { spc_code = 1 }
@@ -128,7 +128,8 @@ bio_df = trap_df %>%
   filter(SpawnYear == paste0("SY", yr)) %>%     # keep only the desired spawn year
   filter(LGDLifeStage == "RF") %>%              # keep only returning fish (adults)
   filter(!is.na(tag_code)) %>%                  # keep only fish with PIT tags
-  filter(!is.na(BioSamplesID)) %>%              # keep only fish with BioSamplesID
+  # conditionally exclude samples w/o a BioSamplesID if spc is not "Coho"
+  { if (spc != "Coho") filter(., !is.na(BioSamplesID)) else . } %>%
   filter(tag_code %in% tag_final_loc$tag_code) %>%  # keep only fish in tag_final_loc
   group_by(tag_code) %>%
   arrange(tag_code, CollectionDate) %>%
@@ -243,9 +244,10 @@ if(spc == "Steelhead") {
 
 # sex proportions by population
 sex_df = tag_lh %>%
+  # conditionally use LGDSex if species is Coho
+  { if (spc == "Coho") mutate(., GenSex = LGDSex) else . } %>%
   group_by(species, spawn_year, MPG, POP_NAME, TRT_POPID, GenSex) %>%
-  summarise(n_tags = n_distinct(tag_code)) %>%
-  ungroup() %>%
+  summarise(n_tags = n_distinct(tag_code), .groups = "drop") %>%
   filter(GenSex %in% c("F", "M")) %>%
   spread(GenSex, n_tags, fill = 0) %>%
   mutate(n_sexed = F + M,
@@ -316,6 +318,11 @@ if(spc == "Steelhead") {
        age_df = age_df,
        brood_df = brood_df,
        size_df = size_df) %>%
+    writexl::write_xlsx(paste0(life_history_path, spc, "_SY", yr, "_lh_summary.xlsx"))
+}
+if(spc == "Coho") {
+  list(tag_lh = tag_lh,
+       sex_df = sex_df) %>%
     writexl::write_xlsx(paste0(life_history_path, spc, "_SY", yr, "_lh_summary.xlsx"))
 }
 

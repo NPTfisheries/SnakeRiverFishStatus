@@ -59,6 +59,8 @@ origin_df = trap_df %>%
   # filter LGTrappingDB down to the species and spawn year
   filter(grepl(paste0('^', spc_code), SRR)) %>%
   filter(SpawnYear == paste0("SY", yr)) %>%
+  # keep only returning fish (adults)
+  filter(LGDLifeStage == "RF") %>%              
   # and to just PIT tags in our observations for dabom
   filter(LGDNumPIT %in% tags) %>%
   # conditionally exclude samples w/o a BioSamplesID if spc is not "Coho"
