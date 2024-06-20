@@ -11,7 +11,7 @@
 #' @return NULL
 #' @examples definePopulations()
  
-definePopulations = function(spc = c("Chinook", "Steelhead")) {
+definePopulations = function(spc = c("Chinook", "Steelhead", "Coho")) {
   
   spc = match.arg(spc)
   
@@ -117,6 +117,26 @@ definePopulations = function(spc = c("Chinook", "Steelhead")) {
       select(TRT_POPID = ind,
              site = values)
   } # end if Steelhead
+  
+  if(spc == "Coho") {
+    report_df = list(
+      # Clearwater River
+      "CRLAP-c" = "LAP",
+      "CRLAW-c" = "LAW",
+      "CRLOC-c" = c("LRL", "SW1"),
+      "CRLOL-c" = "LC1",
+      "CRSFC-c" = "SC1",
+      # Grande Ronde River
+      "GRJOS-c" = "JOC",
+      "GRWAL-c" = "WR1",
+      # Lower Snake River
+      "SNASO-c" = "ACM"
+      ) %>%
+      stack() %>%
+      as_tibble() %>%
+      select(TRT_POPID = ind,
+             site = values)
+  } # end if Coho
   
   return(report_df)
   
