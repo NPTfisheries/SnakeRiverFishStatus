@@ -19,6 +19,7 @@ library(tidyverse)
 library(sf)
 library(DABOM)
 library(magrittr)
+library(readxl)
 
 # load configuration files
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
@@ -31,6 +32,7 @@ yr = 2023
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
 if(spc == "Steelhead") { spc_prefix = "sthd_" }
+if(spc == "Coho")      { spc_prefix = "coho_" }
 
 # assign each node to a branch
 node_branches = node_paths %>%
@@ -58,6 +60,13 @@ node_pops = configuration %>%
                    chnk_POP_NAME = POP_NAME,
                    chnk_TRT_POPID = TRT_POPID,
                    chnk_GSI_Group = GSI_Group)) %>%
+  left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+              rename(site_code = spawn_site) %>%
+              mutate(coho_GSI_Group = NA) %>%
+              left_join(configuration %>%
+                          select(site_code,
+                                 node) %>%
+                          distinct())) %>%
   select(node, starts_with(spc_prefix)) %>%
   rename_with(~str_remove(., spc_prefix)) %>%
   select(-ESU_DPS, -GSI_Group) %>%
@@ -65,6 +74,41 @@ node_pops = configuration %>%
   mutate(site = str_remove(node, "_U|_D")) %>%
   left_join(node_branches) %>%
   arrange(MPG, POP_NAME, node)
+
+# tmp = read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+#   rename(site_code = spawn_site) %>%
+#   left_join(configuration %>%
+#               select(site_code,
+#                      node) %>%
+#               distinct())
+
+# fix some sites so that fish are assigned to the correct population for parsing abundance estimates
+if(spc == "Chinook") {
+  node_pops %<>%
+    select(node, TRT_POPID) %>%
+    mutate(TRT_POPID = case_when(
+      node %in% c("SC1", "SC2")     ~ "SCUMA",
+      node %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
+      node %in% c("JOC_D", "JOC_U") ~ "Joseph",
+      TRUE ~ TRT_POPID
+    )) %>%
+    left_join(spsm_pop %>%
+                select(MPG, POP_NAME, TRT_POPID) %>%
+                st_drop_geometry())
+} # end Chinook fixes
+if(spc == "Steelhead") {
+  node_pops %<>% 
+    select(node, TRT_POPID) %>%
+    mutate(TRT_POPID = case_when(
+      node == "USI"                ~ "SREFS-s",
+      node == "MCCA"               ~ "SFMAI-s",
+      node %in% c("SC1", "SC2")    ~ "CRSFC-s",
+      TRUE ~ TRT_POPID
+    )) %>%
+    left_join(sth_pop %>%
+                select(MPG, POP_NAME, TRT_POPID) %>%
+                st_drop_geometry())
+} # end steelhead fixes
   
 # remove a couple objects
 rm(sth_pop, spsm_pop)
@@ -242,7 +286,7 @@ pop_escp_summ = pop_escp_post %>%
 
 # load sex and age model results
 load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
-load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
+if(spc == "Chinook" | spc == "Steelhead") { load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda")) }
 if(spc == "Steelhead") { load(paste0(here(), "/output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
 
 # # tag life history summary
@@ -331,13 +375,17 @@ combined_post = pop_escp_post %>%
             by = c("TRT_POPID", "iter")) %>%
   select(-pop_num) %>%
   rename(p_fem = p) %>%
-  mutate(p_male = 1 - p_fem) %>%
-  left_join(age_post %>%
-              pivot_wider(names_from = age,
-                          names_prefix = "p_",
-                          values_from = p),
-            by = c("TRT_POPID", "iter")) %>%
-  select(-pop_num)
+  mutate(p_male = 1 - p_fem) 
+
+if(spc == "Chinook" | spc == "Steelhead") {
+  combined_post %<>%
+    left_join(age_post %>%
+                pivot_wider(names_from = age,
+                            names_prefix = "p_",
+                            values_from = p),
+              by = c("TRT_POPID", "iter")) %>%
+    select(-pop_num)
+}
 
 if(spc == "Steelhead") {
   combined_post %<>%
