@@ -17,8 +17,8 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Coho"
-yr = 2023
+spc = "Steelhead"
+yr = 2010
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"

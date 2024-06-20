@@ -26,7 +26,7 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Coho"
+spc = "Steelhead"
 yr = 2023
 
 # set prefix
@@ -75,21 +75,14 @@ node_pops = configuration %>%
   left_join(node_branches) %>%
   arrange(MPG, POP_NAME, node)
 
-# tmp = read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
-#   rename(site_code = spawn_site) %>%
-#   left_join(configuration %>%
-#               select(site_code,
-#                      node) %>%
-#               distinct())
-
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
 if(spc == "Chinook") {
   node_pops %<>%
-    select(node, TRT_POPID) %>%
+    select(site, node, TRT_POPID, branch) %>%
     mutate(TRT_POPID = case_when(
-      node %in% c("SC1", "SC2")     ~ "SCUMA",
-      node %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
-      node %in% c("JOC_D", "JOC_U") ~ "Joseph",
+      site %in% c("SC1", "SC2")     ~ "SCUMA",
+      site %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
+      site %in% "JOC"               ~ "Joseph",
       TRUE ~ TRT_POPID
     )) %>%
     left_join(spsm_pop %>%
@@ -98,11 +91,11 @@ if(spc == "Chinook") {
 } # end Chinook fixes
 if(spc == "Steelhead") {
   node_pops %<>% 
-    select(node, TRT_POPID) %>%
+    select(site, node, TRT_POPID, branch) %>%
     mutate(TRT_POPID = case_when(
-      node == "USI"                ~ "SREFS-s",
-      node == "MCCA"               ~ "SFMAI-s",
-      node %in% c("SC1", "SC2")    ~ "CRSFC-s",
+      site == "USI"                ~ "SREFS-s",
+      site == "MCCA"               ~ "SFMAI-s",
+      site %in% c("SC1", "SC2")    ~ "CRSFC-s",
       TRUE ~ TRT_POPID
     )) %>%
     left_join(sth_pop %>%
