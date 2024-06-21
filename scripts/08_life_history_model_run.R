@@ -22,7 +22,7 @@ yr = 2023
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
-if(spc == "Chinook" | spc == "Steelhead") { age_folder = "output/age_results/" }
+age_folder = "output/age_results/"
 if(spc == "Steelhead") { size_folder = "output/size_results/" }
 
 # file path where life history summaries are stored
@@ -241,8 +241,8 @@ cat(model_code, file = age_mod_hier_nm)
 #-----------------
 # run age model
 
-if(spc == "Chinook")   { model = "simple" }
-if(spc == "Steelhead") { model = "hierarchical" }
+if(spc == "Chinook" | spc == "Coho")   { model = "simple" }
+if(spc == "Steelhead")                 { model = "hierarchical" }
 
 if(model == "simple") {
   age_model_nm = age_mod_simp_nm
