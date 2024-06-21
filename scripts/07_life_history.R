@@ -205,6 +205,7 @@ tag_lh %<>%
   mutate(fw_age = substr(BioScaleFinalAge, 1, 1)) %>%
   mutate(fw_age = case_when(
     fw_age %in% c("N", "?", "") ~ NA_character_,
+    species == "Coho" ~ "1",                         # this should be verified; are all coho freshwater age 1?
     TRUE ~ fw_age
   )) %>%
   mutate(fw_age = as.numeric(fw_age)) %>%
@@ -215,6 +216,8 @@ tag_lh %<>%
     sw_age %in% c("A", "?", "") ~ NA_character_,
     is.na(fw_age) ~ NA_character_,
     sw_age %in% c("S", "s") ~ "S",
+    species == "Coho" & LGDFLmm < 410  ~ "1",
+    species == "Coho" & LGDFLmm >= 410 ~ "2",
     TRUE ~ sw_age
   )) %>%
   # calculate saltwater age accounting for spawn checks for steelhead
@@ -223,7 +226,8 @@ tag_lh %<>%
            sapply(sum) +                     
            str_count(sw_age, "S")) %>%
   # create total_age column
-  mutate(total_age = fw_age + sw_age + 1) %>% # add 1. For Chinook, winter spent in gravel. For steelhead, extra winter in freshwater before spawning.
+  # verify whether I need to add 1 for coho total age for winter spent in gravel?
+  mutate(total_age = fw_age + sw_age + 1) %>% # add 1. For Chinook and coho, winter spent in gravel. For steelhead, extra winter in freshwater before spawning.
   # assign brood year
   mutate(brood_year = as.integer(str_extract(spawn_year, '[:digit:]+')) - total_age)
 
@@ -300,7 +304,7 @@ if(spc == "Steelhead") {
 life_history_path = "output/life_history/"
 
 # save_results
-if(spc == "Chinook") {
+if(spc == "Chinook" | spc == "Coho") {
   list(tag_lh = tag_lh,
        sex_df = sex_df,
        age_df = age_df,
@@ -313,11 +317,6 @@ if(spc == "Steelhead") {
        age_df = age_df,
        brood_df = brood_df,
        size_df = size_df) %>%
-    writexl::write_xlsx(paste0(life_history_path, spc, "_SY", yr, "_lh_summary.xlsx"))
-}
-if(spc == "Coho") {
-  list(tag_lh = tag_lh,
-       sex_df = sex_df) %>%
     writexl::write_xlsx(paste0(life_history_path, spc, "_SY", yr, "_lh_summary.xlsx"))
 }
 
