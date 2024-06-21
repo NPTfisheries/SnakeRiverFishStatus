@@ -34,12 +34,10 @@ if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 spc = "Coho"
 yr = 2023
 
-if(spc == "Chinook")   { spc_code = 1 }
-if(spc == "Coho")      { spc_code = 2 }
-if(spc == "Steelhead") { spc_code = 3 }
-
-# include hatchery fish?
-incl_hatchery = FALSE
+# set species code and whether to include hatchery fish
+if(spc == "Chinook")   { spc_code = 1 ; incl_hatchery = FALSE }
+if(spc == "Coho")      { spc_code = 2 ; incl_hatchery = TRUE  }
+if(spc == "Steelhead") { spc_code = 3 ; incl_hatchery = FALSE }
 
 # load compressed, cleaned observations for use in DABOM
 pitcleanr_folder = here("output/PITcleanr/human_reviewed/")
