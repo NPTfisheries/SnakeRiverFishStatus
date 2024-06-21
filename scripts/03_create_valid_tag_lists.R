@@ -43,7 +43,8 @@ valid_df = trap_df %>%
   # of collection, species, FL, origin (hatchery or wild), or adipose fish status (ad-clipped or ad-intact). Trapped fish less
   # than 30 cm (FL) were considered invalid as they are not identified to species at the USACE fish-counting window
   filter(LGDValid == 1) %>% 
-  filter(LGDMarkAD == "AI") %>%
+  # conditionally remove ad-clipped fish if species is not "Coho"
+  { if (spc != "Coho") filter(., LGDMarkAD == "AI") else . } %>%
   filter(!is.na(LGDNumPIT))
 
 if(spc == "Chinook") {
