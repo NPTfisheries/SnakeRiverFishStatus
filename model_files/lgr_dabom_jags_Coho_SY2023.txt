@@ -200,11 +200,11 @@ model {
 	 WEN_U_p <- 0; # no detections / not in operation
 	 WR1_p ~ dbeta(1, 1);
 	 BCANF_p <- 0; # no detections / not in operation
-	 MR1_D_p <- 0; # no detections / not in operation
+	 MR1_D_p <- 1; # Single array, no upstream detections
 	 MR1_U_p <- 0; # no detections / not in operation
 	 WR2_D_p <- 0; # no detections / not in operation
 	 WR2_U_p <- 0; # no detections / not in operation
-	 LOSTIW_p <- 0; # no detections / not in operation
+	 LOSTIW_p <- 1; # Single array, no upstream detections
 	 WALH_p <- 0; # no detections / not in operation
 
 # Priors for transition probabilities 
