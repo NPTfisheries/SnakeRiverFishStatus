@@ -26,7 +26,7 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # set prefix
@@ -282,7 +282,7 @@ load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda")
 if(spc == "Chinook" | spc == "Steelhead") { load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda")) }
 if(spc == "Steelhead") { load(paste0(here(), "/output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
 
-# # tag life history summary
+# tag life history summary
 tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                             "tag_lh",
                             progress = F)
