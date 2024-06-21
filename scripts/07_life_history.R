@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # load tag summaries from PITcleanr and used in the DABOM model
@@ -52,10 +52,10 @@ site_pops = configuration %>%
                    chnk_GSI_Group = GSI_Group)) %>%
   st_drop_geometry()
 
-# set prefix
-if(spc == "Chinook")   { spc_prefix = "chnk_" }
-if(spc == "Steelhead") { spc_prefix = "sthd_" }
-if(spc == "Coho")      { spc_prefix = "coho_" }
+# set species prefix and codes
+if(spc == "Chinook")   { spc_prefix = "chnk_" ; spc_code = 1 }
+if(spc == "Steelhead") { spc_prefix = "sthd_" ; spc_code = 3 }
+if(spc == "Coho")      { spc_prefix = "coho_" ; spc_code = 2 }
 
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
 if(spc == "Chinook") {
@@ -115,11 +115,6 @@ names(tag_final_loc) = gsub(spc_prefix, "", names(tag_final_loc))
 
 # load LGR trap database
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
-
-# set species code
-if(spc == "Chinook")   { spc_code = 1 }
-if(spc == "Coho")      { spc_code = 2 }
-if(spc == "Steelhead") { spc_code = 3 }
 
 # clean and trim data from the LGTrappingDB to join to tag_final_loc
 bio_df = trap_df %>%
