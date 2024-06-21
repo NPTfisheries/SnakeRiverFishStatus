@@ -36,23 +36,21 @@ LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 spc = "Coho"
 yr = 2023
 
-# for Chinook and Coho, include jacks
-if(spc == "Chinook")   { incl_jacks = TRUE  } 
-if(spc == "Steelhead") { incl_jacks = FALSE }
-if(spc == "Coho")      { incl_jacks = TRUE  }
-
-# set spawn year dates
+# set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
   start_date = paste0(yr, "0301")
   end_date = paste0(yr, "0817")
+  incl_jacks = TRUE
 }
 if(spc == "Steelhead") {
   start_date = paste0(yr-1, "0701")
   end_date = paste0(yr, "0630")
+  incl_jacks = FALSE
 }
 if(spc == "Coho") { # it appears August 7 (2017) is the earliest date a coho has been observed at the window
   start_date = paste0(yr, "0801")
   end_date = paste0(yr, "1231")
+  incl_jacks = TRUE
 }
 
 # compile data
