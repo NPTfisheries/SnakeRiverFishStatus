@@ -33,7 +33,7 @@ if(!dir.exists(modelFolder)) {
 LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
 
 # run only a single species x year at a time
-spc = "Coho"
+spc = "Chinook"
 yr = 2023
 
 # set spawn year dates and whether to include jacks
