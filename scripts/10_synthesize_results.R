@@ -105,13 +105,15 @@ if(spc == "Coho"){
            spawn_yr = spawn_year,
            TRT_POPID,
            tag_code,
-           LGDSex) %>%           # note Lower Granite Dam phenotypic sex, not GenSex
+           LGDSex,
+           total_age) %>%           # note Lower Granite Dam phenotypic sex, not GenSex
     filter(!is.na(TRT_POPID)) %>%
     group_by(species,
              spawn_yr,
              TRT_POPID) %>%
     summarize(n_tags = n_distinct(tag_code),
               n_sexed = sum(LGDSex %in% c("F", "M")),
+              n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
               .groups = "drop")
 }
 
@@ -184,51 +186,47 @@ sex_p_synth = dabom_synth %>%
 
 #-----------------
 # population age abundance
-if(spc != "Coho") {
-  age_N_synth = dabom_synth %>%
-    filter(grepl("N_age", param)) %>%
-    mutate(brood_yr = spawn_yr - as.numeric(str_sub(param, -1))) %>%
-    left_join(valid_est,
-              by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
-    left_join(tag_df,
-              by = c("species", "spawn_yr", "TRT_POPID")) %>%
-    mutate(cv = sd / median) %>%
-    select(species,
-           spawn_yr,
-           MPG,
-           TRT_POPID,
-           param,
-           valid_est,
-           n_tags,
-           n_aged,
-           median,
-           lower95ci,
-           upper95ci,
-           mean,
-           mode,
-           sd,
-           cv,
-           notes)
-}
+age_N_synth = dabom_synth %>%
+  filter(grepl("N_age", param)) %>%
+  mutate(brood_yr = spawn_yr - as.numeric(str_sub(param, -1))) %>%
+  left_join(valid_est,
+            by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
+  left_join(tag_df,
+            by = c("species", "spawn_yr", "TRT_POPID")) %>%
+  mutate(cv = sd / median) %>%
+  select(species,
+         spawn_yr,
+         MPG,
+         TRT_POPID,
+         param,
+         valid_est,
+         n_tags,
+         n_aged,
+         median,
+         lower95ci,
+         upper95ci,
+         mean,
+         mode,
+         sd,
+         cv,
+         notes)
 
 #-----------------
 # population age proportions
-if(spc != "Coho") {
-  age_p_synth = dabom_synth %>%
-    filter(grepl("p_age", param)) %>%
-    mutate(cv = sd / median) %>%
-    select(species,
-           spawn_yr,
-           TRT_POPID,
-           param,
-           median,
-           lower95ci,
-           upper95ci,
-           mean,
-           mode,
-           sd,
-           cv)
-}
+age_p_synth = dabom_synth %>%
+  filter(grepl("p_age", param)) %>%
+  mutate(cv = sd / median) %>%
+  select(species,
+         spawn_yr,
+         TRT_POPID,
+         param,
+         median,
+         lower95ci,
+         upper95ci,
+         mean,
+         mode,
+         sd,
+         cv)
 
 #-----------------
 # if steelhead, population size abundance
@@ -302,7 +300,7 @@ site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summa
          cv)
 
 # write all DABOM results to excel
-if(spc == "Chinook") {
+if(spc == "Chinook" | spc == "Coho") {
   list("LGR_Esc" = stadem_synth,
        "Pop_Tot_Esc" = N_synth,
        "Pop_Sex_Esc" = sex_N_synth,
@@ -322,15 +320,6 @@ if(spc == "Steelhead") {
        "Pop_Age_Props" = age_p_synth,
        "Pop_Size_Esc" = size_N_synth,
        "Pop_Size_Props" = size_p_synth,
-       "Node_Det_Probs" = detect_synth,
-       "Site_Esc" = site_N_synth) %>%
-    write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
-}
-if(spc == "Coho") {
-  list("LGR_Esc" = stadem_synth,
-       "Pop_Tot_Esc" = N_synth,
-       "Pop_Sex_Esc" = sex_N_synth,
-       "Pop_Sex_Props" = sex_p_synth,
        "Node_Det_Probs" = detect_synth,
        "Site_Esc" = site_N_synth) %>%
     write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
