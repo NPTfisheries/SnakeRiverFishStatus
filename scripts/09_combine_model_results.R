@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: June 20, 2024
+#   Last Modified: July 2, 2024
 #
 # Notes: 
 
@@ -182,7 +182,8 @@ trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
                               configuration = configuration) %>%
   # exclude non-sensical hatchery transition probs
   filter(origin == 1) %>% # 1 = natural-origin
-  mutate(origin = recode(origin, `1` = "wild"))
+  mutate(origin = recode(origin, `1` = if(spc == "Coho") "all" else "wild"))
+  #mutate(origin = recode(origin, `1` = "wild"))
 
 # posteriors of STADEM abundance by strata_num
 abund_post = STADEM::extractPost(stadem_mod,
@@ -190,6 +191,14 @@ abund_post = STADEM::extractPost(stadem_mod,
   mutate(origin = case_when(str_detect(param, "wild") ~ "wild",
                             .default = NA_character_)) %>%
   rename(abund_param = param)
+
+if(spc == "Coho") {
+  abund_post = STADEM::extractPost(stadem_mod,
+                                   param_nms = "X.new.tot") %>%
+    mutate(origin = case_when(str_detect(param, "tot") ~ "all",
+                              .default = NA_character_)) %>%
+    rename(abund_param = param)
+}
 
 # compile main branch movement parameters, which are time-varying
 main_post = compileTransProbs(trans_post = trans_post,
@@ -279,7 +288,7 @@ pop_escp_summ = pop_escp_post %>%
 
 # load sex and age model results
 load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
-if(spc == "Chinook" | spc == "Steelhead") { load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda")) }
+load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
 if(spc == "Steelhead") { load(paste0(here(), "/output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
 
 # tag life history summary
@@ -368,17 +377,13 @@ combined_post = pop_escp_post %>%
             by = c("TRT_POPID", "iter")) %>%
   select(-pop_num) %>%
   rename(p_fem = p) %>%
-  mutate(p_male = 1 - p_fem) 
-
-if(spc == "Chinook" | spc == "Steelhead") {
-  combined_post %<>%
-    left_join(age_post %>%
-                pivot_wider(names_from = age,
-                            names_prefix = "p_",
-                            values_from = p),
-              by = c("TRT_POPID", "iter")) %>%
-    select(-pop_num)
-}
+  mutate(p_male = 1 - p_fem) %>%
+  left_join(age_post %>%
+              pivot_wider(names_from = age,
+                          names_prefix = "p_",
+                          values_from = p),
+            by = c("TRT_POPID", "iter")) %>%
+  select(-pop_num)
 
 if(spc == "Steelhead") {
   combined_post %<>%
