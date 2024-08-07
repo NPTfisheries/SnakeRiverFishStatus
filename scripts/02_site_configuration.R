@@ -14,7 +14,7 @@
 rm(list = ls())
 
 # install PITcleanr, if needed
-# remotes::install_github("KevinSee/PITcleanr")
+# remotes::install_github("KevinSee/PITcleanr", ref = "develop")
 
 # load needed libraries
 library(PITcleanr)
