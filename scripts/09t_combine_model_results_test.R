@@ -8,7 +8,7 @@
 # Created Date: Unknown
 #   Last Modified: August 7, 2024
 #
-# Notes: 
+# Notes: THIS IS A DRAFT, TEST VERSION OF 09 SCRIPT!
 
 # clear environment
 rm(list = ls())
@@ -257,6 +257,18 @@ site_escp_summ = summarisePost(.data = site_escp_post,
          spawn_yr = yr) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci)
+
+# load site operations information
+load("C:/Git/SnakeRiverIPTDS/output/iptds_operations/site_operations_summary.rda")
+
+# is each site operational for the given species and year
+site_spc_yr = site_ops %>%
+  filter(case_when(
+      spc == "Steelhead" ~ species == "sthd",
+      spc == "Chinook" ~ species == "chnk",
+      spc == "Coho" ~ species == "coho")) %>%
+  filter(year == yr) %>%
+  select(site_code, operational)
 
 # use definePopulations() to define which sites are grouped for population estimates
 source(here("R/definePopulations.R"))
