@@ -249,7 +249,7 @@ sr_config = org_config %>%
     node = case_when(
       # UPPER SALMON 
       site_code %in% c("SAWT", "BEAVEC", 
-                       "ALTULC")          ~ "STL",    # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to STL
+                       "ALTULC")          ~ "STL",    # Do I need to add SAWTRP??? Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to STL
       site_code %in% c("CEY", "YANKFK",
                        "YANKWF")          ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
       site_code == "SALREF"               ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
