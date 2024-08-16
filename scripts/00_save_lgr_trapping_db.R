@@ -1,10 +1,10 @@
 # -----------------------
 # Author(s): Ryan Kinzer and Mike Ackerman
 # Purpose: Open connection to the Lower Granite Dam trapping database (LGTrappingDB)
-#   and save table as a .csv
+#   and save master table as a .csv
 # 
 # Created Date: Unknown
-#   Last Modified: June 12, 2024
+#   Last Modified: August 16, 2024
 #
 # Notes:
 
@@ -18,11 +18,11 @@ library(here)
 # Requires a copy of the Lower Granite Dam trapping database and the ODBC driver
 if(.Platform$OS.type != "unix") { # includes windows machines
   
-  # source LGTrappingDB function
-  source(here("R/loadLGTrappingDBase.R"))
-  
   # set path to LGTrappingDB Access database
   trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-06-14.accdb")
+  
+  # source loadLGTrappingDBase function
+  source(here("R/loadLGTrappingDBase.R"))
   
   # connect to LGTrappingDB
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)
