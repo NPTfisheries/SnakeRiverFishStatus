@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: June 10, 2024
+#   Last Modified: August 19, 2024
 #
 # Notes:
 
@@ -18,19 +18,8 @@ library(tidyverse)
 library(STADEM)
 library(here)
 
-# establish some folders, if not already
-stademFolder = "output/stadem_results"
-if(!dir.exists(stademFolder)) {
-  dir.create(stademFolder)
-}
-
-modelFolder = "model_files"
-if(!dir.exists(modelFolder)) {
-  dir.create(modelFolder)
-}
-
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
 spc = "Chinook"
@@ -69,12 +58,12 @@ jags_data_list = prepJAGS(lgr_weekly = stadem_list[["weeklyData"]], # data frame
                           wild_tags = FALSE)                        # should only wild tags be used to estimate daytime passage and re-ascension rates?
                           
 # JAGs needs to access a .txt file of the model code
-model_file_nm = here("model_files/STADEM_LGR_model.txt")
+model_file_nm = here("model_files/lgr_stadem_jags_model.txt")
 
-# what distribution to use for window counts
+# what distribution to use for window counts?
 win_model = c('pois', 'neg_bin', 'neg_bin2', 'quasi_pois', 'log_space')[2]
 
-# run model using runSTADEMmodel(). # runSTADEMmodel() sets the params to save inside the functions,
+# run model using runSTADEMmodel(). Note: runSTADEMmodel() sets the params to save inside the functions,
 # and it does not save all the params available in the model!
 stadem_mod = runSTADEMmodel(file_name = model_file_nm,
                             mcmc_chainLength = 40000,
@@ -85,10 +74,9 @@ stadem_mod = runSTADEMmodel(file_name = model_file_nm,
                             seed = 5,
                             weekly_params = TRUE,
                             win_model = win_model)
-    
-# look at model summary
-# ests = stadem_mod$summary
-    
+
+# See 09_combine_model_results for code to summarize posteriors from STADEM
+
 # save results
 save(stadem_mod,
      stadem_list,
