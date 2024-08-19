@@ -1,13 +1,13 @@
 # -----------------------
 # Author(s): Mike Ackerman, Kevin See, and Ryan Kinzer
 # Purpose: Download and configure Snake River IPTDS infrastructure for tag observation
-# processing and the DABOM model
+#   processing and the DABOM model. The outputs from this script are used for processing
+#   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: February 28, 2024
+#   Last Modified: August 19, 2024
 #
-# Notes: The output and saved files from this script are used for processing tag
-#   observations and for visualizing infrastructure.
+# Notes: 
 
 #----------------------
 # clear environment
@@ -24,20 +24,20 @@ library(sf)
 library(magrittr)
 
 #----------------------
-# prep to summarize Snake River sites of Interest
+# prep to summarize Snake River sites of interest
+
 # get Snake River steelhead DPS polygon to filter area of interest
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
-  select(sthd_DPS = ESU_DPS, 
-         sthd_MPG = MPG, 
-         sthd_POP_NAME = POP_NAME, 
-         sthd_TRT_POPID = TRT_POPID, 
-         sthd_GSI_Group = GSI_Group); rm(sth_pop)
+  select(sthd_dps = ESU_DPS,
+         sthd_mpg = MPG,
+         sthd_popid = TRT_POPID,
+         sthd_popname = POP_NAME); rm(sth_pop)
 
 # plot sthd populations
 sr_sthd_pops %>%
   ggplot() +
-  geom_sf(aes(fill = sthd_MPG)) +
+  geom_sf(aes(fill = sthd_mpg)) +
   theme_bw() +
   labs(title = "Snake River Steelhead DPS",
        fill = "MPG") +
@@ -79,7 +79,7 @@ ptagis_sf = org_config %>%
 sr_int_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
   st_join(sr_sthd_pops) %>%
-  filter(!is.na(sthd_DPS)) %>%
+  filter(!is.na(sthd_dps)) %>%
   # grab only INT sites for now 
   filter(site_type == "INT") %>%
   # remove some dam sites; we'll deal with those later
@@ -87,26 +87,27 @@ sr_int_sites_sf = ptagis_sf %>%
   # remove unnecessary INT sites we don't want
   filter(!site_code %in% c("0HR", # Henry's Inreach Array, Lemhi
                            "CCP", # Catherine Creek Acclimation Pond
-                           "GRP", # Grande Ronde Acclimation Pond
-                           "LOP", # Lostine River Acclimation Pond
-                           "RPJ", # Rapid River Hatchery Pond
-                           "S2I", # Lemhi Sub-reach 2 SC Inlet
-                           "S2O", # Lemhi Sub-reach 2 SC Outlet
-                           "S3A", # Eagle Valley Ranch S3A
-                           "S3B", # Eagle Valley Ranch S3B
                            "CHN", # Challis Diversion North
                            "CHS", # Challis Diversion South
                            "CLJ", # Clearwater River Juvenile Fish Trap
+                           "COU", # Couse Creek Near Mouth
                            "CRT", # Crooked River Satellite Facility
-                           "RRT", # Red River Satellite Facility
-                           "IMJ", # Imnaha River Juvenile Fish Trap
-                           "SAJ", # Salmon River Trap
-                           "SNJ", # Snake River Trap
                            # Dworshak natural-origin fish are returned back to river and so we don't 
                            # really know their destination unless they are detected elsewhere which is 
                            # not necessarily the case for other "Hatchery Return" facilities (e.g., CRT, 
                            # RRT, STL, STR) where we can be confident that they stay in that tributary
-                           "DWL"))# Dworshak NFH Adult Ladder
+                           "DWL", # Dworshak NFH Adult Trap
+                           "GRP", # Grande Ronde Acclimation Pond
+                           "IMJ", # Imnaha River Juvenile Fish Trap
+                           "LOP", # Lostine River Acclimation Pond
+                           "RPJ", # Rapid River Hatchery Pond
+                           "RRT", # Red River Satellite Facility
+                           "S2I", # Lemhi Sub-reach 2 SC Inlet
+                           "S2O", # Lemhi Sub-reach 2 SC Outlet
+                           "S3A", # Eagle Valley Ranch S3A
+                           "S3B", # Eagle Valley Ranch S3B
+                           "SAJ", # Salmon River Trap
+                           "SNJ"))# Snake River Trap
 
 #----------------------
 # create list of Snake River MRR Sites
@@ -115,7 +116,8 @@ tags_by_site = list.files(path = here("data/complete_tag_histories/"),
                           pattern = "\\.csv$",
                           full.names = T) %>%
   setNames(nm = .) %>%
-  map_df(~read_csv(.x), .id = "file_name") %>%
+  map_df(~read_csv(.x, show_col_types = F), .id = "file_name") %>%
+  # CONTINUE HERE!!!
   # add species and spawn year
   mutate(file_name = str_replace(file_name, ".*/", ""), 
          species = str_extract(file_name, "(?<=_)[^_]+"),       
@@ -464,7 +466,7 @@ save(configuration,
      node_paths,
      file = here("data/configuration_files/site_config_LGR_20240304.rda"))
 
-# write sites_sf and flowlines out to shapefiles, if desired
+# write sites_sf and flowlines out to geopackage, if desired
 st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
 st_write(flowlines, dsn = "data/spatial/dabom_sites.gpkg", layer = "flowlines", driver = "GPKG", append = F)
 
