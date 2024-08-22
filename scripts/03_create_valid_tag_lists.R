@@ -3,7 +3,7 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: June 13, 2024
+#   Last Modified: August 22, 2024
 #
 # Notes:
 
