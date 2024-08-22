@@ -18,15 +18,12 @@ library(janitor)
 
 # set up folder structure
 tags_folder = here("output/valid_tag_lists")
-if(!dir.exists(tags_folder)) {
-  dir.create(tags_folder)
-}
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"))
 
 # set species and spawn year
-spc = "Chinook"
+spc = "Steelhead"
 yr  = 2023
 
 # set species code
