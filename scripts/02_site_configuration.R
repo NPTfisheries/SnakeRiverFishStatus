@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: August 21, 2024
+#   Last Modified: August 22, 2024
 #
 # Notes: 
 
@@ -23,20 +23,25 @@ library(here)
 library(sf)
 library(magrittr)
 library(janitor)
+library(readxl)
+
+# set default coordinate reference system
+default_crs = st_crs(32611) # WGS84 ; UTM zone 11N
 
 #----------------------
 # prep to summarize Snake River sites of interest
 
 # get Snake River steelhead DPS polygon to filter area of interest
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
-sr_sthd_pops = st_as_sf(sth_pop) %>%
+load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_dps = ESU_DPS,
          sthd_mpg = MPG,
          sthd_popid = TRT_POPID,
-         sthd_popname = POP_NAME); rm(sth_pop)
+         sthd_popname = POP_NAME) %>%
+  st_transform(default_crs); rm(sth_pop)
 
 # plot sthd populations
-sr_sthd_pops %>%
+sthd_pops %>%
   ggplot() +
   geom_sf(aes(fill = sthd_mpg)) +
   theme_bw() +
@@ -67,6 +72,7 @@ ptagis_sf = org_config %>%
   st_as_sf(coords = c("longitude", 
                       "latitude"), 
            crs = 4326) %>%
+  st_transform(default_crs) %>%
   # unique sites
   distinct(site_code,
            site_name,
@@ -79,7 +85,7 @@ ptagis_sf = org_config %>%
 # create list of Snake River INT sites
 sr_int_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
-  st_join(sr_sthd_pops) %>%
+  st_join(sthd_pops) %>%
   filter(!is.na(sthd_dps)) %>%
   # grab only INT sites for now 
   filter(site_type == "INT") %>%
@@ -148,7 +154,7 @@ tags_by_site = list.files(path = here("data/complete_tag_histories/"),
 # mrr sites of interest
 sr_mrr_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
-  st_join(sr_sthd_pops) %>%
+  st_join(sthd_pops) %>%
   filter(!is.na(sthd_dps)) %>%
   # grab only MRR sites
   filter(site_type == "MRR") %>%
@@ -324,20 +330,32 @@ configuration = bind_rows(sr_config,
                           downriver_config) ; rm(sr_config, dam_config, downriver_config)
 
 # convert configuration into a sites_sf
-sites_sf = configuration %>%
-  select(site_code = node) %>%
+crb_sites_sf = configuration %>%
+  select(site_code = node, org_site_code = site_code) %>%
   mutate(site_code = str_replace(site_code, "_D$|_U$", "")) %>%
   distinct() %>%
-  left_join(ptagis_sf) %>%
+  group_by(site_code) %>%
+  summarize(incl_sites = toString(org_site_code)) %>%
+  ungroup() %>%
+  mutate(incl_sites = str_remove_all(incl_sites, paste0("(^|,\\s*)", site_code, "(\\s*,|$)")),
+         incl_sites = str_replace_all(incl_sites, ",{2,}", ","),
+         incl_sites = str_replace_all(incl_sites, "^,|,$", ""),
+         incl_sites = str_trim(incl_sites)) %>%
+  left_join(ptagis_sf, by = "site_code") %>%
   # remove an extra Prosser Dam record
   filter(!(site_code == "PRO" & site_type == "MRR")) %>%
-  st_as_sf(crs = 4326) %>%
-  st_transform(crs = 5070) # NAD83
+  st_as_sf(crs = default_crs) %>%
+  select(site_code,
+         site_name,
+         site_type,
+         site_type_name,
+         incl_sites,
+         everything())
 
 #----------------------
 # download the NHDPlus v2 Flowlines
 dwn_flw = T # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
-nhd_list = queryFlowlines(sites_sf = sites_sf,
+nhd_list = queryFlowlines(sites_sf = crb_sites_sf,
                           root_site_code = "LGR",
                           min_strm_order = 2,
                           dwnstrm_sites = dwn_flw, 
@@ -370,7 +388,7 @@ flowlines %<>%
 
 #----------------------
 # build parent-child table
-parent_child = sites_sf %>%
+parent_child = crb_sites_sf %>%
   # just keep values at and upstream of LGR for the initial parent-child table
   filter(
     grepl("^522\\.[0-9]{3}", rkm) & 
@@ -426,29 +444,73 @@ parent_child = sites_sf %>%
   select(-parent_hydro,
          -child_hydro)
 
-### CONTINUE HERE: Consider removing pc_nodes & node_paths; add pop etc. info for Snake River INT and MRR sites
+#----------------------
+# population info for snake river dabom sites
+sr_site_pops = crb_sites_sf %>%
+  # filter for sites at or above LTR
+  filter(str_extract(rkm, "^[0-9]{3}") == "522" & as.numeric(str_extract(rkm, "(?<=\\.)[0-9]{3}")) >= 100) %>%
+  # remove GOA, LGR, and GRS
+  filter(!site_code %in% c("GOA", "LGR", "GRS")) %>%
+  select(site_code, site_type, incl_sites) %>%
+  # join steelhead, sp/sum chinook, and (made up) coho populations
+  st_join(sthd_pops %>%
+            select(-sthd_dps)) %>%
+  st_join(spsm_pop %>%
+            st_transform(crs = default_crs) %>%
+            select(chnk_mpg = MPG,
+                   chnk_popid = TRT_POPID,
+                   chnk_popname = POP_NAME)) %>%
+  left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+              select(-coho_esu_dps)) %>%
+  # move geometry column to the end
+  select(-geometry, everything(), geometry) %>%
+  mutate(
+    chnk_popid   = if_else(site_code %in% c("SC1", "SC2"), "SCUMA", chnk_popid),
+    chnk_popname = if_else(site_code %in% c("SC1", "SC2"), "Upper South Fork Clearwater", chnk_popname)
+  ) %>%
+  mutate(
+    chnk_popid   = if_else(site_code %in% c("IR1", "IR2"), NA, chnk_popid), # We don't necessarily know whether IR1 and IR2 Chinook end up in IRMAI or IRBSH
+    chnk_popname = if_else(site_code %in% c("IR1", "IR2"), NA, chnk_popname)
+  ) %>%
+  mutate(
+    chnk_popid   = if_else(site_code %in% c("SW1", "SW2"), "SEUMA/SEMEA/SEMOO", chnk_popid),
+    chnk_popname = if_else(site_code %in% c("SW1", "SW2"), "Upper Selway River/Meadow Creek/Moose Creek", chnk_popname)
+  ) %>%
+  mutate(
+    chnk_popid   = if_else(site_code == "WR1", "GRLOS/GRMIN", chnk_popid),
+    chnk_popname = if_else(site_code == "WR1", "Lostine River/Minam River", chnk_popname)
+  ) %>%
+  mutate(
+    sthd_popid   = if_else(site_code %in% c("SC1", "SC2"), "CRSFC-s", sthd_popid),
+    sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "South Fork Clearwater River", sthd_popname)
+  ) %>%
+  mutate(
+    sthd_popid   = if_else(site_code %in% c("USE", "USI"), NA, sthd_popid), # We don't necessarily know which population USI, USE steelhead end up in
+    sthd_popname = if_else(site_code %in% c("USE", "USI"), NA, sthd_popname)
+  )
 
 # add nodes to parent-child table (I don't think I need to create this here!)
-pc_nodes = parent_child %>%
-  #select(parent, child) %>%
-  addParentChildNodes(.,  configuration = configuration)
-
-# build paths to each node
-node_paths = buildNodeOrder(parent_child = pc_nodes,
-                            direction = "u")
+# pc_nodes = parent_child %>%
+#   #select(parent, child) %>%
+#   addParentChildNodes(.,  configuration = configuration)
+# 
+# # build paths to each node
+# node_paths = buildNodeOrder(parent_child = pc_nodes,
+#                             direction = "u")
 
 #----------------------
 # write configuration, parent-child table, flowlines, etc.
 save(configuration,
-     sites_sf,
+     crb_sites_sf,
+     sr_site_pops,
      flowlines,
      parent_child,
-     pc_nodes,
-     node_paths,
-     file = here("data/configuration_files/site_config_LGR_20240304.rda"))
+     #pc_nodes,
+     #node_paths,
+     file = here("data/configuration_files/site_config_LGR_20240822.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
-st_write(sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
+st_write(crb_sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
 st_write(flowlines, dsn = "data/spatial/dabom_sites.gpkg", layer = "flowlines", driver = "GPKG", append = F)
 
 # END SCRIPT
