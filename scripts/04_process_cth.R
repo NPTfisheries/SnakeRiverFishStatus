@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: June 13, 2024
+#   Last Modified: August 22, 2024
 #
 #   Notes: 
 
@@ -18,9 +18,6 @@ library(writexl)
 
 # set up folder structure
 PITcleanr_folder = "output/PITcleanr"
-if(!dir.exists(PITcleanr_folder)) {
-  dir.create(PITcleanr_folder)
-}
 
 # set species and year
 spc = "Coho"
