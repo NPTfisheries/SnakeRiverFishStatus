@@ -22,8 +22,8 @@ library(here)
 LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
-spc = "Chinook"
-yr = 2013
+spc = "Steelhead"
+yr = 2018
 
 # set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
