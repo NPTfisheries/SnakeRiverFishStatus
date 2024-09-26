@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: June 13, 2024
+#   Last Modified: August 26, 2024
 #
 # Notes: 
 
@@ -22,11 +22,10 @@ library(DABOM)
 load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
-if(!dir.exists(dabom_folder)) { dir.create(dabom_folder) }
 
 #--------------------
 # start analysis

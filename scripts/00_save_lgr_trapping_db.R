@@ -4,7 +4,7 @@
 #   and save master table as a .csv
 # 
 # Created Date: Unknown
-#   Last Modified: August 16, 2024
+#   Last Modified: September 26, 2024
 #
 # Notes:
 
@@ -19,7 +19,7 @@ library(here)
 if(.Platform$OS.type != "unix") { # includes windows machines
   
   # set path to LGTrappingDB Access database
-  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-06-14.accdb")
+  trap_filepath = here("data/LGTrappingDB/LGTrappingExport_2024-09-26.accdb")
   
   # source loadLGTrappingDBase function
   source(here("R/loadLGTrappingDBase.R"))

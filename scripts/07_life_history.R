@@ -91,7 +91,11 @@ rm(sth_pop, spsm_pop)
 # if spc == "Coho", use custom population designations
 if(spc == "Coho") {
   library(readxl)
-  site_pops = read_excel(here("data/coho_populations/coho_populations.xlsx"))
+  site_pops = read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+    select(spawn_site = site_code, 
+           MPG = coho_mpg,
+           POP_NAME = coho_popname,
+           TRT_POPID = coho_popid)
 }
 
 # estimate final spawning location
@@ -114,7 +118,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
 names(tag_final_loc) = gsub(spc_prefix, "", names(tag_final_loc))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-06-14.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"))
 
 # clean and trim data from the LGTrappingDB to join to tag_final_loc
 bio_df = trap_df %>%

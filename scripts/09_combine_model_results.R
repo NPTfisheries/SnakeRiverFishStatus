@@ -26,7 +26,7 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Steelhead"
+spc = "Coho"
 yr = 2023
 
 # set prefix
@@ -61,7 +61,7 @@ node_pops = configuration %>%
                    chnk_TRT_POPID = TRT_POPID,
                    chnk_GSI_Group = GSI_Group)) %>%
   left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
-              rename(site_code = spawn_site) %>%
+              #rename(site_code = spawn_site) %>%
               mutate(coho_GSI_Group = NA) %>%
               left_join(configuration %>%
                           select(site_code,
@@ -69,11 +69,13 @@ node_pops = configuration %>%
                           distinct())) %>%
   select(node, starts_with(spc_prefix)) %>%
   rename_with(~str_remove(., spc_prefix)) %>%
-  select(-ESU_DPS, -GSI_Group) %>%
+  #select(-ESU_DPS, -GSI_Group) %>%
+  select(-esu_dps, -GSI_Group) %>%
   distinct(node, .keep_all = TRUE) %>%
   mutate(site = str_remove(node, "_U|_D")) %>%
   left_join(node_branches) %>%
-  arrange(MPG, POP_NAME, node)
+  arrange(mpg, popname, node)
+  #arrange(MPG, POP_NAME, node)
 
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
 if(spc == "Chinook") {
@@ -109,12 +111,14 @@ rm(sth_pop, spsm_pop)
 # df of trt populations
 trt_df = node_pops %>%
   select(-node) %>%
-  arrange(MPG, POP_NAME, site) %>%
+  arrange(mpg, popname, site) %>%
+  #arrange(MPG, POP_NAME, site) %>%
   distinct(site, .keep_all = TRUE) %>%
   sf::st_set_geometry(NULL) %>%
   select(-site, -branch) %>%
-  filter(!is.na(MPG)) %>%
-  distinct(TRT_POPID, .keep_all = TRUE)
+  #filter(!is.na(MPG)) %>%
+  filter(!is.na(mpg)) %>%
+  distinct(popid, .keep_all = TRUE)
 
 #-----------------
 # load DABOM and STADEM results
@@ -160,9 +164,12 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
   left_join(node_pops) %>%
   select(species,
          spawn_yr,
-         MPG,
-         TRT_POPID,
-         POP_NAME,
+         mpg,
+         popid,
+         popname,
+         # MPG,
+         # TRT_POPID,
+         # POP_NAME,
          branch,
          node,
          n_tags,
@@ -171,7 +178,8 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          cv,
          lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
-  arrange(MPG, TRT_POPID, node)
+  #arrange(MPG, TRT_POPID, node)
+  arrange(mpg, popid, node)
 
 #-----------------
 # examine movement posteriors (phi and psi)
@@ -275,13 +283,17 @@ pop_escp_summ = pop_escp_post %>%
   summarisePost(value = abund,
                 # grouping variables,
                 TRT_POPID,
+                #popid,
                 origin,
                 .cred_int_prob = 0.95) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
-  left_join(trt_df) %>%
-  select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
-  arrange(MPG, TRT_POPID)
+  left_join(trt_df,
+            by = c("TRT_POPID" = "popid")) %>%
+  select(mpg, TRT_POPID, popname, origin, everything()) %>%
+  arrange(mpg, TRT_POPID)
+  # select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
+  # arrange(MPG, TRT_POPID)
   
 #-----------------
 # sex, age, and size estimates
