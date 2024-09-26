@@ -26,8 +26,8 @@ load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlin
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Coho"
-yr = 2023
+spc = "Chinook"
+yr = 2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -122,7 +122,8 @@ trt_df = node_pops %>%
 
 #-----------------
 # load DABOM and STADEM results
-load(paste0(here(), "/output/stadem_results/LGR_STADEM_", spc, "_", yr, ".rda"))
+#load(paste0(here(), "/output/stadem_results/LGR_STADEM_", spc, "_", yr, ".rda"))
+load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
 load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
 #-----------------

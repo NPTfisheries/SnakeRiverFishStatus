@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: August 19, 2024
+#   Last Modified: September 26, 2024
 #
 # Notes:
 
@@ -19,11 +19,11 @@ library(STADEM)
 library(here)
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"), show_col_types = FALSE)
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
 spc = "Chinook"
-yr = 2023
+yr = 2010
 
 # set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
@@ -75,12 +75,12 @@ stadem_mod = runSTADEMmodel(file_name = model_file_nm,
                             weekly_params = TRUE,
                             win_model = win_model)
 
-# See 09_combine_model_results for code to summarize posteriors from STADEM
+# See 09_combine_model_results.R for code to summarize posteriors from STADEM
 
 # save results
 save(stadem_mod,
      stadem_list,
-     file = paste0(here(stademFolder), "/LGR_STADEM_", spc, "_", yr, ".rda"))
+     file = paste0(here("output/stadem_results"), "/lgr_stadem_", spc, "_SY", yr, ".rda"))
 
 # plot weekly STADEM results
 week_esc_p = plotTimeSeries(stadem_mod = stadem_mod,
