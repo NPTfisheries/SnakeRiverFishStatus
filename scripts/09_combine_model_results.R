@@ -127,30 +127,30 @@ load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"
 load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
 #-----------------
-# STADEM estimates
-stadem_df = STADEM::extractPost(stadem_mod,
-                                param_nms = c("X.tot.new")) %>%
-  mutate(species = spc,
-         spawn_yr = yr,
-         origin = case_when(
-           grepl("all", param) ~ "Total",
-           grepl("wild", param) ~ "Natural",
-           grepl("hatch", param) ~ "Hatchery Clip",
-           grepl('hnc', param) ~ "Hatchery No-Clip"
-         )) %>%
-  summarisePost(value = tot_abund,
-                # columns to group by
-                species,
-                spawn_yr,
-                origin) %>%
-  select(species,
-         spawn_yr,
-         origin,
-         estimate = median,
-         lower95ci = lower_ci,
-         upper95ci = upper_ci,
-         mean,
-         sd)
+# STADEM estimates; consider removing later, moved to 01 script
+# stadem_df = STADEM::extractPost(stadem_mod,
+#                                 param_nms = c("X.tot.new")) %>%
+#   mutate(species = spc,
+#          spawn_yr = yr,
+#          origin = case_when(
+#            grepl("all", param) ~ "Total",
+#            grepl("wild", param) ~ "Natural",
+#            grepl("hatch", param) ~ "Hatchery Clip",
+#            grepl('hnc', param) ~ "Hatchery No-Clip"
+#          )) %>%
+#   summarisePost(value = tot_abund,
+#                 # columns to group by
+#                 species,
+#                 spawn_yr,
+#                 origin) %>%
+#   select(species,
+#          spawn_yr,
+#          origin,
+#          estimate = median,
+#          lower95ci = lower_ci,
+#          upper95ci = upper_ci,
+#          mean,
+#          sd)
   
 #-----------------
 # summarize detection probabilities (p)
@@ -438,10 +438,10 @@ combined_summ = combined_post %>%
 
 #-----------------
 # save results
-# stadem escapement summary
-write_csv(stadem_df,
-          file = paste0(here("output/stadem_results/escapement_summaries"),
-                        "/SY", yr, "_", spc, "_stadem_escapement.csv"))
+# stadem escapement summary; consider removing later, moved to 01 script
+# write_csv(stadem_df,
+#           file = paste0(here("output/stadem_results/escapement_summaries"),
+#                         "/SY", yr, "_", spc, "_stadem_escapement.csv"))
 
 # detection probabilities
 save(detect_summ,

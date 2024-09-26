@@ -23,7 +23,7 @@ LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"), s
 
 # run only a single species x year at a time
 spc = "Chinook"
-yr = 2010
+yr = 2013
 
 # set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
@@ -77,10 +77,40 @@ stadem_mod = runSTADEMmodel(file_name = model_file_nm,
 
 # See 09_combine_model_results.R for code to summarize posteriors from STADEM
 
-# save results
+# save raw results
 save(stadem_mod,
      stadem_list,
      file = paste0(here("output/stadem_results"), "/lgr_stadem_", spc, "_SY", yr, ".rda"))
+
+# summarize escapement
+stadem_df = STADEM::extractPost(stadem_mod,
+                                param_nms = c("X.tot.new")) %>%
+  mutate(species = spc,
+         spawn_yr = yr,
+         origin = case_when(
+           grepl("all", param)   ~ "Total",
+           grepl("wild", param)  ~ "Natural",
+           grepl("hatch", param) ~ "Hatchery Clip",
+           grepl('hnc', param)   ~ "Hatchery No-Clip"
+         )) %>%
+  DABOM::summarisePost(value = tot_abund,
+                # columns to group by
+                species,
+                spawn_yr,
+                origin) %>%
+  select(species,
+         spawn_yr,
+         origin,
+         estimate = median,
+         lower95ci = lower_ci,
+         upper95ci = upper_ci,
+         mean,
+         sd)
+
+# write stadem escapement summary
+write_csv(stadem_df,
+          file = paste0(here("output/stadem_results/escapement_summaries"),
+                        "/", spc, "_SY", yr, "_stadem_escapement.csv"))
 
 # plot weekly STADEM results
 week_esc_p = plotTimeSeries(stadem_mod = stadem_mod,
