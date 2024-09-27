@@ -3,9 +3,9 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: August 22, 2024
+#   Last Modified: September 27, 2024
 #
-#   Notes: 
+#   Notes: 9/27/24 - Need to finish processing remaining sthd cth's and then start reviewing for DABOM.
 
 # clear environment
 rm(list = ls())
@@ -20,18 +20,17 @@ library(writexl)
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
-spc = "Coho"
-yr = 2023
+spc = "Steelhead"
+yr = 2010
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines, sites_sf, parent_child)
+load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines, crb_sites_sf, sr_site_pops)
 
 # read in complete tag history
-cth_path = paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv")
-cth_df = readCTH(cth_path)
+cth_df = readCTH(paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv"))
 
 # QC complete tag history
 cth_qc = qcTagHistory(cth_df)
@@ -93,6 +92,10 @@ lgr_after_obs = comp_obs %>%
 # i.e., moving in a single direction. Note: the function first runs addDirection() which determines movement
 # based on relationships in the provided parent-child table.
 
+# add nodes to parent-child table
+pc_nodes = parent_child %>%
+  addParentChildNodes(.,  configuration = configuration)
+
 # Chinook or coho salmon
 if(spc == "Chinook") { max_obs_date = paste0(yr, "1031")     } # use to filter errant detections e.g., shed tags
 if(spc == "Coho")    { max_obs_date = paste0(yr + 1, "0228") } 
@@ -114,7 +117,7 @@ if(spc == "Chinook" | spc == "Coho"){
 if(spc == "Steelhead"){
   
   # function to deal w kelts and repeat spawners
-  source("R/steelhead/steelheadLifeStage.R")
+  source("R/steelheadLifeStage.R")
 
   dabom_obs = filterDetections(compress_obs = lgr_after_obs,
                                parent_child = pc_nodes,
