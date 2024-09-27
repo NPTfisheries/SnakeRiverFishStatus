@@ -3,7 +3,7 @@
 # Purpose: Create a map of DABOM sites across the Snake River basin
 # 
 # Created Date: June 26, 2023
-#   Last Modified:
+#   Last Modified: September 26, 2024
 #
 # Notes: 
 
@@ -27,7 +27,7 @@ source(here("R/theme_map.R"))
 
 #----------------------
 # load some data
-load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(configuration, node_paths)
+load(here("data/configuration_files/site_config_LGR_20240926.rda"))
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_DPS = ESU_DPS, 
@@ -38,7 +38,7 @@ sr_sthd_pops = st_as_sf(sth_pop) %>%
 # load(here("data/spatial/large_rivers.rda"))
 
 #----------------------
-# Columbia-wide Map
+# columbia-wide map
 crb_site_map = ggplot() +
   geom_sf(data = sr_sthd_pops,
           aes(fill = sthd_MPG)) +
@@ -51,11 +51,11 @@ crb_site_map = ggplot() +
                         end = 0.8) +
   scale_size_continuous(range = c(0.2, 1.2),
                         guide = 'none') +
-  geom_sf(data = sites_sf,
+  geom_sf(data = crb_sites_sf,
           size = 3, 
           color = "black") +
   ggrepel::geom_label_repel(
-    data = sites_sf %>%
+    data = crb_sites_sf %>%
       filter(site_code != "LGR"),
     aes(label = site_code,
         geometry = geometry),
@@ -63,7 +63,7 @@ crb_site_map = ggplot() +
     stat = "sf_coordinates",
     min.segment.length = 0,
     max.overlaps = 100) +
-  geom_sf_label(data = sites_sf %>%
+  geom_sf_label(data = crb_sites_sf %>%
                   filter(site_code == "LGR"),
                 aes(label = site_code),
                 color = "red") +
@@ -74,13 +74,13 @@ crb_site_map = ggplot() +
 crb_site_map
 
 # save site map
-ggsave(here("output/figures/crb_site_map.png"),
+ggsave(here("output/figures/site_mapping/crb_site_map.png"),
        crb_site_map,
        width = 14,
        height = 8.5)
 
 #----------------------
-# Snake River Map
+# snake river Map
 # get polygons for pacific northwest states
 pnw = st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) %>%
   filter(ID %in% c("idaho", "oregon", "washington")) %>%
@@ -114,7 +114,7 @@ snake_map = ggplot() +
           colour = "cyan",
           size = 1,
           inherit.aes = FALSE) +
-  geom_sf(data = sites_sf,
+  geom_sf(data = crb_sites_sf,
           aes(geometry = geometry), 
           size = 2) +
   scale_fill_manual(values = plasma_pal,
@@ -141,7 +141,7 @@ snake_map = ggplot() +
 snake_map
 
 # save snake river site map
-ggsave(paste0(here("output/figures/snake_site_map.png")),
+ggsave(paste0(here("output/figures/site_mapping/snake_site_map.png")),
        snake_map,
        width = 8,
        height = 7)
@@ -157,7 +157,7 @@ site_p
 
 #----------------------
 # site network using buildNetwork_tbl()
-site_attributes = sites_sf %>%
+site_attributes = crb_sites_sf %>%
   st_transform(crs = 4326) %>%
   st_join(sr_sthd_pops) %>%
   select(label = site_code,
@@ -214,13 +214,16 @@ site_network = ggraph(site_graph,
 site_network
 
 # save site_network
-ggsave(here("output/figures/site_network_LGR.png"),
+ggsave(here("output/figures/site_mapping/site_network_LGR.png"),
        site_network,
        width = 20,
        height = 8.5)
 
 #----------------------
 # create node network
+pc_nodes = parent_child %>%
+  addParentChildNodes(.,  configuration = configuration)
+
 node_attributes = union(pc_nodes$parent, pc_nodes$child) %>%
   as_tibble() %>%
   rename(label = value) %>% 
@@ -258,7 +261,7 @@ node_network = ggraph(node_graph,
 node_network
 
 # save site_network
-ggsave(here("output/figures/node_network_LGR.png"),
+ggsave(here("output/figures/site_mapping/node_network_LGR.png"),
        node_network,
        width = 20,
        height = 8.5)
