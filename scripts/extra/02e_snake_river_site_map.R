@@ -23,7 +23,7 @@ library(ggraph)
 # library(cowplot)
 
 # source theme_map()
-source(here("R/theme_map.R"))
+source(here("R/themeMap.R"))
 
 #----------------------
 # load some data
