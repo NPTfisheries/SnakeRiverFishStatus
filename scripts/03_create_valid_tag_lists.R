@@ -20,10 +20,10 @@ library(janitor)
 tags_folder = here("output/valid_tag_lists")
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"))
 
 # set species and spawn year
-spc = "Coho"
+spc = "Steelhead"
 yr  = 2023
 
 # set species code
