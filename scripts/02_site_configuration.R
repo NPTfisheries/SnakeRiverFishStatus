@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: September 26, 2024
+#   Last Modified: September 27, 2024
 #
 # Notes: 
 
@@ -507,7 +507,7 @@ save(configuration,
      parent_child,
      #pc_nodes,
      #node_paths,
-     file = here("data/configuration_files/site_config_LGR_20240926.rda"))
+     file = here("data/configuration_files/site_config_LGR_20240927.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
 st_write(crb_sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
