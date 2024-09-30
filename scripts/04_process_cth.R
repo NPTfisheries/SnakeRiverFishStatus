@@ -3,9 +3,9 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: September 27, 2024
+#   Last Modified: September 30, 2024
 #
-#   Notes: 9/27/24 - Need to finish processing remaining sthd cth's and then start reviewing for DABOM.
+#   Notes:
 
 # clear environment
 rm(list = ls())
@@ -21,7 +21,7 @@ PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
 spc = "Steelhead"
-yr = 2010
+yr = 2023
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
