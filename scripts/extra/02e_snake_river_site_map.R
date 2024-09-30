@@ -182,9 +182,9 @@ site_attributes = crb_sites_sf %>%
   # st_set_geometry(NULL)
 
 # source buildNetwork()
-source('./R/buildNetwork_tbl.R')
-site_graph = buildNetwork_tbl(parent_child = parent_child,
-                              node_attributes = site_attributes)
+source('./R/buildNetworkTbl.R')
+site_graph = buildNetworkTbl(parent_child = parent_child,
+                             node_attributes = site_attributes)
 
 # set a color palette
 sn_pal = c(viridis(n = 5, begin = 0.5), "grey50")
@@ -234,8 +234,8 @@ node_attributes = union(pc_nodes$parent, pc_nodes$child) %>%
               st_drop_geometry(),
             by = c("site_code" = "label"))
 
-node_graph = buildNetwork_tbl(parent_child = pc_nodes,
-                              node_attributes = node_attributes)
+node_graph = buildNetworkTbl(parent_child = pc_nodes,
+                             node_attributes = node_attributes)
 
 node_network = ggraph(node_graph,
                       layout = "tree") +

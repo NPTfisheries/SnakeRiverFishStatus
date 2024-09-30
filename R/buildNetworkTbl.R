@@ -3,11 +3,11 @@
 # Purpose: build a node network tbl_graph with covariate information assigned
 # 
 # Created Date: October 1, 2021
-#   Last Modified: June 21, 2023 by MA
+#   Last Modified: September 30, 2024 by MA
 #
 # Notes:
 
-buildNetwork_tbl <- function(parent_child = NULL, 
+buildNetworkTbl <- function(parent_child = NULL, 
                              node_attributes = NULL) {
   
   requireNamespace("tidygraph", quietly = TRUE)
