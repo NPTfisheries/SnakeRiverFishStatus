@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: August 26, 2024
+#   Last Modified: September 30, 2024
 #
 # Notes: 
 
@@ -19,10 +19,10 @@ library(DABOM)
 #--------------------
 # some initial setup
 # load configuration
-load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-08-16.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -30,8 +30,8 @@ dabom_folder = here("output/dabom_results/")
 #--------------------
 # start analysis
 # set species and spawn year
-spc = "Coho"
-yr = 2023
+spc = "Chinook"
+yr = 2011
 
 # set species code and whether to include hatchery fish
 if(spc == "Chinook")   { spc_code = 1 ; incl_hatchery = FALSE }
@@ -170,18 +170,18 @@ n.thin   = 10
 # n.thin   = 10
 
 # or run using parallel cores
-source(here("R/run_dabom_parallel_v2.R"))
-dabom_output = run_dabom_parallel_v2(model = final_mod_file,
-                                     data = jags_data,
-                                     jags_params = jags_params,
-                                     inits = init_fnc,
-                                     n.chains = n.chains,
-                                     n.adapt = n.adapt,
-                                     n.burn = n.burn,
-                                     n.iter = n.iter,
-                                     thin = n.thin,
-                                     filter_ch = filter_ch,
-                                     filename = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
+source(here("R/runDabomParallelV2.R"))
+dabom_output = runDabomParallelV2(model = final_mod_file,
+                                  data = jags_data,
+                                  jags_params = jags_params,
+                                  inits = init_fnc,
+                                  n.chains = n.chains,
+                                  n.adapt = n.adapt,
+                                  n.burn = n.burn,
+                                  n.iter = n.iter,
+                                  thin = n.thin,
+                                  filter_ch = filter_ch,
+                                  filename = paste0(dabom_folder, "/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
 # create capture history with tag codes for debugging
 # cap_hist = createDABOMcapHist(filter_ch = filter_ch,
