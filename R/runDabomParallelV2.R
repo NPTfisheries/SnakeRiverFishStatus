@@ -1,6 +1,6 @@
 # function to run DABOM on multiple cores equal to number of chains using
 # dclone and jags.parfit.
-run_dabom_parallel_v2 <- function(model, 
+runDabomParallelV2 <- function(model, 
                                   data, 
                                   jags_params, 
                                   inits,
