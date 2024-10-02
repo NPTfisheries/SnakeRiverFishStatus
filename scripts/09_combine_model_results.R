@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: August 7, 2024
+#   Last Modified: October 2, 2024
 #
 # Notes: 
 
@@ -22,8 +22,8 @@ library(magrittr)
 library(readxl)
 
 # load configuration files
-load(here("data/configuration_files/site_config_LGR_20240304.rda")) ; rm(flowlines)
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
+#load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
 spc = "Chinook"
@@ -35,94 +35,114 @@ if(spc == "Steelhead") { spc_prefix = "sthd_" }
 if(spc == "Coho")      { spc_prefix = "coho_" }
 
 # assign each node to a branch
-node_branches = node_paths %>%
+node_branches = parent_child %>%
+  # get paths to each node
+  addParentChildNodes(., configuration = configuration) %>%
+  buildNodeOrder(direction = "u") %>%
   mutate(branch = str_split(path, " ", simplify = TRUE)[,2],
          branch = ifelse(path == "LGR", "Black-Box", branch)) %>%
   select(node, branch)
 
 # populations and branches for each node
-node_pops = configuration %>%
-  select(node, latitude, longitude) %>%
-  distinct() %>%
-  filter(!is.na(latitude) | !is.na(longitude)) %>%
-  st_as_sf(coords = c("longitude",
-                      "latitude"),
-           crs = 4326) %>%
-  st_join(st_as_sf(sth_pop) %>%
-            select(sthd_ESU_DPS = ESU_DPS,
-                   sthd_MPG = MPG, 
-                   sthd_POP_NAME = POP_NAME, 
-                   sthd_TRT_POPID = TRT_POPID, 
-                   sthd_GSI_Group = GSI_Group)) %>%
-  st_join(st_as_sf(spsm_pop) %>%
-            select(chnk_ESU_DPS = ESU_DPS,
-                   chnk_MPG = MPG,
-                   chnk_POP_NAME = POP_NAME,
-                   chnk_TRT_POPID = TRT_POPID,
-                   chnk_GSI_Group = GSI_Group)) %>%
-  left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
-              #rename(site_code = spawn_site) %>%
-              mutate(coho_GSI_Group = NA) %>%
-              left_join(configuration %>%
-                          select(site_code,
-                                 node) %>%
-                          distinct())) %>%
-  select(node, starts_with(spc_prefix)) %>%
-  rename_with(~str_remove(., spc_prefix)) %>%
-  #select(-ESU_DPS, -GSI_Group) %>%
-  select(-esu_dps, -GSI_Group) %>%
-  distinct(node, .keep_all = TRUE) %>%
-  mutate(site = str_remove(node, "_U|_D")) %>%
-  left_join(node_branches) %>%
+node_pops = node_branches %>%
+  mutate(site_code = str_remove(node, "_U|_D")) %>%
+  left_join(sr_site_pops %>%
+              select(site_code, incl_sites, starts_with(spc_prefix)) %>%
+              rename_with(~str_remove(., spc_prefix)),
+            by = ("site_code" = "site_code")) %>%
   arrange(mpg, popname, node)
-  #arrange(MPG, POP_NAME, node)
+
+# populations and branches for each node
+# node_pops = configuration %>%
+#   select(node, latitude, longitude) %>%
+#   distinct() %>%
+#   filter(!is.na(latitude) | !is.na(longitude)) %>%
+#   st_as_sf(coords = c("longitude",
+#                       "latitude"),
+#            crs = 4326) %>%
+#   st_join(st_as_sf(sth_pop) %>%
+#             select(sthd_ESU_DPS = ESU_DPS,
+#                    sthd_MPG = MPG, 
+#                    sthd_POP_NAME = POP_NAME, 
+#                    sthd_TRT_POPID = TRT_POPID, 
+#                    sthd_GSI_Group = GSI_Group)) %>%
+#   st_join(st_as_sf(spsm_pop) %>%
+#             select(chnk_ESU_DPS = ESU_DPS,
+#                    chnk_MPG = MPG,
+#                    chnk_POP_NAME = POP_NAME,
+#                    chnk_TRT_POPID = TRT_POPID,
+#                    chnk_GSI_Group = GSI_Group)) %>%
+#   left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+#               #rename(site_code = spawn_site) %>%
+#               mutate(coho_GSI_Group = NA) %>%
+#               left_join(configuration %>%
+#                           select(site_code,
+#                                  node) %>%
+#                           distinct())) %>%
+#   select(node, starts_with(spc_prefix)) %>%
+#   rename_with(~str_remove(., spc_prefix)) %>%
+#   #select(-ESU_DPS, -GSI_Group) %>%
+#   select(-esu_dps, -GSI_Group) %>%
+#   distinct(node, .keep_all = TRUE) %>%
+#   mutate(site = str_remove(node, "_U|_D")) %>%
+#   left_join(node_branches) %>%
+#   arrange(mpg, popname, node)
+#   #arrange(MPG, POP_NAME, node)
 
 # fix some sites so that fish are assigned to the correct population for parsing abundance estimates
-if(spc == "Chinook") {
-  node_pops %<>%
-    select(site, node, TRT_POPID, branch) %>%
-    mutate(TRT_POPID = case_when(
-      site %in% c("SC1", "SC2")     ~ "SCUMA",
-      site %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
-      site %in% "JOC"               ~ "Joseph",
-      TRUE ~ TRT_POPID
-    )) %>%
-    left_join(spsm_pop %>%
-                select(MPG, POP_NAME, TRT_POPID) %>%
-                st_drop_geometry())
-} # end Chinook fixes
-if(spc == "Steelhead") {
-  node_pops %<>% 
-    select(site, node, TRT_POPID, branch) %>%
-    mutate(TRT_POPID = case_when(
-      site == "USI"                ~ "SREFS-s",
-      site == "MCCA"               ~ "SFMAI-s",
-      site %in% c("SC1", "SC2")    ~ "CRSFC-s",
-      TRUE ~ TRT_POPID
-    )) %>%
-    left_join(sth_pop %>%
-                select(MPG, POP_NAME, TRT_POPID) %>%
-                st_drop_geometry())
-} # end steelhead fixes
+# if(spc == "Chinook") {
+#   node_pops %<>%
+#     select(site, node, TRT_POPID, branch) %>%
+#     mutate(TRT_POPID = case_when(
+#       site %in% c("SC1", "SC2")     ~ "SCUMA",
+#       site %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
+#       site %in% "JOC"               ~ "Joseph",
+#       TRUE ~ TRT_POPID
+#     )) %>%
+#     left_join(spsm_pop %>%
+#                 select(MPG, POP_NAME, TRT_POPID) %>%
+#                 st_drop_geometry())
+# } # end Chinook fixes
+# if(spc == "Steelhead") {
+#   node_pops %<>% 
+#     select(site, node, TRT_POPID, branch) %>%
+#     mutate(TRT_POPID = case_when(
+#       site == "USI"                ~ "SREFS-s",
+#       site == "MCCA"               ~ "SFMAI-s",
+#       site %in% c("SC1", "SC2")    ~ "CRSFC-s",
+#       TRUE ~ TRT_POPID
+#     )) %>%
+#     left_join(sth_pop %>%
+#                 select(MPG, POP_NAME, TRT_POPID) %>%
+#                 st_drop_geometry())
+# } # end steelhead fixes
   
 # remove a couple objects
-rm(sth_pop, spsm_pop)
+# rm(sth_pop, spsm_pop)
 
 # df of trt populations
 trt_df = node_pops %>%
   select(-node) %>%
-  arrange(mpg, popname, site) %>%
-  #arrange(MPG, POP_NAME, site) %>%
-  distinct(site, .keep_all = TRUE) %>%
-  sf::st_set_geometry(NULL) %>%
-  select(-site, -branch) %>%
-  #filter(!is.na(MPG)) %>%
-  filter(!is.na(mpg)) %>%
-  distinct(popid, .keep_all = TRUE)
+  distinct(site_code, .keep_all = T) %>%
+  select(-branch, -site_code, -incl_sites) %>%
+  filter(!is.na(popid)) %>%
+  distinct(popid, .keep_all = T) %>%
+  arrange(mpg, popid)
+
+# # df of trt populations
+# trt_df = node_pops %>%
+#   select(-node) %>%
+#   arrange(mpg, popname, site) %>%
+#   #arrange(MPG, POP_NAME, site) %>%
+#   distinct(site, .keep_all = TRUE) %>%
+#   sf::st_set_geometry(NULL) %>%
+#   select(-site, -branch) %>%
+#   #filter(!is.na(MPG)) %>%
+#   filter(!is.na(mpg)) %>%
+#   distinct(popid, .keep_all = TRUE)
 
 #-----------------
-# load DABOM and STADEM results
-#load(paste0(here(), "/output/stadem_results/LGR_STADEM_", spc, "_", yr, ".rda"))
+# load stadem and dabom results
 load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
 load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
@@ -162,24 +182,21 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
          cv = sd / median) %>%
   filter(n_tags != 0,
          node != "LGR") %>%
-  left_join(node_pops) %>%
+  left_join(node_pops,
+            by = c("node" = "node")) %>%
   select(species,
          spawn_yr,
          mpg,
          popid,
          popname,
-         # MPG,
-         # TRT_POPID,
-         # POP_NAME,
-         branch,
          node,
+         branch,
          n_tags,
          estimate = median,
          sd,
          cv,
          lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
-  #arrange(MPG, TRT_POPID, node)
   arrange(mpg, popid, node)
 
 #-----------------
@@ -194,7 +211,7 @@ trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
   mutate(origin = recode(origin, `1` = if(spc == "Coho") "all" else "wild"))
   #mutate(origin = recode(origin, `1` = "wild"))
 
-# posteriors of STADEM abundance by strata_num
+# posteriors of stadem abundance by strata_num
 abund_post = STADEM::extractPost(stadem_mod,
                                  param_nms = "X.new.wild") %>%
   mutate(origin = case_when(str_detect(param, "wild") ~ "wild",
@@ -266,6 +283,8 @@ site_escp_summ = summarisePost(.data = site_escp_post,
          spawn_yr = yr) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci)
+
+# CONTINUE HERE!!!
 
 # use definePopulations() to define which sites are grouped for population estimates
 source(here("R/definePopulations.R"))
