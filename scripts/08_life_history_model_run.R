@@ -17,8 +17,8 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Coho"
-yr = 2023
+spc = "Chinook"
+yr = 2010
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
@@ -64,8 +64,8 @@ mod_sex_df = read_excel(paste0(here(), "/", lh_folder, spc, "_SY", yr, "_lh_summ
 
 # pull out relevant bits for JAGS, and name them appropriately
 sex_jags_data = mod_sex_df %>%
-  filter(TRT_POPID != "Not Observed") %>%
-  mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
+  filter(popid != "Not Observed") %>%
+  mutate(pop_num = as.integer(as.factor(popid))) %>%
   select(f = F,
          tags = n_sexed,
          pop_num) %>%
@@ -127,8 +127,8 @@ model {
   
   # pull out relevant bits for JAGS, and name them appropriately
   size_jags_data = mod_size_df %>%
-    filter(TRT_POPID != "Not Observed") %>%
-    mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
+    filter(popid != "Not Observed") %>%
+    mutate(pop_num = as.integer(as.factor(popid))) %>%
     select(a = fl_a,
            tags = n_measured,
            pop_num) %>%
@@ -259,15 +259,15 @@ mod_age_df = read_excel(paste0(here(), "/", lh_folder, spc, "_SY", yr, "_lh_summ
 
 # pull out relevant bits for JAGS, and name them appropriately
 age_jags_data = mod_age_df %>%
-  filter(TRT_POPID != "Not Observed") %>%
-  mutate(pop_num = as.integer(as.factor(TRT_POPID))) %>%
+  filter(popid != "Not Observed") %>%
+  mutate(pop_num = as.integer(as.factor(popid))) %>%
   select(tags = n_aged,
          pop_num) %>%
   as.list()
 
 age_jags_data$age_mat = mod_age_df %>%
-  filter(TRT_POPID != "Not Observed") %>%
-  filter(species != "Total") %>%
+  filter(popid != "Not Observed") %>%
+  #filter(species != "Total") %>%
   select(starts_with("age")) %>%
   as.matrix()
   
@@ -280,9 +280,9 @@ if(sum(colSums(age_jags_data$age_mat) == 0) > 0) {
 if(model == "hierarchical"){
   
   age_jags_data$run_type = mod_age_df %>%
-    filter(TRT_POPID != "Not Observed") %>%
-    filter(species != "Total") %>%
-    select(TRT_POPID) %>%
+    filter(popid != "Not Observed") %>%
+    #filter(species != "Total") %>%
+    select(popid) %>%
     mutate(run = if_else(TRT_POPID %in% c('CRLMA-s',
                                           'CRLOC-s',
                                           'CRLOL-s',
