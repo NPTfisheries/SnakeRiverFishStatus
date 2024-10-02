@@ -3,9 +3,9 @@
 # Purpose: Diagnostics for DABOM MCMC runs
 # 
 # Created Date: October 7, 2019
-#   Last Modified: March 20, 2024
+#   Last Modified: October 2, 2024
 #
-# Notes: postpack package can be installed by typing "devtools::install_github("bstaton1/postpack")"
+# Notes: postpack package can be installed by using "remotes::install_github("bstaton1/postpack")"
 
 # clear environment
 rm(list = ls())
@@ -15,8 +15,8 @@ library(tidyverse)
 library(here)
 
 # set species and year
-spc = c("Chinook", "Coho", "Steelhead")[2]
-yr = 2023
+spc = c("Chinook", "Coho", "Steelhead")[1]
+yr = 2010
 
 # where are the dabom results stored?
 dabom_folder = "output/dabom_results/"
