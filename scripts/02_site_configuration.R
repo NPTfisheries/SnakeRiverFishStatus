@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: September 27, 2024
+#   Last Modified: October 2, 2024
 #
 # Notes: 
 
@@ -488,15 +488,6 @@ sr_site_pops = crb_sites_sf %>%
     sthd_popid   = if_else(site_code %in% c("USE", "USI"), NA, sthd_popid), # We don't necessarily know which population USI, USE steelhead end up in
     sthd_popname = if_else(site_code %in% c("USE", "USI"), NA, sthd_popname)
   )
-
-# add nodes to parent-child table (I don't think I need to create this here!)
-# pc_nodes = parent_child %>%
-#   #select(parent, child) %>%
-#   addParentChildNodes(.,  configuration = configuration)
-# 
-# # build paths to each node
-# node_paths = buildNodeOrder(parent_child = pc_nodes,
-#                             direction = "u")
 
 #----------------------
 # write configuration, parent-child table, flowlines, etc.
