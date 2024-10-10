@@ -18,7 +18,7 @@ library(jagsUI)
 
 # set species and year
 spc = "Steelhead"
-yr = 2021
+yr = 2023
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
