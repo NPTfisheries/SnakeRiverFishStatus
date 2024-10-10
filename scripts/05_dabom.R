@@ -30,8 +30,8 @@ dabom_folder = here("output/dabom_results/")
 #--------------------
 # start analysis
 # set species and spawn year
-spc = "Chinook"
-yr = 2011
+spc = "Steelhead"
+yr = 2023
 
 # set species code and whether to include hatchery fish
 if(spc == "Chinook")   { spc_code = 1 ; incl_hatchery = FALSE }
