@@ -481,6 +481,16 @@ sr_site_pops = crb_sites_sf %>%
     chnk_popname = if_else(site_code == "WR1", "Lostine River/Minam River", chnk_popname)
   ) %>%
   mutate(
+    chnk_popid   = if_else(site_code == "SFG", "SFSMA/SFSEC/SFEFS", chnk_popid),
+    chnk_popname = if_else(site_code == "SFG", "South Fork Salmon River mainstem/Secesh River/East Fork South Fork Salmon River", chnk_popname)
+  ) %>%
+  mutate(
+    chnk_popid   = if_else(site_code %in% c("USE", "USI"), "SRLMA/SRPAH/SREFS/SRYFS/SRVAL/SRUMA", chnk_popid),
+    chnk_popname = if_else(site_code %in% c("USE", "USI"), "Salmon River lower mainstem below Redfish Lake/
+                           Pahsimeroi River/East Fork Salmon River/Yankee Fork/Valley Creek/Salmon River upper
+                           mainstem above Redfish Lake", chnk_popname)
+  ) %>%
+  mutate(
     sthd_popid   = if_else(site_code %in% c("SC1", "SC2"), "CRSFC-s", sthd_popid),
     sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "South Fork Clearwater River", sthd_popname)
   ) %>%
