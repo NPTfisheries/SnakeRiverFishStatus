@@ -469,8 +469,8 @@ sr_site_pops = crb_sites_sf %>%
     chnk_popname = if_else(site_code %in% c("SC1", "SC2"), "Upper South Fork Clearwater", chnk_popname)
   ) %>%
   mutate(
-    chnk_popid   = if_else(site_code %in% c("IR1", "IR2"), NA, chnk_popid), # We don't necessarily know whether IR1 and IR2 Chinook end up in IRMAI or IRBSH
-    chnk_popname = if_else(site_code %in% c("IR1", "IR2"), NA, chnk_popname)
+    chnk_popid   = if_else(site_code %in% c("IR1", "IR2"), "IRMAI/IRBSH", chnk_popid), # We don't necessarily know whether IR1 and IR2 Chinook end up in IRMAI or IRBSH
+    chnk_popname = if_else(site_code %in% c("IR1", "IR2"), "Imnaha River mainstem/Big Sheep Creek", chnk_popname)
   ) %>%
   mutate(
     chnk_popid   = if_else(site_code %in% c("SW1", "SW2"), "SEUMA/SEMEA/SEMOO", chnk_popid),
@@ -496,8 +496,6 @@ save(configuration,
      sr_site_pops,
      flowlines,
      parent_child,
-     #pc_nodes,
-     #node_paths,
      file = here("data/configuration_files/site_config_LGR_20240927.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
