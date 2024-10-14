@@ -497,6 +497,10 @@ sr_site_pops = crb_sites_sf %>%
   mutate(
     sthd_popid   = if_else(site_code %in% c("USE", "USI"), "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI, USE steelhead end up in
     sthd_popname = if_else(site_code %in% c("USE", "USI"), "Pahsimeroi River/East Fork Salmon River/Salmon River upper mainstem", sthd_popname)
+  ) %>%
+  mutate(
+    sthd_popid   = if_else(site_code == "SFG", "SFMAI-s/SFSEC-s", sthd_popid),
+    sthd_popname = if_else(site_code == "SFG", "South Fork Salmon River/Secesh River", sthd_popname)
   )
 
 #----------------------
