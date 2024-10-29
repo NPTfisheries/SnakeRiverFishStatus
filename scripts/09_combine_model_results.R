@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: October 28, 2024
+#   Last Modified: October 29, 2024
 #
 # Notes: 
 
@@ -27,7 +27,7 @@ load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlin
 
 # set species and year
 spc = "Chinook"
-yr = 2023
+yr = 2010
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -72,7 +72,8 @@ pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/
          site_code,
          incl_sites,
          user_operational,
-         use_for_pop_abundance) %>%
+         use_for_pop_abundance,
+         notes) %>%
   arrange(popid,
           site_code)
 
@@ -214,7 +215,6 @@ pop_escp_post = site_escp_post %>%
   filter(!is.na(popid)) %>%
   group_by(popid, chain, iter, origin) %>%
   summarise(abund = sum(abund))
-            #site_codes = list(param))
 
 # trt population escapement summaries
 pop_escp_summ = pop_escp_post %>%
@@ -371,7 +371,21 @@ combined_summ = combined_post %>%
                 param,
                 .cred_int_prob = 0.95) %>%
   rename(lower95ci = lower_ci,
-         upper95ci = upper_ci)
+         upper95ci = upper_ci) %>%
+  left_join(pop_sites_yr %>%
+              filter(user_operational == TRUE & use_for_pop_abundance == TRUE) %>%
+              group_by(popid) %>%
+              summarise(pop_sites = toString(site_code),
+                        incl_sites = toString(incl_sites),
+                        notes = toString(notes)),
+            by = c("popid" = "popid")) %>%
+  select(species,
+         spawn_yr,
+         popid,
+         pop_sites,
+         incl_sites,
+         everything(),
+         notes)
 
 #-----------------
 # save results

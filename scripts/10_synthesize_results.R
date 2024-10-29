@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: June 21, 2024
+#   Last Modified: October 29, 2024
 #
 # Notes: 
 
@@ -20,22 +20,21 @@ library(writexl)
 # set species
 spc = "Chinook"
 
-#-----------------
-# STADEM estimates
+# stadem estimates
 stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
                           full.names = T) %>%
   .[grepl(spc, .)] %>%
   map_dfr(read_csv) %>%
   suppressMessages()
 
-#-----------------
 # detection probabilities
 detect_synth = list.files(path = paste0(here(), "/output/dabom_results/detection_probabilities/"),
                           pattern = "\\.rda$",
                           full.names = T) %>%
   .[grepl(spc, .)] %>%
   map_df(~ get(load(file = .x))) %>%
-  select(-POP_NAME)
+  select(-popname) %>%
+  filter(site_operational == TRUE | is.na(site_operational))
 
 #-----------------
 # DABOM summaries
@@ -48,7 +47,7 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
   })
 
 # read df of which estimates are valid
-valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240620.csv"))
+# valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240620.csv"))
 
 # compile tag life history data
 if(spc == "Chinook"){
