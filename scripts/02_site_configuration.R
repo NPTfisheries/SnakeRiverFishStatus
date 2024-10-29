@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: October 2, 2024
+#   Last Modified: October 29, 2024
 #
 # Notes: 
 
@@ -335,15 +335,8 @@ crb_sites_sf = configuration %>%
   mutate(site_code = str_replace(site_code, "_D$|_U$", "")) %>%
   distinct() %>%
   group_by(site_code) %>%
-  #summarize(incl_sites = toString(org_site_code)) %>%
-  summarise(
-    incl_sites = toString(setdiff(org_site_code, site_code))
-  ) %>%
+  summarise(incl_sites = toString(setdiff(org_site_code, site_code))) %>%
   ungroup() %>%
-  # mutate(incl_sites = str_remove_all(incl_sites, paste0("(^|,\\s*)", site_code, "(\\s*,|$)")),
-  #        incl_sites = str_replace_all(incl_sites, ",{2,}", ","),
-  #        incl_sites = str_replace_all(incl_sites, "^,|,$", ""),
-  #        incl_sites = str_trim(incl_sites)) %>%
   left_join(ptagis_sf, by = "site_code") %>%
   # remove an extra Prosser Dam record
   filter(!(site_code == "PRO" & site_type == "MRR")) %>%
