@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: October 2, 2024
+#   Last Modified: October 28, 2024
 #
 # Notes: 
 
@@ -17,17 +17,17 @@ rm(list = ls())
 library(here)
 library(tidyverse)
 library(sf)
+library(PITcleanr)
 library(DABOM)
 library(magrittr)
 library(readxl)
 
 # load configuration files
 load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
-#load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
 
 # set species and year
-spc = "Chinook"
-yr = 2010
+spc = "Steelhead"
+yr = 2023
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
@@ -52,74 +52,6 @@ node_pops = node_branches %>%
             by = ("site_code" = "site_code")) %>%
   arrange(mpg, popname, node)
 
-# populations and branches for each node
-# node_pops = configuration %>%
-#   select(node, latitude, longitude) %>%
-#   distinct() %>%
-#   filter(!is.na(latitude) | !is.na(longitude)) %>%
-#   st_as_sf(coords = c("longitude",
-#                       "latitude"),
-#            crs = 4326) %>%
-#   st_join(st_as_sf(sth_pop) %>%
-#             select(sthd_ESU_DPS = ESU_DPS,
-#                    sthd_MPG = MPG, 
-#                    sthd_POP_NAME = POP_NAME, 
-#                    sthd_TRT_POPID = TRT_POPID, 
-#                    sthd_GSI_Group = GSI_Group)) %>%
-#   st_join(st_as_sf(spsm_pop) %>%
-#             select(chnk_ESU_DPS = ESU_DPS,
-#                    chnk_MPG = MPG,
-#                    chnk_POP_NAME = POP_NAME,
-#                    chnk_TRT_POPID = TRT_POPID,
-#                    chnk_GSI_Group = GSI_Group)) %>%
-#   left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
-#               #rename(site_code = spawn_site) %>%
-#               mutate(coho_GSI_Group = NA) %>%
-#               left_join(configuration %>%
-#                           select(site_code,
-#                                  node) %>%
-#                           distinct())) %>%
-#   select(node, starts_with(spc_prefix)) %>%
-#   rename_with(~str_remove(., spc_prefix)) %>%
-#   #select(-ESU_DPS, -GSI_Group) %>%
-#   select(-esu_dps, -GSI_Group) %>%
-#   distinct(node, .keep_all = TRUE) %>%
-#   mutate(site = str_remove(node, "_U|_D")) %>%
-#   left_join(node_branches) %>%
-#   arrange(mpg, popname, node)
-#   #arrange(MPG, POP_NAME, node)
-
-# fix some sites so that fish are assigned to the correct population for parsing abundance estimates
-# if(spc == "Chinook") {
-#   node_pops %<>%
-#     select(site, node, TRT_POPID, branch) %>%
-#     mutate(TRT_POPID = case_when(
-#       site %in% c("SC1", "SC2")     ~ "SCUMA",
-#       site %in% c("IR1", "IR2")     ~ NA,       # We don't necessarily know whether IR1 and IR2 fish end up in IRMAI or IRBSH
-#       site %in% "JOC"               ~ "Joseph",
-#       TRUE ~ TRT_POPID
-#     )) %>%
-#     left_join(spsm_pop %>%
-#                 select(MPG, POP_NAME, TRT_POPID) %>%
-#                 st_drop_geometry())
-# } # end Chinook fixes
-# if(spc == "Steelhead") {
-#   node_pops %<>% 
-#     select(site, node, TRT_POPID, branch) %>%
-#     mutate(TRT_POPID = case_when(
-#       site == "USI"                ~ "SREFS-s",
-#       site == "MCCA"               ~ "SFMAI-s",
-#       site %in% c("SC1", "SC2")    ~ "CRSFC-s",
-#       TRUE ~ TRT_POPID
-#     )) %>%
-#     left_join(sth_pop %>%
-#                 select(MPG, POP_NAME, TRT_POPID) %>%
-#                 st_drop_geometry())
-# } # end steelhead fixes
-  
-# remove a couple objects
-# rm(sth_pop, spsm_pop)
-
 # df of trt populations
 trt_df = node_pops %>%
   select(-node) %>%
@@ -127,51 +59,14 @@ trt_df = node_pops %>%
   select(-branch, -site_code, -incl_sites) %>%
   filter(!is.na(popid)) %>%
   distinct(popid, .keep_all = T) %>%
-  arrange(mpg, popid)
-
-# # df of trt populations
-# trt_df = node_pops %>%
-#   select(-node) %>%
-#   arrange(mpg, popname, site) %>%
-#   #arrange(MPG, POP_NAME, site) %>%
-#   distinct(site, .keep_all = TRUE) %>%
-#   sf::st_set_geometry(NULL) %>%
-#   select(-site, -branch) %>%
-#   #filter(!is.na(MPG)) %>%
-#   filter(!is.na(mpg)) %>%
-#   distinct(popid, .keep_all = TRUE)
+  arrange(mpg, popid) %>%
+  select(-geometry)
 
 #-----------------
 # load stadem and dabom results
 load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
 load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
-#-----------------
-# STADEM estimates; consider removing later, moved to 01 script
-# stadem_df = STADEM::extractPost(stadem_mod,
-#                                 param_nms = c("X.tot.new")) %>%
-#   mutate(species = spc,
-#          spawn_yr = yr,
-#          origin = case_when(
-#            grepl("all", param) ~ "Total",
-#            grepl("wild", param) ~ "Natural",
-#            grepl("hatch", param) ~ "Hatchery Clip",
-#            grepl('hnc', param) ~ "Hatchery No-Clip"
-#          )) %>%
-#   summarisePost(value = tot_abund,
-#                 # columns to group by
-#                 species,
-#                 spawn_yr,
-#                 origin) %>%
-#   select(species,
-#          spawn_yr,
-#          origin,
-#          estimate = median,
-#          lower95ci = lower_ci,
-#          upper95ci = upper_ci,
-#          mean,
-#          sd)
-  
 #-----------------
 # summarize detection probabilities (p)
 detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
@@ -209,7 +104,6 @@ trans_post = extractTransPost(dabom_mod = dabom_output$dabom_mod,
   # exclude non-sensical hatchery transition probs
   filter(origin == 1) %>% # 1 = natural-origin
   mutate(origin = recode(origin, `1` = if(spc == "Coho") "all" else "wild"))
-  #mutate(origin = recode(origin, `1` = "wild"))
 
 # posteriors of stadem abundance by strata_num
 abund_post = STADEM::extractPost(stadem_mod,
@@ -284,36 +178,49 @@ site_escp_summ = summarisePost(.data = site_escp_post,
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci)
 
-# CONTINUE HERE!!!
-
 # use definePopulations() to define which sites are grouped for population estimates
-source(here("R/definePopulations.R"))
-pop_sites = definePopulations(spc = spc)
+# source(here("R/definePopulations.R"))
+# pop_sites = definePopulations(spc = spc)
+
+# new code chunk to define which sites are grouped for population estimates
+pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2024-10-07.xlsx") %>%
+  filter(species == str_remove(spc_prefix, "_"),
+         spawn_year == yr) %>%
+  select(popid,
+         site_code,
+         incl_sites,
+         user_operational,
+         use_for_pop_abundance) %>%
+  arrange(popid,
+          site_code)
 
 # trt population escapement posteriors
 pop_escp_post = site_escp_post %>%
-  left_join(pop_sites,
-            by = c("param" = "site")) %>%
-  filter(!is.na(TRT_POPID)) %>%
-  group_by(TRT_POPID, chain, iter, origin) %>%
+  left_join(pop_sites_yr %>%
+              filter(use_for_pop_abundance == TRUE) %>%
+              select(popid, site_code),
+            by = c("param" = "site_code")) %>%
+  filter(!is.na(popid)) %>%
+  group_by(popid, chain, iter, origin) %>%
   summarise(abund = sum(abund))
+            #site_codes = list(param))
 
 # trt population escapement summaries
 pop_escp_summ = pop_escp_post %>%
   summarisePost(value = abund,
                 # grouping variables,
-                TRT_POPID,
-                #popid,
+                popid,
                 origin,
                 .cred_int_prob = 0.95) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
-  left_join(trt_df,
-            by = c("TRT_POPID" = "popid")) %>%
-  select(mpg, TRT_POPID, popname, origin, everything()) %>%
-  arrange(mpg, TRT_POPID)
-  # select(MPG, TRT_POPID, POP_NAME, origin, everything()) %>%
-  # arrange(MPG, TRT_POPID)
+  left_join(pop_sites_yr %>%
+              filter(use_for_pop_abundance == TRUE) %>%
+              group_by(popid) %>%
+              summarise(pop_sites = toString(site_code))) %>%
+  left_join(trt_df) %>%
+  select(mpg, popid, popname, pop_sites, origin, everything()) %>%
+  arrange(mpg, popid)
   
 #-----------------
 # sex, age, and size estimates
@@ -337,10 +244,10 @@ sex_post = sex_mod$sims.list$p %>%
   group_by(pop_num) %>%
   mutate(iter = 1:n()) %>%
   left_join(mod_sex_df %>%
-              filter(TRT_POPID != "Not Observed") %>%
+              filter(popid != "Not Observed") %>%
               filter(species == spc) %>%
               mutate(pop_num = sex_jags_data$pop_num)) %>%
-  select(TRT_POPID,
+  select(popid,
          pop_num,
          iter,
          p)
@@ -348,7 +255,7 @@ sex_post = sex_mod$sims.list$p %>%
 # a table of possible ages with indexes (age_fct)
 poss_ages = mod_age_df %>%
   filter(species == spc) %>%
-  filter(TRT_POPID != "Not Observed") %>%
+  filter(popid != "Not Observed") %>%
   select(starts_with("age")) %>%
   # remove columns with no ages
   select(which(colSums(.) != 0)) %>%
@@ -370,13 +277,13 @@ age_post = age_mod$sims.list$pi %>%
   left_join(poss_ages, by = "age_fct") %>%
   select(-age_fct) %>%
   left_join(mod_age_df %>%
-              filter(TRT_POPID != "Not Observed") %>%
+              filter(popid != "Not Observed") %>%
               filter(species == spc) %>%
               mutate(pop_num = age_jags_data$pop_num) %>%
-              select(TRT_POPID, pop_num) %>% 
+              select(popid, pop_num) %>% 
               distinct(),
             by = "pop_num") %>%
-  select(TRT_POPID, 
+  select(popid, 
          pop_num, 
          iter, 
          age, 
@@ -392,10 +299,10 @@ if(spc == "Steelhead") {
     group_by(pop_num) %>%
     mutate(iter = 1:n()) %>%
     left_join(mod_size_df %>%
-                filter(TRT_POPID != "Not Observed") %>%
+                filter(popid != "Not Observed") %>%
                 filter(species == spc) %>%
                 mutate(pop_num = size_jags_data$pop_num)) %>%
-    select(TRT_POPID,
+    select(popid,
            pop_num,
            iter,
            p)
@@ -403,10 +310,10 @@ if(spc == "Steelhead") {
 
 # combine population abundance, sex, age, and size posteriors
 combined_post = pop_escp_post %>%
-  group_by(TRT_POPID, iter, origin) %>%
+  group_by(popid, iter, origin) %>%
   summarise(N = mean(abund)) %>%
   left_join(sex_post,
-            by = c("TRT_POPID", "iter")) %>%
+            by = c("popid", "iter")) %>%
   select(-pop_num) %>%
   rename(p_fem = p) %>%
   mutate(p_male = 1 - p_fem) %>%
@@ -414,13 +321,13 @@ combined_post = pop_escp_post %>%
               pivot_wider(names_from = age,
                           names_prefix = "p_",
                           values_from = p),
-            by = c("TRT_POPID", "iter")) %>%
+            by = c("popid", "iter")) %>%
   select(-pop_num)
 
 if(spc == "Steelhead") {
   combined_post %<>%
     left_join(size_post,
-              by = c("TRT_POPID", "iter")) %>%
+              by = c("popid", "iter")) %>%
     rename(p_a = p) %>%
     mutate(p_b = 1 - p_a)
 }
@@ -434,7 +341,7 @@ combined_post %<>%
          spawn_yr = yr) %>%
   select(species,
          spawn_yr,
-         TRT_POPID,
+         popid,
          origin,
          iter,
          param,
@@ -448,7 +355,7 @@ combined_summ = combined_post %>%
                 # grouping variables,
                 species, 
                 spawn_yr,
-                TRT_POPID,
+                popid,
                 origin,
                 param,
                 .cred_int_prob = 0.95) %>%
@@ -457,11 +364,6 @@ combined_summ = combined_post %>%
 
 #-----------------
 # save results
-# stadem escapement summary; consider removing later, moved to 01 script
-# write_csv(stadem_df,
-#           file = paste0(here("output/stadem_results/escapement_summaries"),
-#                         "/SY", yr, "_", spc, "_stadem_escapement.csv"))
-
 # detection probabilities
 save(detect_summ,
      file = paste0(here("output/dabom_results/detection_probabilities"),
