@@ -292,13 +292,15 @@ site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summa
   select(species,
          spawn_yr,
          site = param,
+         site_operational,
          median,
          lower95ci,
          upper95ci,
          mean,
          mode,
          sd,
-         cv)
+         cv) %>%
+  filter(site_operational == TRUE | is.na(site_operational))
 
 # write all DABOM results to excel
 if(spc == "Chinook" | spc == "Coho") {

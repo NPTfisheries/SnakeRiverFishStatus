@@ -383,20 +383,26 @@ combined_summ = combined_post %>%
                 .cred_int_prob = 0.95) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
-  left_join(pop_sites_yr %>%
-              filter(user_operational == TRUE & use_for_pop_abundance == TRUE) %>%
-              group_by(popid) %>%
-              summarise(pop_sites = toString(site_code),
-                        incl_sites = toString(incl_sites),
-                        notes = toString(notes)),
-            by = c("popid" = "popid")) %>%
-  select(species,
-         spawn_yr,
-         popid,
-         pop_sites,
-         incl_sites,
-         everything(),
-         notes)
+  left_join(
+    pop_sites_yr %>%
+      filter(user_operational == TRUE & use_for_pop_abundance == TRUE) %>%
+      group_by(popid) %>%
+      summarise(
+        pop_sites = toString(site_code),
+        incl_sites = if_else(
+          all(is.na(incl_sites)),
+          NA_character_,
+          toString(na.omit(incl_sites))
+        ),
+        notes = if_else(
+          all(is.na(notes)),
+          NA_character_,
+          toString(na.omit(notes))
+        )
+      ),
+    by = "popid"
+  ) %>%
+  select(species, spawn_yr, popid, pop_sites, incl_sites, everything(), notes)
 
 #-----------------
 # save results
