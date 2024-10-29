@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
@@ -247,7 +247,6 @@ if(spc == "Steelhead") {
            pop_sites,
            incl_sites,
            param,
-           valid_est,
            n_tags,
            n_measured,
            median,
