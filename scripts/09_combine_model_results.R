@@ -197,14 +197,25 @@ site_escp_summ = summarisePost(.data = site_escp_post,
                                origin,
                                .cred_int_prob = 0.95) %>%
   mutate(species = spc,
-         spawn_yr = yr) %>%
+         spawn_yr = yr,
+         site_code = str_remove(param, "_bb")) %>%
   rename(lower95ci = lower_ci,
-         upper95ci = upper_ci)
+         upper95ci = upper_ci) %>%
+  left_join(pop_sites_yr %>%
+              select(site_code,
+                     user_operational),
+            by = c("site_code" = "site_code")) %>%
+  select(species,
+         spawn_yr,
+         param,
+         site_operational = user_operational,
+         origin,
+         everything(),
+         -site_code)
 
 # use definePopulations() to define which sites are grouped for population estimates
 # source(here("R/definePopulations.R"))
 # pop_sites = definePopulations(spc = spc)
-
 
 # trt population escapement posteriors
 pop_escp_post = site_escp_post %>%
