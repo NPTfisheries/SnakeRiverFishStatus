@@ -26,7 +26,7 @@ library(readxl)
 load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2023
 
 # set prefix
@@ -62,6 +62,20 @@ trt_df = node_pops %>%
   arrange(mpg, popid) %>%
   select(-geometry)
 
+# define which sites were operational and/or should be used for population estimates
+pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2024-10-07.xlsx") %>%
+  filter(species == str_remove(spc_prefix, "_"),
+         spawn_year == yr) %>%
+  select(species,
+         spawn_year,
+         popid,
+         site_code,
+         incl_sites,
+         user_operational,
+         use_for_pop_abundance) %>%
+  arrange(popid,
+          site_code)
+
 #-----------------
 # load stadem and dabom results
 load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
@@ -75,23 +89,31 @@ detect_summ = summariseDetectProbs(dabom_mod = dabom_output$dabom_mod,
   mutate(species = spc,
          spawn_yr = yr,
          cv = sd / median) %>%
+         #site_code = str_remove(node, "_D|_U")) %>%
   filter(n_tags != 0,
          node != "LGR") %>%
   left_join(node_pops,
             by = c("node" = "node")) %>%
+  left_join(pop_sites_yr %>%
+              select(site_code,
+                     user_operational),
+            by = c("site_code" = "site_code")) %>%
   select(species,
          spawn_yr,
          mpg,
          popid,
          popname,
          node,
+         site_code,
          branch,
          n_tags,
          estimate = median,
          sd,
          cv,
          lower95ci = lower_ci,
-         upper95ci = upper_ci) %>%
+         upper95ci = upper_ci,
+         site_operational = user_operational,
+         -geometry) %>%
   arrange(mpg, popid, node)
 
 #-----------------
@@ -182,17 +204,6 @@ site_escp_summ = summarisePost(.data = site_escp_post,
 # source(here("R/definePopulations.R"))
 # pop_sites = definePopulations(spc = spc)
 
-# new code chunk to define which sites are grouped for population estimates
-pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2024-10-07.xlsx") %>%
-  filter(species == str_remove(spc_prefix, "_"),
-         spawn_year == yr) %>%
-  select(popid,
-         site_code,
-         incl_sites,
-         user_operational,
-         use_for_pop_abundance) %>%
-  arrange(popid,
-          site_code)
 
 # trt population escapement posteriors
 pop_escp_post = site_escp_post %>%
