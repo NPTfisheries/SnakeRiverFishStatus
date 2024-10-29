@@ -4,7 +4,7 @@
 #   information from STADEM, DABOM, and life history model runs.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: March 15, 2024
+#   Last Modified: October 29, 2024
 #
 # Notes: 
 
@@ -16,7 +16,7 @@ library(here)
 library(tidyverse)
 
 # set species and year
-spc = "Coho"
+spc = "Steelhead"
 yr = 2023
 
 # load posteriors
