@@ -402,7 +402,9 @@ combined_summ = combined_post %>%
       ),
     by = "popid"
   ) %>%
-  select(species, spawn_yr, popid, pop_sites, incl_sites, everything(), notes)
+  left_join(trt_df %>%
+              select(popid, mpg)) %>%
+  select(species, spawn_yr, mpg, popid, pop_sites, incl_sites, everything(), notes)
 
 #-----------------
 # save results

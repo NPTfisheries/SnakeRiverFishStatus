@@ -45,9 +45,6 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
     combined_summ = pluck(abund_list, "combined_summ")
   })
 
-# read df of which estimates are valid
-# valid_est = read_csv(here("data/valid_trt_estimates/valid_trt_estimates_20240620.csv"))
-
 # compile tag life history data
 if(spc == "Chinook"){
   tag_df = list.files(path = paste0(here(), "/output/life_history/"),
@@ -124,10 +121,8 @@ if(spc == "Coho"){
 # population abundance
 N_synth = dabom_synth %>%
   filter(param == "N") %>%
-  # left_join(valid_est,
-  #           by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid")) %>%
+            by = c("species", "spawn_yr", "popid", "mpg")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -143,15 +138,14 @@ N_synth = dabom_synth %>%
          mode,
          sd,
          cv,
-         notes)
+         notes) %>%
+  mutate(n_tags = replace_na(n_tags, 0))
 
 # population sex abundance
 sex_N_synth = dabom_synth %>%
   filter(grepl("N_fem|N_male", param)) %>%
-  # left_join(valid_est,
-  #           by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid")) %>%
+            by = c("species", "spawn_yr", "popid", "mpg")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -191,10 +185,8 @@ sex_p_synth = dabom_synth %>%
 age_N_synth = dabom_synth %>%
   filter(grepl("N_age", param)) %>%
   mutate(brood_yr = spawn_yr - as.numeric(str_sub(param, -1))) %>%
-  # left_join(valid_est,
-  #           by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid")) %>%
+            by = c("species", "spawn_yr", "popid", "mpg")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -234,11 +226,8 @@ age_p_synth = dabom_synth %>%
 if(spc == "Steelhead") {
   size_N_synth = dabom_synth %>%
     filter(param %in% c("N_a", "N_b")) %>%
-    #filter(grepl("N_a|N_b", param)) %>%
-    # left_join(valid_est,
-    #           by = c("species", "spawn_yr", "TRT_POPID" = "TRT")) %>%
     left_join(tag_df,
-              by = c("species", "spawn_yr", "popid")) %>%
+              by = c("species", "spawn_yr", "popid", "mpg")) %>%
     mutate(cv = sd / median) %>%
     select(species,
            spawn_yr,
@@ -263,7 +252,6 @@ if(spc == "Steelhead") {
 if(spc == "Steelhead") {
   size_p_synth = dabom_synth %>%
     filter(param %in% c("p_a", "p_b")) %>%
-    #filter(grepl("p_a|p_b", param)) %>%
     mutate(cv = sd / median) %>%
     select(species,
            spawn_yr,
