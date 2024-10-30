@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: October 29, 2024
+#   Last Modified: October 30, 2024
 #
 # Notes: 
 
@@ -26,7 +26,7 @@ library(readxl)
 load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2023
 
 # set prefix
@@ -212,10 +212,6 @@ site_escp_summ = summarisePost(.data = site_escp_post,
          origin,
          everything(),
          -site_code)
-
-# use definePopulations() to define which sites are grouped for population estimates
-# source(here("R/definePopulations.R"))
-# pop_sites = definePopulations(spc = spc)
 
 # trt population escapement posteriors
 pop_escp_post = site_escp_post %>%
