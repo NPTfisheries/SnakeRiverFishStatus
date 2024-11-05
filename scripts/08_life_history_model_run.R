@@ -17,7 +17,7 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2023
 
 # set up folder structure for output
