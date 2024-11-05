@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: October 30, 2024
+#   Last Modified: November 5, 2024
 #
 # Notes: 
 
@@ -23,10 +23,10 @@ library(magrittr)
 library(readxl)
 
 # load configuration files
-load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
+load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines)
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2023
 
 # set prefix
