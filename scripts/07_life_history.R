@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: October 2, 2024
+#   Last Modified: November 5, 2024
 #
 # Notes: Next step, update to accommodate coho
 
@@ -27,7 +27,7 @@ load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
 filter_ch = dabom_output$filter_ch
 
 # load configuration and population info
-load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines, crb_sites_sf)
+load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines, crb_sites_sf)
 
 # set species prefix and codes
 if(spc == "Chinook")   { spc_prefix = "chnk_" ; spc_code = 1 }
