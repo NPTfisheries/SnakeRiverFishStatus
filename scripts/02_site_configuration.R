@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: October 29, 2024
+#   Last Modified: November 5, 2024
 #
 # Notes: 
 
@@ -467,6 +467,10 @@ sr_site_pops = crb_sites_sf %>%
   mutate(
     chnk_popid   = if_else(site_code %in% c("IR1", "IR2"), "IRMAI/IRBSH", chnk_popid), # We don't necessarily know whether IR1 and IR2 Chinook end up in IRMAI or IRBSH
     chnk_popname = if_else(site_code %in% c("IR1", "IR2"), "Imnaha River mainstem/Big Sheep Creek", chnk_popname)
+  ) %>%
+  mutate(
+    chnk_popid   = if_else(site_code == "UGR", "GRCAT/GRUMA", chnk_popid),
+    chnk_popname = if_else(site_code == "UGR", "Catherine Creek/Grande Ronde River upper mainstem", chnk_popname)
   ) %>%
   mutate(
     chnk_popid   = if_else(site_code %in% c("SW1", "SW2"), "SEUMA/SEMEA/SEMOO", chnk_popid),
