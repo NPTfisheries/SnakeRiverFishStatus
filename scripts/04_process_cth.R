@@ -27,7 +27,7 @@ yr = 2023
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines, crb_sites_sf, sr_site_pops)
+load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines, crb_sites_sf, sr_site_pops)
 
 # read in complete tag history
 cth_df = readCTH(paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv"))

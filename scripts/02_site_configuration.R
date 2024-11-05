@@ -461,8 +461,8 @@ sr_site_pops = crb_sites_sf %>%
   # move geometry column to the end
   select(-geometry, everything(), geometry) %>%
   mutate(
-    chnk_popid   = if_else(site_code %in% c("SC1", "SC2"), "SCUMA", chnk_popid),
-    chnk_popname = if_else(site_code %in% c("SC1", "SC2"), "Upper South Fork Clearwater", chnk_popname)
+    chnk_popid   = if_else(site_code %in% c("SC1", "SC2"), "SCLAW/SCUMA", chnk_popid),
+    chnk_popname = if_else(site_code %in% c("SC1", "SC2"), "Lawyer Creek/Upper South Fork Clearwater", chnk_popname)
   ) %>%
   mutate(
     chnk_popid   = if_else(site_code %in% c("IR1", "IR2"), "IRMAI/IRBSH", chnk_popid), # We don't necessarily know whether IR1 and IR2 Chinook end up in IRMAI or IRBSH
@@ -487,8 +487,8 @@ sr_site_pops = crb_sites_sf %>%
                            mainstem above Redfish Lake", chnk_popname)
   ) %>%
   mutate(
-    sthd_popid   = if_else(site_code %in% c("SC1", "SC2"), "CRSFC-s", sthd_popid),
-    sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "South Fork Clearwater River", sthd_popname)
+    sthd_popid   = if_else(site_code %in% c("SC1", "SC2"), "CRLMA-s/CRSFC-s", sthd_popid),
+    sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "Clearwater River lower mainstem/South Fork Clearwater River", sthd_popname)
   ) %>%
   mutate(
     sthd_popid   = if_else(site_code %in% c("USE", "USI"), "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI, USE steelhead end up in
@@ -506,7 +506,7 @@ save(configuration,
      sr_site_pops,
      flowlines,
      parent_child,
-     file = here("data/configuration_files/site_config_LGR_20240927.rda"))
+     file = here("data/configuration_files/site_config_LGR_20241105.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
 st_write(crb_sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
