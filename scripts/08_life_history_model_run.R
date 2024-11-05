@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: October 9, 2024
+#   Last Modified: November 5, 2024
 #
 # Notes: 
 
@@ -283,14 +283,17 @@ if(model == "hierarchical"){
     filter(popid != "Not Observed") %>%
     #filter(species != "Total") %>%
     select(popid) %>%
-    mutate(run = if_else(popid %in% c('CRLMA-s',
-                                      'CRLOC-s',
-                                      'CRLOL-s',
-                                      'CRSEL-s',
-                                      'CRSFC-s',
-                                      'MFBIG-s',
-                                      'SFMAI-s',
-                                      'SFSEC-s'),
+    mutate(run = if_else(popid %in% c("CRLMA-s",
+                                      "CRLOC-s",
+                                      "CRLOL-s",
+                                      "CRSEL-s",
+                                      "CRSFC-s",
+                                      "CRLMA-s/CRSFC-s",
+                                      "MFUMA-s",
+                                      "MFBIG-s",
+                                      "SFMAI-s",
+                                      "SFSEC-s",
+                                      "SFMAI-s/SFSEC-s"),
                          "B", "A")) %>%
     distinct() %>%
     mutate(run = as.factor(run),
