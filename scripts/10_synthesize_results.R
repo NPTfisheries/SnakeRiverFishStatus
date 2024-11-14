@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: October 30, 2024
+#   Last Modified: November 14, 2024
 #
 # Notes: 
 
@@ -286,7 +286,8 @@ site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summa
          mean,
          mode,
          sd,
-         cv) %>%
+         cv,
+         notes) %>%
   filter(site_operational == TRUE | is.na(site_operational))
 
 # write all DABOM results to excel

@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: November 5, 2024
+#   Last Modified: November 14, 2024
 #
 # Notes: 
 
@@ -203,7 +203,8 @@ site_escp_summ = summarisePost(.data = site_escp_post,
          upper95ci = upper_ci) %>%
   left_join(pop_sites_yr %>%
               select(site_code,
-                     user_operational),
+                     user_operational,
+                     notes),
             by = c("site_code" = "site_code")) %>%
   select(species,
          spawn_yr,
