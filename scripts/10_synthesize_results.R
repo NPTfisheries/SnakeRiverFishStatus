@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Steelhead"
+spc = "Chinook"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
@@ -118,6 +118,18 @@ if(spc == "Coho"){
               .groups = "drop")
 }
 
+# load summary of proportion of habitat monitored by each iptds 
+load("C:/Git/SnakeRiverIPTDS/output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"); rm(site_avail_hab, pop_avail_hab)
+
+spc_avail_hab = avail_hab_df %>%
+  # trim down to the species of interest
+  filter(
+    (spc == "Chinook" & spc_code == "chnk") |
+    (spc == "Steelhead" & spc_code == "sthd")
+  ) %>%
+  select(site_code,
+         p_ip_habitat = p_ip_length_w_curr)
+
 # population abundance
 N_synth = dabom_synth %>%
   filter(param == "N") %>%
@@ -139,7 +151,18 @@ N_synth = dabom_synth %>%
          sd,
          cv,
          notes) %>%
-  mutate(n_tags = replace_na(n_tags, 0))
+  mutate(n_tags = replace_na(n_tags, 0)) #%>%
+  # summarize the proportion of habitat monitored by sites in pop_sites
+  # rowwise() %>%
+  # mutate(
+  #   p_ip_habitat = sum(
+  #     spc_avail_hab %>%
+  #       filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
+  #       pull(p_ip_habitat),
+  #     na.rm = TRUE
+  #   )) %>%
+  # ungroup() %>%
+  # mutate(median_exp = median / p_ip_habitat)
 
 # population sex abundance
 sex_N_synth = dabom_synth %>%

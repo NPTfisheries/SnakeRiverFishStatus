@@ -26,8 +26,8 @@ library(readxl)
 load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines)
 
 # set species and year
-spc = "Steelhead"
-yr = 2023
+spc = "Chinook"
+yr = 2018
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
