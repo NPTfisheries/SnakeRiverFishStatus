@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: November 5, 2024
+#   Last Modified: November 14, 2024
 #
 # Notes: 
 
@@ -470,7 +470,8 @@ sr_site_pops = crb_sites_sf %>%
   ) %>%
   mutate(
     chnk_popid   = if_else(site_code == "UGR", "GRCAT/GRUMA", chnk_popid),
-    chnk_popname = if_else(site_code == "UGR", "Catherine Creek/Grande Ronde River upper mainstem", chnk_popname)
+    chnk_popname = if_else(site_code == "UGR", "Catherine Creek/Grande Ronde River upper mainstem", chnk_popname),
+    chnk_mpg     = if_else(site_code == "UGR", "Grande Ronde / Imnaha", chnk_mpg)
   ) %>%
   mutate(
     chnk_popid   = if_else(site_code %in% c("SW1", "SW2"), "SEUMA/SEMEA/SEMOO", chnk_popid),
