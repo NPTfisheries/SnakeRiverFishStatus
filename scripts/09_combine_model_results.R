@@ -27,7 +27,7 @@ load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlin
 
 # set species and year
 spc = "Chinook"
-yr = 2018
+yr = 2023
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
