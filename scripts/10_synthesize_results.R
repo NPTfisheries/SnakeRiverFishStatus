@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: November 14, 2024
+#   Last Modified: December 4, 2024
 #
 # Notes: 
 
@@ -128,7 +128,10 @@ spc_avail_hab = avail_hab_df %>%
     (spc == "Steelhead" & spc_code == "sthd")
   ) %>%
   select(site_code,
-         p_ip_hab = p_ip_length_w_curr)
+         p_ip_hab = p_ip_length_w_curr,
+         p_qrf_hab = p_qrf_n) %>%
+  # for qrf, replace any NaN with 1 (NaN = no redd qrf habitat above iptds or in population); 1 results in no expansion
+  mutate(p_qrf_hab = if_else(is.nan(p_qrf_hab), 1, p_qrf_hab))
 
 # population abundance
 N_synth = dabom_synth %>%
@@ -160,11 +163,11 @@ if (spc %in% c("Chinook", "Steelhead")) {
     rowwise() %>%
     mutate(
       # split pop_sites and check if all sites are present in spc_avail_hab
-      p_ip_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
         sum(
           spc_avail_hab %>%
             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_ip_hab),
+            pull(p_qrf_hab),
           na.rm = TRUE
         )
       } else {
@@ -173,9 +176,9 @@ if (spc %in% c("Chinook", "Steelhead")) {
     ) %>%
     ungroup() %>%
     # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_ip_hab,
-           lower95ci_hab_exp = lower95ci / p_ip_hab,
-           upper95ci_hab_exp = upper95ci / p_ip_hab) %>%
+    mutate(median_hab_exp = median / p_qrf_hab,
+           lower95ci_hab_exp = lower95ci / p_qrf_hab,
+           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
     select(-notes, everything(), notes)
 }
 
@@ -210,11 +213,11 @@ if (spc %in% c("Chinook", "Steelhead")) {
     rowwise() %>%
     mutate(
       # split pop_sites and check if all sites are present in spc_avail_hab
-      p_ip_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
         sum(
           spc_avail_hab %>%
             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_ip_hab),
+            pull(p_qrf_hab),
           na.rm = TRUE
         )
       } else {
@@ -223,9 +226,9 @@ if (spc %in% c("Chinook", "Steelhead")) {
     ) %>%
     ungroup() %>%
     # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_ip_hab,
-           lower95ci_hab_exp = lower95ci / p_ip_hab,
-           upper95ci_hab_exp = upper95ci / p_ip_hab) %>%
+    mutate(median_hab_exp = median / p_qrf_hab,
+           lower95ci_hab_exp = lower95ci / p_qrf_hab,
+           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
     select(-notes, everything(), notes)
 }
 
@@ -277,11 +280,11 @@ if (spc %in% c("Chinook", "Steelhead")) {
     rowwise() %>%
     mutate(
       # split pop_sites and check if all sites are present in spc_avail_hab
-      p_ip_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
         sum(
           spc_avail_hab %>%
             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_ip_hab),
+            pull(p_qrf_hab),
           na.rm = TRUE
         )
       } else {
@@ -290,9 +293,9 @@ if (spc %in% c("Chinook", "Steelhead")) {
     ) %>%
     ungroup() %>%
     # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_ip_hab,
-           lower95ci_hab_exp = lower95ci / p_ip_hab,
-           upper95ci_hab_exp = upper95ci / p_ip_hab) %>%
+    mutate(median_hab_exp = median / p_qrf_hab,
+           lower95ci_hab_exp = lower95ci / p_qrf_hab,
+           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
     select(-notes, everything(), notes)
 }
 
@@ -341,11 +344,11 @@ if(spc == "Steelhead") {
     rowwise() %>%
     mutate(
       # split pop_sites and check if all sites are present in spc_avail_hab
-      p_ip_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
         sum(
           spc_avail_hab %>%
             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_ip_hab),
+            pull(p_qrf_hab),
           na.rm = TRUE
         )
       } else {
@@ -354,9 +357,9 @@ if(spc == "Steelhead") {
     ) %>%
     ungroup() %>%
     # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_ip_hab,
-           lower95ci_hab_exp = lower95ci / p_ip_hab,
-           upper95ci_hab_exp = upper95ci / p_ip_hab) %>%
+    mutate(median_hab_exp = median / p_qrf_hab,
+           lower95ci_hab_exp = lower95ci / p_qrf_hab,
+           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
     select(-notes, everything(), notes)
  
 }
