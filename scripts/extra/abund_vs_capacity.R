@@ -17,6 +17,7 @@ library(here)
 library(sf)
 library(readxl)
 library(viridis)
+library(colorspace)
 
 #-------------------
 # load and prep data
@@ -73,7 +74,7 @@ fem_per_redd_df = n_cap_df %>%
   mutate(fem_per_redd = median_hab_exp / qrf_n)
 
 #-------------------
-# boxplots
+# females per redd capacity boxplots
 
 # females per redd boxplot, chinook salmon
 chnk_fem_per_redd_boxp = fem_per_redd_df %>%
@@ -136,7 +137,7 @@ ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_boxp.pdf"),
        plot = sthd_fem_per_redd_boxp)
 
 #-------------------
-# maps
+# females per redd capacity maps
 
 # set default crs
 default_crs = st_crs(32611) # WGS 84, UTM zone 11N
@@ -249,5 +250,93 @@ sthd_fem_per_redd_map =
 sthd_fem_per_redd_map
 ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_map.pdf"),
        plot = sthd_fem_per_redd_map)
+
+#-------------------
+# median abundance maps
+chnk_abund_sf = chnk_pops %>%
+  select(popid = TRT_POPID,
+         mpg = MPG,
+         geometry) %>%
+  left_join(n_cap_df %>%
+              group_by(popid) %>%
+              summarize(mn_abund = mean(median, na.rm = T),
+                        .groups = "drop") %>%
+              filter(!str_detect(popid, "/"))) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = mn_abund),
+          color = "black",
+          size = 0.5) +
+  scale_fill_continuous_sequential(palette = "Blues") +
+  theme_minimal() +
+  labs(fill = "Mean Pop Abundance",
+       title = "Mean Chinook Salmon Abundance, Spawn Years 2010 - 2023") +
+  theme(legend.position = "bottom")
+chnk_abund_sf
+
+sthd_abund_sf = sthd_pops %>%
+  select(popid = TRT_POPID,
+         mpg = MPG,
+         geometry) %>%
+  left_join(n_cap_df %>%
+              group_by(popid) %>%
+              summarize(mn_abund = mean(median, na.rm = T),
+                        .groups = "drop") %>%
+              filter(!str_detect(popid, "/"))) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = mn_abund),
+          color = "black",
+          size = 0.5) +
+  scale_fill_continuous_sequential(palette = "Blues") +
+  theme_minimal() +
+  labs(fill = "Mean Pop Abundance",
+       title = "Mean Steelhead Abundance, Spawn Years 2010 - 2023") +
+  theme(legend.position = "bottom")
+sthd_abund_sf
+
+#-------------------
+# redd capacity maps
+chnk_cap_sf = chnk_pops %>%
+  select(popid = TRT_POPID,
+         mpg = MPG,
+         geometry) %>%
+  left_join(pop_avail_hab %>%
+              select(popid,
+                     qrf_n,
+                     qrf_length_m) %>%
+              mutate(redds_per_km = qrf_n / (qrf_length_m / 1000))) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = redds_per_km),
+          color = "black",
+          size = 0.5) +
+  scale_fill_continuous_sequential(palette = "Oranges") +
+  theme_minimal() +
+  labs(fill = "Redds per km",
+       title = "Chinook Salmon Redd Capacity") +
+  theme(legend.position = "bottom")
+chnk_cap_sf
+
+sthd_cap_sf = sthd_pops %>%
+  select(popid = TRT_POPID,
+         mpg = MPG,
+         geometry) %>%
+  left_join(pop_avail_hab %>%
+              select(popid,
+                     qrf_n,
+                     qrf_length_m) %>%
+              mutate(redds_per_km = qrf_n / (qrf_length_m / 1000))) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = redds_per_km),
+          color = "black",
+          size = 0.5) +
+  scale_fill_continuous_sequential(palette = "Oranges") +
+  theme_minimal() +
+  labs(fill = "Redds per km",
+       title = "Steelhead Redd Capacity") +
+  theme(legend.position = "bottom")
+sthd_cap_sf
 
 ### END SCRIPT
