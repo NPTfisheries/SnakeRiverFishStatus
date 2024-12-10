@@ -16,6 +16,7 @@ library(tidyverse)
 library(here)
 library(sf)
 library(readxl)
+library(viridis)
 
 #-------------------
 # load and prep data
@@ -79,6 +80,7 @@ chnk_fem_per_redd_boxp = fem_per_redd_df %>%
   filter(param == "N_fem") %>%
   filter(species == "Chinook") %>%
   filter(popid != "SNASO") %>%
+  filter(popid != "GRLOO") %>%
   filter(!str_detect(popid, "SNTUC")) %>%
   mutate(
     fem_per_redd = median_hab_exp / qrf_n,
@@ -165,20 +167,38 @@ chnk_fem_per_redd_sf = chnk_pops %>%
          mpg = MPG,
          geometry) %>%
   left_join(chnk_fem_per_redd_df) %>%
-  ggplot() +
-  geom_sf(aes(fill = mean_fem_per_redd),
+  mutate(
+    trans_fem_per_redd = case_when(
+      # keep values in [0, 1] as is
+      mean_fem_per_redd <= 1 ~ mean_fem_per_redd,
+      # scale >1 to [1, 2]
+      mean_fem_per_redd > 1 ~ 1 + (mean_fem_per_redd - 1) / (max(mean_fem_per_redd, na.rm = TRUE) - 1)))
+
+breaks = c(0, 1, max(chnk_fem_per_redd_sf$mean_fem_per_redd, na.rm = TRUE))
+labels = c("0", "1", as.character(round(max(chnk_fem_per_redd_sf$mean_fem_per_redd, na.rm = TRUE), 1)))
+
+chnk_fem_per_redd_map = 
+  ggplot(data = chnk_fem_per_redd_sf) +
+  geom_sf(aes(fill = trans_fem_per_redd),
           color = "black",
           size = 0.5) +
-  scale_fill_viridis(option = "magma", direction = -1) +  # Use the "turbo" palette
+  #scale_fill_viridis(option = "magma", direction = -1) +  # Use the "turbo" palette
+  scale_fill_continuous_divergingx(palette = "RdBu", 
+                                   mid = 1,
+                                   breaks = c(0.07, 1, 2),
+                                   labels = labels,
+                                   guide = guide_colorbar(ticks = F,
+                                                          draw.llim = F,
+                                                          draw.ulim = F)) +
   theme_minimal() +
   labs(fill = "Mean Females Per Redd Capacity", 
        color = "MPG",
        title = "Chinook Salmon, Spawn Years 2010 - 2023") +
   theme(legend.position = "bottom")
 
-chnk_fem_per_redd_sf
+chnk_fem_per_redd_map
 ggsave(here("output/figures/abund_vs_capacity/chnk_fem_per_redd_map.pdf"),
-       plot = chnk_fem_per_redd_sf)
+       plot = chnk_fem_per_redd_map)
 
 # avg. females per redd, chinook salmon
 sthd_fem_per_redd_df = fem_per_redd_df %>%
@@ -198,19 +218,36 @@ sthd_fem_per_redd_sf = sthd_pops %>%
          mpg = MPG,
          geometry) %>%
   left_join(sthd_fem_per_redd_df) %>%
-  ggplot() +
-  geom_sf(aes(fill = mean_fem_per_redd),
+  mutate(
+    trans_fem_per_redd = case_when(
+      # keep values in [0, 1] as is
+      mean_fem_per_redd <= 1 ~ mean_fem_per_redd,
+      # scale >1 to [1, 2]
+      mean_fem_per_redd > 1 ~ 1 + (mean_fem_per_redd - 1) / (max(mean_fem_per_redd, na.rm = TRUE) - 1)))
+
+breaks = c(0, 1, max(sthd_fem_per_redd_sf$mean_fem_per_redd, na.rm = TRUE))
+labels = c("0", "1", as.character(round(max(sthd_fem_per_redd_sf$mean_fem_per_redd, na.rm = TRUE), 1)))
+
+sthd_fem_per_redd_map = 
+  ggplot(data = sthd_fem_per_redd_sf) +
+  geom_sf(aes(fill = trans_fem_per_redd),
           color = "black",
           size = 0.5) +
-  scale_fill_viridis(option = "magma", direction = -1) +  # Use the "turbo" palette
+  scale_fill_continuous_divergingx(palette = "RdBu", 
+                                   mid = 1,
+                                   breaks = c(0.07, 1, 2),
+                                   labels = labels,
+                                   guide = guide_colorbar(ticks = F,
+                                                          draw.llim = F,
+                                                          draw.ulim = F)) +
   theme_minimal() +
   labs(fill = "Mean Females Per Redd Capacity", 
        color = "MPG",
        title = "Steelhead, Spawn Years 2010 - 2023") +
   theme(legend.position = "bottom")
 
-sthd_fem_per_redd_sf
+sthd_fem_per_redd_map
 ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_map.pdf"),
-       plot = sthd_fem_per_redd_sf)
+       plot = sthd_fem_per_redd_map)
 
 ### END SCRIPT
