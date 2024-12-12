@@ -106,6 +106,11 @@ chnk_fem_per_redd_boxp = fem_per_redd_df %>%
 chnk_fem_per_redd_boxp
 ggsave(here("output/figures/abund_vs_capacity/chnk_fem_per_redd_boxp.pdf"),
        plot = chnk_fem_per_redd_boxp)
+ggsave(here("output/figures/abund_vs_capacity/chnk_fem_per_redd_boxp.png"),
+       plot = chnk_fem_per_redd_boxp,
+       width = 11,
+       height = 10,
+       dpi = 300)
 
 # females per redd boxplot, steelhead
 sthd_fem_per_redd_boxp = fem_per_redd_df %>%
@@ -135,6 +140,11 @@ sthd_fem_per_redd_boxp = fem_per_redd_df %>%
 sthd_fem_per_redd_boxp
 ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_boxp.pdf"),
        plot = sthd_fem_per_redd_boxp)
+ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_boxp.png"),
+       plot = sthd_fem_per_redd_boxp,
+       width = 11,
+       height = 10,
+       dpi = 300)
 
 #-------------------
 # females per redd capacity maps
@@ -200,6 +210,11 @@ chnk_fem_per_redd_map =
 chnk_fem_per_redd_map
 ggsave(here("output/figures/abund_vs_capacity/chnk_fem_per_redd_map.pdf"),
        plot = chnk_fem_per_redd_map)
+ggsave(here("output/figures/abund_vs_capacity/chnk_fem_per_redd_map.png"),
+       plot = chnk_fem_per_redd_map,
+       width = 11,
+       height = 10,
+       dpi = 300)
 
 # avg. females per redd, chinook salmon
 sthd_fem_per_redd_df = fem_per_redd_df %>%
@@ -250,6 +265,11 @@ sthd_fem_per_redd_map =
 sthd_fem_per_redd_map
 ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_map.pdf"),
        plot = sthd_fem_per_redd_map)
+ggsave(here("output/figures/abund_vs_capacity/sthd_fem_per_redd_map.png"),
+       plot = sthd_fem_per_redd_map,
+       width = 11,
+       height = 10,
+       dpi = 300)
 
 #-------------------
 # median abundance maps
