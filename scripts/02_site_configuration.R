@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: November 14, 2024
+#   Last Modified: December 26, 2024
 #
 # Notes: 
 
@@ -92,12 +92,12 @@ sr_int_sites_sf = ptagis_sf %>%
   # remove some dam sites; we'll deal with those later
   filter(!str_detect(site_name, "Lower Granite|LOWER GRANITE|Little Goose|Lower Monumental")) %>%
   # remove unnecessary INT sites we don't want
-  filter(!site_code %in% c("0HR", # Henry's Inreach Array, Lemhi
+  filter(!site_code %in% c("0HR", # Henry's Instream Array, Lemhi
                            "CCP", # Catherine Creek Acclimation Pond
                            "CHN", # Challis Diversion North
                            "CHS", # Challis Diversion South
                            "CLJ", # Clearwater River Juvenile Fish Trap
-                           "COU", # Couse Creek Near Mouth
+                           #"COU", # Couse Creek Near Mouth
                            "CRT", # Crooked River Satellite Facility
                            # Dworshak natural-origin fish are returned back to river and so we don't 
                            # really know their destination unless they are detected elsewhere which is 
@@ -511,7 +511,7 @@ save(configuration,
      sr_site_pops,
      flowlines,
      parent_child,
-     file = here("data/configuration_files/site_config_LGR_20241105.rda"))
+     file = here("data/configuration_files/site_config_LGR_20241226.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
 st_write(crb_sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
