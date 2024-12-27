@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: September 30, 2024
+#   Last Modified: December 27, 2024
 #
 #   Notes:
 
@@ -21,13 +21,15 @@ PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
 spc = "Steelhead"
-yr = 2023
+yr = 2024
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
-load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines, crb_sites_sf, sr_site_pops)
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) }
+rm(flowlines, crb_sites_sf, sr_site_pops)
 
 # read in complete tag history
 cth_df = readCTH(paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv"))
