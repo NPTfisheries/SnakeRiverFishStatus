@@ -18,20 +18,24 @@ library(DABOM)
 
 #--------------------
 # some initial setup
+
+# set species and spawn year
+spc = "Chinook"
+yr = 2024
+
 # load configuration
-load(here("data/configuration_files/site_config_LGR_20240927.rda")) ; rm(flowlines)
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) }
+rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-09-26.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
 
 #--------------------
 # start analysis
-# set species and spawn year
-spc = "Steelhead"
-yr = 2023
 
 # set species code and whether to include hatchery fish
 if(spc == "Chinook")   { spc_code = 1 ; incl_hatchery = FALSE }
