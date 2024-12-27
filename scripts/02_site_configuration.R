@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: December 26, 2024
+#   Last Modified: December 27, 2024
 #
 # Notes: 
 
@@ -406,7 +406,9 @@ parent_child = crb_sites_sf %>%
                          c("LBS", "CAC", "LRW"),
                          # Imnaha River
                          c("IR3", "IML", "IR4"),
-                         c("IR4", "IR5", "IML"))) %>%
+                         c("IR4", "IR5", "IML"),
+                         # Catherine Creek
+                         c("CCU", "CC4", "CCW"))) %>%
   filter(!is.na(parent)) %>%
   # now add in parent-child relationships below LGR
   bind_rows(
