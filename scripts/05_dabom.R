@@ -107,7 +107,8 @@ bad_paths = filter_ch %>%
 nrow(bad_paths)
 
 # write default, initial jags model
-init_mod_file = here("model_files/lgr_dabom_jags.txt")
+if (yr <  2024) { init_mod_file = here("model_files/lgr_dabom_jags_20241105.txt") }
+if (yr == 2024) { init_mod_file = here("model_files/lgr_dabom_jags_20241226.txt") }
 # writeDABOM(file_name = init_mod_file,
 #            parent_child = parent_child,
 #            configuration = configuration,
