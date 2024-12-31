@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: November 14, 2024
+#   Last Modified: December 31, 2024
 #
 # Notes: 
 
@@ -22,12 +22,14 @@ library(DABOM)
 library(magrittr)
 library(readxl)
 
-# load configuration files
-load(here("data/configuration_files/site_config_LGR_20241105.rda")) ; rm(flowlines)
-
 # set species and year
 spc = "Chinook"
-yr = 2023
+yr = 2024
+
+# load configuration files
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) } 
+rm(flowlines)
 
 # set prefix
 if(spc == "Chinook")   { spc_prefix = "chnk_" }
