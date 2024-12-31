@@ -20,7 +20,7 @@ library(DABOM)
 # some initial setup
 
 # set species and spawn year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2024
 
 # load configuration
