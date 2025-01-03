@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: December 31, 2024
+#   Last Modified: January 3, 2025
 #
 # Notes: 
 
@@ -23,7 +23,7 @@ library(magrittr)
 library(readxl)
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2024
 
 # load configuration files
@@ -65,7 +65,7 @@ trt_df = node_pops %>%
   select(-geometry)
 
 # define which sites were operational and/or should be used for population estimates
-pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2024-10-07.xlsx") %>%
+pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2025-01-03.xlsx") %>%
   filter(species == str_remove(spc_prefix, "_"),
          spawn_year == yr) %>%
   select(species,
