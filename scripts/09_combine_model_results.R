@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: January 3, 2025
+#   Last Modified: January 31, 2025
 #
 # Notes: 
 
@@ -368,6 +368,8 @@ combined_post %<>%
          param,
          value)
 
+source(here("R/normalizeAges.R"))
+
 # summarise the combined posteriors
 combined_summ = combined_post %>%
   filter(!is.na(value)) %>% 
@@ -382,6 +384,12 @@ combined_summ = combined_post %>%
                 .cred_int_prob = 0.95) %>%
   rename(lower95ci = lower_ci,
          upper95ci = upper_ci) %>%
+  # normalize age proportions and abundances (note: this doesn't adjust any uncertainty metrics accordingly)
+  # it doesn't seem that this needs to be applied to binomial proportions (sex, size, coho ages)
+  group_by(species, spawn_yr, popid, origin) %>%
+  normalizeAges() %>%
+  ungroup() %>%
+  # filter for sites in operation and those that should be used for population abundances
   left_join(
     pop_sites_yr %>%
       filter(user_operational == TRUE & use_for_pop_abundance == TRUE) %>%
