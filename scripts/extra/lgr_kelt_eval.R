@@ -15,6 +15,7 @@ library(tidyverse)
 library(here)
 library(readxl)
 library(PITcleanr)
+library(sf)
 
 #---------------
 # lgr valid tags
@@ -65,7 +66,7 @@ load(here("data/configuration_files/site_config_LGR_20241226.rda")) ; rm(flowlin
 #---------------
 # kelt complete tag histories
 kelt_cth_df = pitcleanr_df %>%
-  # trim to kelts
+  # trim to adults w kelt observations
   group_by(spawn_yr, tag_code) %>%
   filter(any(life_stage == "kelt")) %>%
   ungroup() %>%
@@ -80,23 +81,38 @@ kelt_cth_df = pitcleanr_df %>%
          direction,
          slot,
          min_det,
-         tag_start_date,
-         node_order,
-         path) %>%
+         max_det,
+         tag_start_date) %>%
   # remove repeat spawner observations, for now
-  filter(life_stage != "repeat spawner")
+  filter(life_stage != "repeat spawner") %>%
+  # calculate the time that the fish last left LGR upstream
+  group_by(tag_code) %>%
+  mutate(lgr_max_det = max(max_det[site_code == "LGR"])) %>%
+  ungroup() %>%
+  # join rkm for each site
+  left_join(crb_sites_sf %>% select(site_code, rkm, rkm_total) %>% st_drop_geometry(), by = "site_code")
 
-# kelt simple capture histories
+# kelt simple capture histories (new version); need to re-think what is actually a kelt obs at grs
 kelt_ch_df = kelt_cth_df %>%
-  # join rkm
-  left_join(crb_sites_sf %>% select(site_code, rkm, rkm_total), by = "site_code") %>%
   group_by(spawn_yr, tag_code) %>%
   summarise(
-    ups = if_else(any(str_starts(rkm, "522") & rkm_total > 695), 1, 0),
-    grs = if_else(any(site_code == "GRS" & life_stage == "kelt"), 1, 0),
+    ups = if_else(any(str_starts(rkm, "522") & rkm_total > 695 & min_det > lgr_max_det), 1, 0),
+    grs = if_else(any(site_code == "GRS" & life_stage == "kelt" & min_det > lgr_max_det), 1, 0),
     dwn = if_else(any(site_code %in% c("GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON") & life_stage == "kelt"), 1, 0)
   ) %>%
   ungroup()
+
+# kelt simple capture histories (old version)
+# kelt_ch_df = kelt_cth_df %>%
+#   # join rkm
+#   left_join(crb_sites_sf %>% select(site_code, rkm, rkm_total), by = "site_code") %>%
+#   group_by(spawn_yr, tag_code) %>%
+#   summarise(
+#     ups = if_else(any(str_starts(rkm, "522") & rkm_total > 695), 1, 0),
+#     grs = if_else(any(site_code == "GRS" & life_stage == "kelt"), 1, 0),
+#     dwn = if_else(any(site_code %in% c("GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON") & life_stage == "kelt"), 1, 0)
+#   ) %>%
+#   ungroup()
 
 # summarize capture histories
 kelt_tbl = kelt_ch_df %>%
