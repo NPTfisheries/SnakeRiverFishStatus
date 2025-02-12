@@ -131,24 +131,4 @@ kelt_tbl = kelt_ch_df %>%
          est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_prob,
          kelt_rate = est_tag_kelt_lgr / n_tags)
 
-# kelt_tbl_w_cis = kelt_ch_df %>%
-#   group_by(spawn_yr) %>%
-#   summarise(
-#     n_tag_kelt_grs = sum(grs == 1),
-#     n_tag_kelt_dwn = sum(dwn == 1),
-#     n_tag_kelt_grs_dwn = sum(grs == 1 & dwn == 1)
-#   ) %>%
-#   ungroup() %>%
-#   left_join(valid_tag_df) %>%
-#   select(spawn_yr,
-#          n_tags,
-#          everything()) %>%
-#   # lgr kelt detection probability
-#   mutate(
-#     grs_kelt_det = binom.confint(n_tag_kelt_grs_dwn, n_tag_kelt_dwn, method = "wilson"),
-#     grs_kelt_det_mean = round(grs_kelt_det$mean, 3),
-#     grs_kelt_det_95ci = paste("(", round(grs_kelt_det$lower, 3), ", ", round(grs_kelt_det$upper, 3), ")", sep = "")
-#   ) %>%
-#   select(-grs_kelt_det)
-
 ### END SCRIPT
