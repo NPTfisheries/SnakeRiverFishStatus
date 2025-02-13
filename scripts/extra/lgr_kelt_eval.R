@@ -16,6 +16,7 @@ library(here)
 library(readxl)
 library(PITcleanr)
 library(sf)
+library(janitor)
 
 #---------------
 # lgr valid tags
@@ -60,6 +61,21 @@ lgr_esc_df = read_xlsx(path = here("output/syntheses/LGR_Steelhead_all_summaries
   select(-mean, -sd)
 
 #---------------
+# load lgtrappingdb
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"))
+
+#---------------
+# load life history data
+lh_df = list.files(path = here("output/life_history/"),
+                   pattern = "Steelhead",
+                   full.names = TRUE) %>%
+  map_df(~ read_xlsx(
+    path = .x,
+    sheet = "tag_lh"
+  )) %>%
+  rename(spawn_yr = spawn_year)
+
+#---------------
 # kelt configuration file
 load(here("data/configuration_files/site_config_LGR_20241226.rda")) ; rm(flowlines, parent_child, configuration, sr_site_pops)
 
@@ -98,23 +114,48 @@ kelt_ch_df = kelt_cth_df %>%
   summarise(
     ups = if_else(any(str_starts(rkm, "522") & rkm_total > 695 & min_det > lgr_max_det), 1, 0),
     grs = if_else(any(site_code == "GRS" & life_stage == "kelt" & min_det > lgr_max_det), 1, 0),
-    dwn = if_else(any(site_code %in% c("GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON") & life_stage == "kelt"), 1, 0)
+    dwn = if_else(any(site_code %in% c("GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON") & life_stage == "kelt" & min_det > lgr_max_det), 1, 0),
+    # when was the fish last observed moving upstream at lgr?
+    lgr_max_det = unique(lgr_max_det),
+    # if grs = 1, when was the fish last observed at grs as a kelt?
+    grs_kelt_det = if (any(site_code == "GRS" & life_stage == "kelt" & min_det > lgr_max_det)) {
+      max(max_det[site_code == "GRS" & life_stage == "kelt" & min_det > lgr_max_det], na.rm = TRUE)
+    } else { NA },
+    .groups = "drop"
   ) %>%
-  ungroup()
+  # join some additional data from lgtrappingdb
+  left_join(trap_df %>%
+              filter(LGDLifeStage == "RF" & str_starts(SRR, "3")) %>%
+              mutate(SpawnYear = as.numeric(str_remove(SpawnYear, "^SY"))) %>%
+              select(spawn_yr = SpawnYear,
+                     tag_code = LGDNumPIT,
+                     collection_date = CollectionDate,
+                     srr = SRR,
+                     fl_mm = LGDFLmm,
+                     gen_sex = GenSex,
+                     gen_stock = GenStock) %>%
+              group_by(spawn_yr, tag_code) %>%
+              filter(collection_date == max(collection_date, na.rm = T)) %>%
+              ungroup(),
+            by = c("spawn_yr", "tag_code")) %>%
+  # one tag code has errant data from lgtrappingdb; appears to be two separate fish sampled, but assigned to same tag_code
+  group_by(tag_code) %>%
+  filter(!(tag_code == "384.3B23AD5B2A" & row_number() > 1)) %>%
+  ungroup() %>%
+  mutate(across(c(srr, fl_mm, gen_sex, gen_stock), ~ if_else(tag_code == "384.3B23AD5B2A", NA, .))) %>%
+  # remove hatchery fish
+  filter(!str_ends(srr, "H")) %>%
+  # join some additional data from lh_df
+  left_join(lh_df %>%
+              select(spawn_yr,
+                     tag_code,
+                     spawn_site,
+                     mpg,
+                     popid,
+                     week_num),
+            by = c("spawn_yr", "tag_code"))
 
-# kelt simple capture histories (old version)
-# kelt_ch_df = kelt_cth_df %>%
-#   # join rkm
-#   left_join(crb_sites_sf %>% select(site_code, rkm, rkm_total), by = "site_code") %>%
-#   group_by(spawn_yr, tag_code) %>%
-#   summarise(
-#     ups = if_else(any(str_starts(rkm, "522") & rkm_total > 695), 1, 0),
-#     grs = if_else(any(site_code == "GRS" & life_stage == "kelt"), 1, 0),
-#     dwn = if_else(any(site_code %in% c("GOA", "LMA", "IHR", "MCN", "JDA", "TDA", "BON") & life_stage == "kelt"), 1, 0)
-#   ) %>%
-#   ungroup()
-
-# summarize capture histories
+# summarize capture histories, no covariates
 kelt_tbl = kelt_ch_df %>%
   group_by(spawn_yr) %>%
   summarise(
@@ -123,12 +164,17 @@ kelt_tbl = kelt_ch_df %>%
     n_tag_kelt_grs_dwn = sum(grs == 1 & dwn == 1)
   ) %>%
   ungroup() %>%
-  left_join(valid_tag_df) %>%
+  left_join(valid_tag_df, by = "spawn_yr") %>%
   select(spawn_yr,
          n_tags,
          everything()) %>%
-  mutate(grs_kelt_det_prob = n_tag_kelt_grs_dwn / n_tag_kelt_dwn,
-         est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_prob,
+  mutate(grs_kelt_det_p = n_tag_kelt_grs_dwn / n_tag_kelt_dwn,
+         grs_kelt_det_se = sqrt((grs_kelt_det_p * (1 - grs_kelt_det_p)) / n_tag_kelt_dwn),
+         est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_p,
          kelt_rate = est_tag_kelt_lgr / n_tags)
+
+# save to file
+write_csv(kelt_tbl,
+          file = here("outgoing/lgr_kelt_rates.csv"))
 
 ### END SCRIPT
