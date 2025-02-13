@@ -153,7 +153,10 @@ kelt_ch_df = kelt_cth_df %>%
                      mpg,
                      popid,
                      week_num),
-            by = c("spawn_yr", "tag_code"))
+            by = c("spawn_yr", "tag_code")) %>%
+  # calculate the julian week and month of when fish last left lgr
+  mutate(julian_week = ceiling(yday(lgr_max_det) / 7)) %>%
+  mutate(julian_month = month(lgr_max_det))
 
 # summarize capture histories, no covariates
 kelt_tbl = kelt_ch_df %>%
@@ -161,20 +164,73 @@ kelt_tbl = kelt_ch_df %>%
   summarise(
     n_tag_kelt_grs = sum(grs == 1),
     n_tag_kelt_dwn = sum(dwn == 1),
-    n_tag_kelt_grs_dwn = sum(grs == 1 & dwn == 1)
+    n_tag_kelt_grs_dwn = sum(grs == 1 & dwn == 1),
+    .groups = "drop"
   ) %>%
   ungroup() %>%
   left_join(valid_tag_df, by = "spawn_yr") %>%
   select(spawn_yr,
          n_tags,
          everything()) %>%
-  mutate(grs_kelt_det_p = n_tag_kelt_grs_dwn / n_tag_kelt_dwn,
-         grs_kelt_det_se = sqrt((grs_kelt_det_p * (1 - grs_kelt_det_p)) / n_tag_kelt_dwn),
-         est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_p,
-         kelt_rate = est_tag_kelt_lgr / n_tags)
+  mutate(
+    grs_kelt_det_p = n_tag_kelt_grs_dwn / n_tag_kelt_dwn,
+    grs_kelt_det_se = sqrt((grs_kelt_det_p * (1 - grs_kelt_det_p)) / n_tag_kelt_dwn),
+    est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_p,
+    kelt_rate = est_tag_kelt_lgr / n_tags)
 
 # save to file
 write_csv(kelt_tbl,
           file = here("outgoing/lgr_kelt_rates.csv"))
+
+# summarize capture histories, julian month
+kelt_tbl_mnth = kelt_ch_df %>%
+  group_by(spawn_yr, julian_month) %>%
+  summarise(
+    n_tag_kelt_grs = sum(grs == 1),
+    n_tag_kelt_dwn = sum(dwn == 1),
+    n_tag_kelt_grs_dwn = sum(grs == 1 & dwn == 1),
+    .groups = "drop"
+  ) %>%
+  ungroup() %>%
+  mutate(
+    n_tag_kelt_dwn = if_else(n_tag_kelt_dwn == 0, 1, n_tag_kelt_dwn),  # avoid zero counts in n_tag_kelt_dwn
+    grs_kelt_det_p = n_tag_kelt_grs_dwn / n_tag_kelt_dwn,
+    est_tag_kelt_lgr = n_tag_kelt_grs / grs_kelt_det_p,
+    # replace NaNs with zero; replace Inf with n_tag_kelt_grs
+    est_tag_kelt_lgr = case_when(
+      is.nan(est_tag_kelt_lgr) ~ 0,
+      is.infinite(est_tag_kelt_lgr) ~ n_tag_kelt_grs,
+      TRUE ~ est_tag_kelt_lgr
+    )) %>%
+  group_by(spawn_yr) %>%
+  summarise(n_tag_kelt_grs = sum(n_tag_kelt_grs),
+            n_tag_kelt_dwn = sum(n_tag_kelt_dwn),
+            n_tag_kelt_grs_dwn = sum(n_tag_kelt_grs_dwn),
+            grs_kelt_det_p = mean(grs_kelt_det_p),
+            est_tag_kelt_lgr = sum(est_tag_kelt_lgr),
+            .groups = "drop") %>%
+  left_join(valid_tag_df, by = "spawn_yr") %>%
+  select(spawn_yr,
+         n_tags,
+         everything()) %>%
+  mutate(kelt_rate = est_tag_kelt_lgr / n_tags)
+
+#---------------
+# bayesian model testing
+library(brms)
+
+mod_df = kelt_tbl_mnth %>%
+  select(spawn_yr,
+         n_tag_kelt_grs_dwn,
+         n_tag_kelt_dwn)
+
+# fit bayesian model for detection probability
+brm_model = brm(
+  bf(n_tag_kelt_grs_dwn | trials(n_tag_kelt_dwn) ~ 1),
+  family = binomial("logit"),
+  data = mod_df,
+  prior = prior(normal(0, 2), class = "Intercept"),  # weak informative prior for the logit scale
+  iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 123
+)
 
 ### END SCRIPT
