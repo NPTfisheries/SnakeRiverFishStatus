@@ -253,7 +253,7 @@ sr_config = org_config %>%
       site_code == "BEARVC"               ~ "BRC",    # Group Bear Valley Creek carcass recoveries to BRC
       # SOUTH FORK SALMON
       site_code %in% c("KNOXB", "MCCA", 
-                       "STR")             ~ "SALSFW",   # South Fork Salmon River weir
+                       "STR")             ~ "SALSFW", # South Fork Salmon River weir
       site_code %in% c("SECESR", "GROUSC",
                        "SUMITC", "LAKEC") ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN_U
       site_code == "BURNLC"               ~ "JOHNSC", # Group Burntlog Creek to Johnson Creek
