@@ -3,7 +3,7 @@
 # Purpose: Create a map of DABOM sites across the Snake River basin
 # 
 # Created Date: June 26, 2023
-#   Last Modified: December 26, 2024
+#   Last Modified: April 16, 2025
 #
 # Notes: 
 
@@ -27,7 +27,7 @@ source(here("R/themeMap.R"))
 
 #----------------------
 # load some data
-load(here("data/configuration_files/site_config_LGR_20241226.rda"))
+load(here("data/configuration_files/site_config_LGR_20250416.rda"))
 load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop, spsm_pop)
 sr_sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_DPS = ESU_DPS, 
@@ -80,7 +80,7 @@ ggsave(here("output/figures/site_mapping/crb_site_map.png"),
        height = 8.5)
 
 #----------------------
-# snake river Map
+# snake river map
 # get polygons for pacific northwest states
 pnw = st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) %>%
   filter(ID %in% c("idaho", "oregon", "washington")) %>%
