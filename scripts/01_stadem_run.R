@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: December 26, 2024
+#   Last Modified: April 16, 2024
 #
 # Notes:
 
@@ -12,7 +12,7 @@ rm(list = ls())
 
 # install STADEM from GitHub, if not already available
 #remotes::install_github("KevinSee/STADEM", ref = "develop")
-#remotes::install_github("mackerman44/STADEM", ref = "develop")
+remotes::install_github("mackerman44/STADEM", ref = "develop", force = T)
 
 # load packages
 library(tidyverse)
@@ -20,10 +20,10 @@ library(STADEM)
 library(here)
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"), show_col_types = FALSE)
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-04-08.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2024
 
 # set spawn year dates and whether to include jacks
