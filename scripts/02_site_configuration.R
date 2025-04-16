@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: December 27, 2024
+#   Last Modified: April 16, 2025
 #
 # Notes: 
 
@@ -119,7 +119,7 @@ sr_int_sites_sf = ptagis_sf %>%
 #----------------------
 # create list of Snake River MRR Sites
 # read in complete tag histories since SY2010
-tags_by_site = list.files(path = here("data/complete_tag_histories/"),
+n_tags_df = list.files(path = here("data/complete_tag_histories/"),
                           pattern = "\\.csv$",
                           full.names = T) %>%
   setNames(nm = .) %>%
@@ -139,7 +139,35 @@ tags_by_site = list.files(path = here("data/complete_tag_histories/"),
   group_by(species,
            spawn_year,
            site_code) %>%
-  summarise(n_tags = n(), .groups = "drop") %>%
+  summarise(n_tags = n(), .groups = "drop")
+
+sy_sorted = n_tags_df %>%
+  pull(spawn_year) %>%
+  unique() %>%
+  sort()
+
+# summary of tags per year by site
+tags_per_yr = n_tags_df %>%
+  pivot_wider(names_from = spawn_year,
+              values_from = n_tags) %>%
+  select(site_code, species, all_of(sy_sorted)) %>%
+  arrange(site_code)
+
+# identify potential new sites
+new_chk = tags_per_yr %>%
+  filter(
+    !is.na(SY2024),
+    if_all(matches("^SY(?!2024)\\d{4}", perl = TRUE), is.na)
+  )
+
+# identify potential sites that haven't uploaded data
+miss_chk = tags_per_yr %>%
+  mutate(non_na_sy = rowSums(!is.na(select(., starts_with("SY")) & names(.) != "SY2024")),
+         is_SY2024_na = is.na(SY2024)) %>%
+  filter(is_SY2024_na & non_na_sy >= 10)
+
+# summarize n_tags_df
+tags_by_site = n_tags_df %>%
   group_by(species,
            site_code) %>%
   summarise(n_yrs = n(),
@@ -210,12 +238,16 @@ sr_mrr_sites_sf = ptagis_sf %>%
                                       "KOOS",         # Kooskia National Fish Hatchery
                                       # IMNAHA RIVER
                                       "LSHEEF",       # Little Sheep Facility
+                                      "GROS2C",       # Grouse Creek, Imnaha River
                                       # GRANDE RONDE
                                       "BCANF",        # Big Canyon Facility
                                       "WALH",         # Wallowa Hatchery
+                                      "WENRNF",       # Wenaha River, North Fork
+                                      "WENRSF",       # Wenaha River, South Fork
                                       # LOWER SNAKE
                                       "PENAWC",       # Penawawa Creek - tributary to Snake River
                                       "TENMC2"))) %>% # Tenmile Creek, tributary to Snake River
+  distinct(site_code, .keep_all = T) %>%
   arrange(site_code)
 
 #----------------------
@@ -244,31 +276,34 @@ sr_config = org_config %>%
   mutate(
     node = case_when(
       # UPPER SALMON 
-      site_code %in% c("ALTULC", "BEAVEC",  
-                       "SAWTRP", "STL")   ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
-      site_code %in% c("CEY", "YANKFK")   ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
-      site_code == "SALREF"               ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
-      site_code == "PAHSIR"               ~ "PAHH"  , # Group Pahsimeroi River carcass recoveries to PAHH
+      site_code %in% c("SAWTRP", "STL")    ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
+      site_code %in% c("ALTULC", "BEAVEC",
+                       "CHC", "4JC")       ~ "4JC", 
+      site_code %in% c("CEY", "YANKFK")    ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
+      site_code == "SALREF"                ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
+      site_code == "PAHSIR"                ~ "PAHH"  , # Group Pahsimeroi River carcass recoveries to PAHH
       # MIDDLE FORK SALMON
-      site_code == "BEARVC"               ~ "BRC",    # Group Bear Valley Creek carcass recoveries to BRC
+      site_code == "BEARVC"                ~ "BRC",    # Group Bear Valley Creek carcass recoveries to BRC
       # SOUTH FORK SALMON
       site_code %in% c("KNOXB", "MCCA", 
-                       "STR")             ~ "SALSFW", # South Fork Salmon River weir
+                       "STR")              ~ "SALSFW", # South Fork Salmon River weir
       site_code %in% c("SECESR", "GROUSC",
-                       "SUMITC", "LAKEC") ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN_U
-      site_code == "BURNLC"               ~ "JOHNSC", # Group Burntlog Creek to Johnson Creek
+                       "SUMITC", "LAKEC")  ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN_U
+      site_code == "BURNLC"                ~ "JOHNSC", # Group Burntlog Creek to Johnson Creek
       # SOUTH FORK CLEARWATER
-      site_code == "KOOS"                 ~ "CLC_U",    # Group Kooskia Hatchery to CLC_U
+      site_code == "KOOS"                  ~ "CLC_U",    # Group Kooskia Hatchery to CLC_U
       # IMNAHA RIVER
-      site_code == "IMNAHW"               ~ "IML_U",   # Group Imnaha Weir w/ trap array
+      site_code == "IMNAHW"                ~ "IML_U",   # Group Imnaha Weir w/ trap array
+      site_code == "GROS2C"                ~ "GCM_U",
       # GRANDE RONDE
-      site_code == "GRANDW"               ~ "UGS_U",   # Group GRANDW to UGS_U (based on site configuration)
-      site_code == "CATHEW"               ~ "CCW_U",   # Group CATHEW to CCW_U (based on site configuration)
-      site_code %in% c("LOOKGC", "LOOH")  ~ "LGW_U",   # Group LGW, LOOKGC, and LOOH into a single node
-      site_code == "JOSEPC"               ~ "JOC_U",
+      site_code == "GRANDW"                ~ "UGS_U",   # Group GRANDW to UGS_U (based on site configuration)
+      site_code == "CATHEW"                ~ "CCW_U",   # Group CATHEW to CCW_U (based on site configuration)
+      site_code %in% c("LOOKGC", "LOOH")   ~ "LGW_U",   # Group LGW, LOOKGC, and LOOH into a single node
+      site_code %in% c("WENRNF", "WENRSF") ~ "WEN_U",
+      site_code == "JOSEPC"                ~ "JOC_U",
       # LOWER SNAKE
-      site_code == "TUCH"                 ~ "TFH_U",   # Group Tucannon Hatchery to TFH_U
-      site_code == "PENAWC"               ~ "PWA_D",   # Group Penawawa Creek to PWA_U
+      site_code == "TUCH"                  ~ "TFH_U",   # Group Tucannon Hatchery to TFH_U
+      site_code == "PENAWC"                ~ "PWA_D",   # Group Penawawa Creek to PWA_U
       TRUE ~ node))
 
 # Snake and Columbia River dams configuration 
@@ -301,7 +336,7 @@ dam_config = org_config %>%
                        "BON", "BCC", "BWL", "BONAFF")     ~ "BON",
       TRUE ~ node))
 
-# Downriver Subbasins configuration
+# Downriver subbasins configuration
 downriver_config = org_config %>%
   mutate(
     node = case_when(
@@ -367,6 +402,7 @@ if(dwn_flw == T) {
 # now cut off areas too far upstream
 library(ggmap)
 upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
+#register_google(key = "AIzaSyAYONkDfAXw920Jci1yYEbo_-OEJL9wsDI") # mike's google API key (I should stash this)
 upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
   st_as_sf(coords = c("lon", "lat"),
            crs = 4326) %>%
@@ -409,6 +445,8 @@ parent_child = crb_sites_sf %>%
                          c("IR4", "IR5", "IML"),
                          # Catherine Creek
                          c("CCU", "CC4", "CCW"))) %>%
+  # CC5 gets listed with two parents; its parent is CC4
+  filter(!(parent == "CCW" & child == "CC5")) %>%
   filter(!is.na(parent)) %>%
   # now add in parent-child relationships below LGR
   bind_rows(
@@ -498,7 +536,7 @@ sr_site_pops = crb_sites_sf %>%
     sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "Clearwater River lower mainstem/South Fork Clearwater River", sthd_popname)
   ) %>%
   mutate(
-    sthd_popid   = if_else(site_code %in% c("USE", "USI"), "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI, USE steelhead end up in
+    sthd_popid   = if_else(site_code %in% c("USE", "USI"), "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI/USE steelhead end up in
     sthd_popname = if_else(site_code %in% c("USE", "USI"), "Pahsimeroi River/East Fork Salmon River/Salmon River upper mainstem", sthd_popname)
   ) %>%
   mutate(
@@ -513,7 +551,7 @@ save(configuration,
      sr_site_pops,
      flowlines,
      parent_child,
-     file = here("data/configuration_files/site_config_LGR_20241226.rda"))
+     file = here("data/configuration_files/site_config_LGR_20250416.rda"))
 
 # write sites_sf and flowlines out to geopackage, if desired
 st_write(crb_sites_sf, dsn = "data/spatial/dabom_sites.gpkg", layer = "sites_sf", driver = "GPKG", append = F)
