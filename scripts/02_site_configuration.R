@@ -401,8 +401,10 @@ if(dwn_flw == T) {
 
 # now cut off areas too far upstream
 library(ggmap)
+key = source(here("keys/ma_google_api.txt"))
+register_google(key = key$value)
+
 upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
-#register_google(key = "AIzaSyAYONkDfAXw920Jci1yYEbo_-OEJL9wsDI") # mike's google API key (I should stash this)
 upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
   st_as_sf(coords = c("lon", "lat"),
            crs = 4326) %>%
