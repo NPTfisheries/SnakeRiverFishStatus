@@ -3,7 +3,7 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: December 30, 2024
+#   Last Modified: April 17, 2025
 #
 # Notes: 
 
@@ -20,16 +20,16 @@ library(DABOM)
 # some initial setup
 
 # set species and spawn year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2024
 
 # load configuration
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) }
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
 rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-04-08.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
@@ -108,7 +108,7 @@ nrow(bad_paths)
 
 # write default, initial jags model
 if (yr <  2024) { init_mod_file = here("model_files/lgr_dabom_jags_20241105.txt") }
-if (yr == 2024) { init_mod_file = here("model_files/lgr_dabom_jags_20241226.txt") }
+if (yr == 2024) { init_mod_file = here("model_files/lgr_dabom_jags_20250417.txt") }
 # writeDABOM(file_name = init_mod_file,
 #            parent_child = parent_child,
 #            configuration = configuration,
