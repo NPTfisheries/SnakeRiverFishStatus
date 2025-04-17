@@ -3,7 +3,7 @@
 # Purpose: Create valid tag lists for LGR
 # 
 # Created Date: May 1, 2019
-#   Last Modified: December 26, 2024
+#   Last Modified: April 17, 2024
 #
 # Notes:
 
@@ -20,7 +20,7 @@ library(janitor)
 tags_folder = here("output/valid_tag_lists")
 
 # read csv of LGTrappingDB
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-04-08.csv"), show_col_types = F)
 
 # set species and spawn year
 spc = "Steelhead"
