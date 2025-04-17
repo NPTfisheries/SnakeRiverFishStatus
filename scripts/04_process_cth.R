@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: December 27, 2024
+#   Last Modified: April 17, 2024
 #
 #   Notes:
 
@@ -20,7 +20,7 @@ library(writexl)
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2024
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
@@ -28,7 +28,7 @@ shade_tags = T
 
 # load configuration and site and node parent-child data frames
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) }
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
 rm(flowlines, crb_sites_sf, sr_site_pops)
 
 # read in complete tag history
