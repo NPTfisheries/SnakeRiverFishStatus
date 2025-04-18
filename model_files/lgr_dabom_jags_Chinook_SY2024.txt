@@ -195,8 +195,7 @@ model {
 	 PAHH_p <- 1; # Single array, no upstream detections
 	 RFL_p <- 0; # no detections / not in operation
 	 SALEFT_p <- 1; # Single array, no upstream detections
-	 SAWT_p ~ dbeta(1, 1);
-	 4JC_p <- 1; # Single array, no upstream detections
+	 SAWT_p <- 1; # Single array, no upstream detections
 	 VC2_D_p ~ dbeta(1, 1);
 	 VC2_U_p ~ dbeta(1, 1);
 	 VC1_D_p <- 0; # no detections / not in operation
@@ -422,9 +421,6 @@ model {
 	 phi_KRS[1] ~ dbeta(1, 1); 
 	 phi_KRS[2] ~ dbeta(1, 1); 
 
-	 phi_SAWT[1] ~ dbeta(1, 1); 
-	 phi_SAWT[2] ~ dbeta(1, 1); 
-
 	 phi_SC4[1] ~ dbeta(1, 1); 
 	 phi_SC4[2] ~ dbeta(1, 1); 
 
@@ -492,7 +488,7 @@ model {
 	 phi_HLM[2] <- 0 # no upstream detections
 
 	 phi_VC2[1] ~ dbeta(1, 1); 
-	 phi_VC2[1] <- 0 # no upstream detections
+	 phi_VC2[2] <- 0 # no upstream detections
 
 	 psi_ACB[1, 1:n_branch_ACB] ~ ddirch(ACB_dirch_vec[1,]); 
 	 psi_ACB[2, 1:n_branch_ACB] ~ ddirch(ACB_dirch_vec[2,]); 
@@ -700,8 +696,6 @@ model {
 			 }
 
 		 eta_KRS[i] ~ dbern(eta_SFG[i, 2] * phi_KRS[fish_type[i]]) 
-
-		 eta_SAWT[i] ~ dbern(eta_USI[i, 4] * phi_SAWT[fish_type[i]]) 
 
 		 eta_SC4[i] ~ dbern(eta_SC3[i] * phi_SC4[fish_type[i]]) 
 
@@ -1197,43 +1191,41 @@ model {
 
 		 cap_hist[i,195] ~ dbern( SAWT_p * eta_USI[i,4] );
 
-		 cap_hist[i,196] ~ dbern( 4JC_p * eta_SAWT[i] );
+		 cap_hist[i,196] ~ dbern( VC2_D_p * eta_USI[i,5] );
 
-		 cap_hist[i,197] ~ dbern( VC2_D_p * eta_USI[i,5] );
+		 cap_hist[i,197] ~ dbern( VC2_U_p * eta_USI[i,5] );
 
-		 cap_hist[i,198] ~ dbern( VC2_U_p * eta_USI[i,5] );
+		 cap_hist[i,198] ~ dbern( VC1_D_p * eta_VC2[i] );
 
-		 cap_hist[i,199] ~ dbern( VC1_D_p * eta_VC2[i] );
+		 cap_hist[i,199] ~ dbern( VC1_U_p * eta_VC2[i] );
 
-		 cap_hist[i,200] ~ dbern( VC1_U_p * eta_VC2[i] );
+		 cap_hist[i,200] ~ dbern( YFK_D_p * eta_USI[i,6] );
 
-		 cap_hist[i,201] ~ dbern( YFK_D_p * eta_USI[i,6] );
+		 cap_hist[i,201] ~ dbern( YFK_U_p * eta_USI[i,6] );
 
-		 cap_hist[i,202] ~ dbern( YFK_U_p * eta_USI[i,6] );
+		 cap_hist[i,202] ~ dbern( WB1_D_p * eta_LGR[i,32] );
 
-		 cap_hist[i,203] ~ dbern( WB1_D_p * eta_LGR[i,32] );
+		 cap_hist[i,203] ~ dbern( WB1_U_p * eta_LGR[i,32] );
 
-		 cap_hist[i,204] ~ dbern( WB1_U_p * eta_LGR[i,32] );
+		 cap_hist[i,204] ~ dbern( WEN_D_p * eta_LGR[i,33] );
 
-		 cap_hist[i,205] ~ dbern( WEN_D_p * eta_LGR[i,33] );
+		 cap_hist[i,205] ~ dbern( WEN_U_p * eta_LGR[i,33] );
 
-		 cap_hist[i,206] ~ dbern( WEN_U_p * eta_LGR[i,33] );
+		 cap_hist[i,206] ~ dbern( WR1_p * eta_LGR[i,34] );
 
-		 cap_hist[i,207] ~ dbern( WR1_p * eta_LGR[i,34] );
+		 cap_hist[i,207] ~ dbern( BCANF_p * eta_WR1[i,1] );
 
-		 cap_hist[i,208] ~ dbern( BCANF_p * eta_WR1[i,1] );
+		 cap_hist[i,208] ~ dbern( MR1_D_p * eta_WR1[i,2] );
 
-		 cap_hist[i,209] ~ dbern( MR1_D_p * eta_WR1[i,2] );
+		 cap_hist[i,209] ~ dbern( MR1_U_p * eta_WR1[i,2] );
 
-		 cap_hist[i,210] ~ dbern( MR1_U_p * eta_WR1[i,2] );
+		 cap_hist[i,210] ~ dbern( WR2_D_p * eta_WR1[i,3] );
 
-		 cap_hist[i,211] ~ dbern( WR2_D_p * eta_WR1[i,3] );
+		 cap_hist[i,211] ~ dbern( WR2_U_p * eta_WR1[i,3] );
 
-		 cap_hist[i,212] ~ dbern( WR2_U_p * eta_WR1[i,3] );
+		 cap_hist[i,212] ~ dbern( LOSTIW_p * eta_WR2[i,1] );
 
-		 cap_hist[i,213] ~ dbern( LOSTIW_p * eta_WR2[i,1] );
-
-		 cap_hist[i,214] ~ dbern( WALH_p * eta_WR2[i,2] );
+		 cap_hist[i,213] ~ dbern( WALH_p * eta_WR2[i,2] );
 
 	}  # end the n_fish loop 
 }
