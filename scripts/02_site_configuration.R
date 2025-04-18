@@ -276,9 +276,9 @@ sr_config = org_config %>%
   mutate(
     node = case_when(
       # UPPER SALMON 
-      site_code %in% c("SAWTRP", "STL")    ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
-      site_code %in% c("ALTULC", "BEAVEC",
-                       "CHC", "4JC")       ~ "4JC", 
+      site_code %in% c("SAWTRP", "STL",
+                       "ALTULC", "BEAVEC",
+                       "CHC", "4JC")       ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
       site_code %in% c("CEY", "YANKFK")    ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
       site_code == "SALREF"                ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
       site_code == "PAHSIR"                ~ "PAHH"  , # Group Pahsimeroi River carcass recoveries to PAHH
