@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: December 31, 2024
+#   Last Modified: April 18, 2024
 #
 # Notes: Next step, update to accommodate coho
 
@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2024
 
 # load tag summaries from PITcleanr and used in the DABOM model
@@ -28,7 +28,7 @@ filter_ch = dabom_output$filter_ch
 
 # load configuration and population info
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20241226.rda")) } 
+if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) } 
 rm(flowlines, crb_sites_sf)
 
 # set species prefix and codes
@@ -58,7 +58,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
             by = c("spawn_site" = "site_code"))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2024-12-26.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-04-08.csv"))
 
 # clean and trim data from the LGTrappingDB to join to tag_final_loc
 bio_df = trap_df %>%
