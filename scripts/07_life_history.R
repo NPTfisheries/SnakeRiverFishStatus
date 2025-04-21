@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: April 18, 2025
+#   Last Modified: April 21, 2025
 #
 # Notes: Next step, update to accommodate coho
 
@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2024
 
 # load tag summaries from PITcleanr and used in the DABOM model
