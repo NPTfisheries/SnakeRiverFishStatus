@@ -24,7 +24,7 @@ library(readxl)
 
 # set species and year
 spc = "Chinook"
-yr = 2024
+yr = 2023
 
 # load configuration files
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
