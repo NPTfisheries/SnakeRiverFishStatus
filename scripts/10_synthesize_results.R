@@ -129,9 +129,10 @@ spc_avail_hab = avail_hab_df %>%
   ) %>%
   select(site_code,
          p_ip_hab = p_ip_length_w_curr,
-         p_qrf_hab = p_qrf_n) %>%
+         p_qrf_hab = p_qrf_n,
+         p_qrf_se_hab = p_qrf_n_se) #%>%
   # for qrf, replace any NaN with 1 (NaN = no redd qrf habitat above iptds or in population); 1 results in no expansion
-  mutate(p_qrf_hab = if_else(is.nan(p_qrf_hab), 1, p_qrf_hab))
+  #mutate(p_qrf_hab = if_else(is.nan(p_qrf_hab), 1, p_qrf_hab))
 
 # population abundance
 N_synth = dabom_synth %>%
@@ -157,6 +158,24 @@ N_synth = dabom_synth %>%
   mutate(n_tags = replace_na(n_tags, 0))
 
 # expand abundance by the proportion of habitat monitored by sites in pop_sites
+# if (spc %in% c("Chinook", "Steelhead")) {
+#   N_synth = N_synth %>%
+#     rowwise() %>%
+#     mutate(
+#       # sum proportions of habitat monitored
+#       p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+#         sites = str_split(pop_sites, ", ", simplify = TRUE)
+#         sum_hab = spc_avail_hab %>%
+#           filter(site_code %in% sites) %>%
+#           pull(p_qrf_hab) %>%
+#           sum(na.rm = TRUE)
+#         sum_hab
+#       } else {
+#         NA_real_
+#       }
+#     )
+# }
+
 if (spc %in% c("Chinook", "Steelhead")) {
   N_synth = N_synth %>%
     # summarize the proportion of habitat monitored by sites in pop_sites
