@@ -307,31 +307,6 @@ if(spc == "Steelhead") {
   size_N_synth = habitatExpansion(size_N_synth, spc_avail_hab)
 }
 
-#     # expand size abundance by the proportion of habitat monitored by sites in pop_sites
-#     # summarize the proportion of habitat monitored by sites in pop_sites
-#     rowwise() %>%
-#     mutate(
-#       # split pop_sites and check if all sites are present in spc_avail_hab
-#       p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-#         sum(
-#           spc_avail_hab %>%
-#             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-#             pull(p_qrf_hab),
-#           na.rm = TRUE
-#         )
-#       } else {
-#         NA_real_  # returns NA if any site is missing
-#       }
-#     ) %>%
-#     ungroup() %>%
-#     # expand median and 95% CIs according to habitat monitored by sites in population
-#     mutate(median_hab_exp = median / p_qrf_hab,
-#            lower95ci_hab_exp = lower95ci / p_qrf_hab,
-#            upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
-#     select(-notes, everything(), notes)
-#  
-# }
-
 # if steelhead, population size proportions
 if(spc == "Steelhead") {
   size_p_synth = dabom_synth %>%
