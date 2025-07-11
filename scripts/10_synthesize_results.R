@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: July 9, 2025
+#   Last Modified: July 11, 2025
 #
 # Notes: 
 
@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
@@ -120,6 +120,7 @@ if(spc == "Coho"){
 
 # load summary of proportion of habitat monitored by each iptds 
 load("C:/Git/SnakeRiverIPTDS/output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"); rm(site_avail_hab, pop_avail_hab)
+source(here("R/habitatExpansion.R"))
 
 spc_avail_hab = avail_hab_df %>%
   # trim down to the species of interest
@@ -128,11 +129,9 @@ spc_avail_hab = avail_hab_df %>%
     (spc == "Steelhead" & spc_code == "sthd")
   ) %>%
   select(site_code,
-         p_ip_hab = p_ip_length_w_curr,
-         p_qrf_hab = p_qrf_n,
-         p_qrf_se_hab = p_qrf_n_se) #%>%
-  # for qrf, replace any NaN with 1 (NaN = no redd qrf habitat above iptds or in population); 1 results in no expansion
-  #mutate(p_qrf_hab = if_else(is.nan(p_qrf_hab), 1, p_qrf_hab))
+         p_ip,
+         p_qrf,
+         p_qrf_se)
 
 # population abundance
 N_synth = dabom_synth %>%
@@ -157,49 +156,36 @@ N_synth = dabom_synth %>%
          notes) %>%
   mutate(n_tags = replace_na(n_tags, 0))
 
-# expand abundance by the proportion of habitat monitored by sites in pop_sites
+# expand abundance by the proportion of habitat monitored
+if (spc %in% c("Chinook", "Steelhead")) {
+  N_synth = habitatExpansion(N_synth, spc_avail_hab)
+}
+
+# PREVIOUS METHOD
 # if (spc %in% c("Chinook", "Steelhead")) {
 #   N_synth = N_synth %>%
+#     # summarize the proportion of habitat monitored by sites in pop_sites
 #     rowwise() %>%
 #     mutate(
-#       # sum proportions of habitat monitored
+#       # split pop_sites and check if all sites are present in spc_avail_hab
 #       p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-#         sites = str_split(pop_sites, ", ", simplify = TRUE)
-#         sum_hab = spc_avail_hab %>%
-#           filter(site_code %in% sites) %>%
-#           pull(p_qrf_hab) %>%
-#           sum(na.rm = TRUE)
-#         sum_hab
+#         sum(
+#           spc_avail_hab %>%
+#             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
+#             pull(p_qrf_hab),
+#           na.rm = TRUE
+#         )
 #       } else {
-#         NA_real_
+#         NA_real_  # returns NA if any site is missing
 #       }
-#     )
+#     ) %>%
+#     ungroup() %>%
+#     # expand median and 95% CIs according to habitat monitored by sites in population
+#     mutate(median_hab_exp = median / p_qrf_hab,
+#            lower95ci_hab_exp = lower95ci / p_qrf_hab,
+#            upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
+#     select(-notes, everything(), notes)
 # }
-
-if (spc %in% c("Chinook", "Steelhead")) {
-  N_synth = N_synth %>%
-    # summarize the proportion of habitat monitored by sites in pop_sites
-    rowwise() %>%
-    mutate(
-      # split pop_sites and check if all sites are present in spc_avail_hab
-      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-        sum(
-          spc_avail_hab %>%
-            filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_qrf_hab),
-          na.rm = TRUE
-        )
-      } else {
-        NA_real_  # returns NA if any site is missing
-      }
-    ) %>%
-    ungroup() %>%
-    # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_qrf_hab,
-           lower95ci_hab_exp = lower95ci / p_qrf_hab,
-           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
-    select(-notes, everything(), notes)
-}
 
 # population sex abundance
 sex_N_synth = dabom_synth %>%
@@ -227,28 +213,7 @@ sex_N_synth = dabom_synth %>%
 
 # expand sex abundance by the proportion of habitat monitored by sites in pop_sites
 if (spc %in% c("Chinook", "Steelhead")) {
-  sex_N_synth = sex_N_synth %>%
-    # summarize the proportion of habitat monitored by sites in pop_sites
-    rowwise() %>%
-    mutate(
-      # split pop_sites and check if all sites are present in spc_avail_hab
-      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-        sum(
-          spc_avail_hab %>%
-            filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_qrf_hab),
-          na.rm = TRUE
-        )
-      } else {
-        NA_real_  # returns NA if any site is missing
-      }
-    ) %>%
-    ungroup() %>%
-    # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_qrf_hab,
-           lower95ci_hab_exp = lower95ci / p_qrf_hab,
-           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
-    select(-notes, everything(), notes)
+  sex_N_synth = habitatExpansion(sex_N_synth, spc_avail_hab)
 }
 
 # population sex proportions
@@ -294,28 +259,7 @@ age_N_synth = dabom_synth %>%
 
 # expand age abundance by the proportion of habitat monitored by sites in pop_sites
 if (spc %in% c("Chinook", "Steelhead")) {
-  age_N_synth = age_N_synth %>%
-    # summarize the proportion of habitat monitored by sites in pop_sites
-    rowwise() %>%
-    mutate(
-      # split pop_sites and check if all sites are present in spc_avail_hab
-      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-        sum(
-          spc_avail_hab %>%
-            filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_qrf_hab),
-          na.rm = TRUE
-        )
-      } else {
-        NA_real_  # returns NA if any site is missing
-      }
-    ) %>%
-    ungroup() %>%
-    # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_qrf_hab,
-           lower95ci_hab_exp = lower95ci / p_qrf_hab,
-           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
-    select(-notes, everything(), notes)
+  age_N_synth = habitatExpansion(age_N_synth, spc_avail_hab)
 }
 
 # population age proportions
@@ -357,31 +301,36 @@ if(spc == "Steelhead") {
            mode,
            sd,
            cv,
-           notes) %>%
-    # expand size abundance by the proportion of habitat monitored by sites in pop_sites
-    # summarize the proportion of habitat monitored by sites in pop_sites
-    rowwise() %>%
-    mutate(
-      # split pop_sites and check if all sites are present in spc_avail_hab
-      p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
-        sum(
-          spc_avail_hab %>%
-            filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
-            pull(p_qrf_hab),
-          na.rm = TRUE
-        )
-      } else {
-        NA_real_  # returns NA if any site is missing
-      }
-    ) %>%
-    ungroup() %>%
-    # expand median and 95% CIs according to habitat monitored by sites in population
-    mutate(median_hab_exp = median / p_qrf_hab,
-           lower95ci_hab_exp = lower95ci / p_qrf_hab,
-           upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
-    select(-notes, everything(), notes)
- 
+           notes) 
+  
+  # expand size abundance by the proportion of habitat monitored by sites in pop_sites
+  size_N_synth = habitatExpansion(size_N_synth, spc_avail_hab)
 }
+
+#     # expand size abundance by the proportion of habitat monitored by sites in pop_sites
+#     # summarize the proportion of habitat monitored by sites in pop_sites
+#     rowwise() %>%
+#     mutate(
+#       # split pop_sites and check if all sites are present in spc_avail_hab
+#       p_qrf_hab = if (all(str_split(pop_sites, ", ", simplify = TRUE) %in% spc_avail_hab$site_code)) {
+#         sum(
+#           spc_avail_hab %>%
+#             filter(site_code %in% str_split(pop_sites, ", ", simplify = TRUE)) %>%
+#             pull(p_qrf_hab),
+#           na.rm = TRUE
+#         )
+#       } else {
+#         NA_real_  # returns NA if any site is missing
+#       }
+#     ) %>%
+#     ungroup() %>%
+#     # expand median and 95% CIs according to habitat monitored by sites in population
+#     mutate(median_hab_exp = median / p_qrf_hab,
+#            lower95ci_hab_exp = lower95ci / p_qrf_hab,
+#            upper95ci_hab_exp = upper95ci / p_qrf_hab) %>%
+#     select(-notes, everything(), notes)
+#  
+# }
 
 # if steelhead, population size proportions
 if(spc == "Steelhead") {
