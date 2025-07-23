@@ -20,7 +20,7 @@ library(writexl)
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2024
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories

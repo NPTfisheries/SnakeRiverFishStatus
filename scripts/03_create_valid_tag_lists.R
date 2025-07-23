@@ -23,7 +23,7 @@ tags_folder = here("output/valid_tag_lists")
 trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-05-21.csv"), show_col_types = F)
 
 # set species and spawn year
-spc = "Coho"
+spc = "Chinook"
 yr  = 2024
 
 # set species code
