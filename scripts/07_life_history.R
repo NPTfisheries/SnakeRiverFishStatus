@@ -3,7 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: April 21, 2025
+#   Last Modified: July 24, 2025
 #
 # Notes: Next step, update to accommodate coho
 

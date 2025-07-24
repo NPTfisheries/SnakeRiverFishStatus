@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: April 21, 2025
+#   Last Modified: July 24, 2025
 #
 # Notes: 
 
@@ -17,7 +17,7 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2024
 
 # set up folder structure for output
@@ -320,4 +320,4 @@ save(age_mod,
      mod_age_df,
      file = paste0(here(), "/", age_folder, "SY", yr, "_", spc, "_pop_age_prop.rda"))
 
-# END SCRIPT
+### END SCRIPT
