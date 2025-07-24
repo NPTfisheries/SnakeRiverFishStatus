@@ -16,8 +16,8 @@ library(here)
 library(tidyverse)
 
 # set species and year
-spc = "Steelhead"
-yr = 2023
+spc = "Chinook"
+yr = 2024
 
 # load posteriors
 load(paste0(here("output/abundance_results/posteriors"), "/SY", yr, "_", spc, "_posteriors.rda"))
