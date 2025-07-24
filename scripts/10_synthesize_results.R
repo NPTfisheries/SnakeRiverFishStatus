@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: July 11, 2025
+#   Last Modified: July 24, 2025
 #
 # Notes: 
 
@@ -18,7 +18,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Steelhead"
+spc = "Chinook"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
