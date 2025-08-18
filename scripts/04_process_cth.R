@@ -27,7 +27,7 @@ yr = 2024
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
 if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
 rm(flowlines, crb_sites_sf, sr_site_pops)
 

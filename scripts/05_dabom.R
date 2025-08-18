@@ -24,7 +24,7 @@ spc = "Chinook"
 yr = 2024
 
 # load configuration
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
 if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
 rm(flowlines)
 
@@ -107,7 +107,7 @@ bad_paths = filter_ch %>%
 nrow(bad_paths)
 
 # write default, initial jags model
-if (yr <  2024) { init_mod_file = here("model_files/lgr_dabom_jags_20241105.txt") }
+if (yr <  2024) { init_mod_file = here("model_files/lgr_dabom_jags.txt") }
 if (yr == 2024) { init_mod_file = here("model_files/lgr_dabom_jags_20250417.txt") }
 # writeDABOM(file_name = init_mod_file,
 #            parent_child = parent_child,

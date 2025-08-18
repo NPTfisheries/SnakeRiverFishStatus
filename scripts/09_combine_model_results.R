@@ -27,7 +27,7 @@ spc = "Chinook"
 yr = 2024
 
 # load configuration files
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20241105.rda")) }
+if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
 if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) } 
 rm(flowlines)
 
