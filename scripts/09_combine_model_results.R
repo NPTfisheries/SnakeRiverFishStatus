@@ -23,8 +23,8 @@ library(magrittr)
 library(readxl)
 
 # set species and year
-spc = "Chinook"
-yr = 2024
+spc = "Steelhead"
+yr = 2010
 
 # load configuration files
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
