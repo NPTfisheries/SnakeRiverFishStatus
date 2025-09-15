@@ -52,6 +52,7 @@ sthd_pops %>%
 # query metadata for all INT and MRR sites in PTAGIS
 org_config = buildConfig(node_assign = "array",
                          array_suffix = "UD")
+# NOTE: Antennas on WR2 are getting assigned w/ "_D". We should either fix metadata, buildConfig() function, or just update here.
 
 # trim configuration file down to unique sites and make spatial
 ptagis_sf = org_config %>%
