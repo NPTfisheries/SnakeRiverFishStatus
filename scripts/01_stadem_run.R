@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: April 16, 2025
+#   Last Modified: September 15, 2025
 #
 # Notes:
 
@@ -20,10 +20,10 @@ library(STADEM)
 library(here)
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-04-08.csv"), show_col_types = FALSE)
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
-spc = "Chinook"
+spc = "Coho"
 yr = 2024
 
 # set spawn year dates and whether to include jacks
