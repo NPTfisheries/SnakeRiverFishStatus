@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: April 17, 2025
+#   Last Modified: September 15, 2025
 #
 #   Notes:
 
@@ -20,7 +20,7 @@ library(writexl)
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
-spc = "Chinook"
+spc = "Coho"
 yr = 2024
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
