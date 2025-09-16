@@ -3,9 +3,9 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: July 24, 2025
+#   Last Modified: September 15, 2025
 #
-# Notes: Next step, update to accommodate coho
+# Notes:
 
 # clear environment
 rm(list = ls())
@@ -19,7 +19,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Chinook"
+spc = "Coho"
 yr = 2024
 
 # load tag summaries from PITcleanr and used in the DABOM model
@@ -42,6 +42,18 @@ sr_site_pops %<>%
   rename_with(~str_remove(., spc_prefix)) %>%
   st_drop_geometry()
 
+# temporary fix to update coho populations if configuration hasn't been updated (overwrites above sr_site_pops w/ info from below .xlsx file)
+if(spc == "Coho"){
+  library(readxl)
+  sr_site_pops %<>%
+    select(site_code, incl_sites) %>%
+    left_join(read_xlsx("data/coho_populations/coho_populations.xlsx"),
+              by = "site_code") %>%
+    rename_with(~str_remove(., spc_prefix)) %>%
+    select(-esu_dps) %>%
+    st_drop_geometry()
+}
+
 # estimate final spawning location
 tag_final_loc = estimateFinalLoc(filter_ch) %>%
   mutate(species = spc,
@@ -58,7 +70,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
             by = c("spawn_site" = "site_code"))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-05-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"))
 
 # clean and trim data from the LGTrappingDB to join to tag_final_loc
 bio_df = trap_df %>%
