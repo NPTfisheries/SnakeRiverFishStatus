@@ -15,7 +15,7 @@ library(tidyverse)
 library(here)
 
 # set species and year
-spc = c("Chinook", "Coho", "Steelhead")[3]
+spc = c("Chinook", "Coho", "Steelhead")[2]
 yr = 2024
 
 # where are the dabom results stored?
@@ -35,7 +35,7 @@ det_prob_summ = post_summ(my_mod, params = "_p$") %>%
   t() %>%
   as_tibble(rownames = "param")
 
-# transition probability (phi_ or psi_) summary statistics. Is this correct?
+# transition probability (phi_ or psi_) summary statistics.
 trans_prob_summ = post_summ(my_mod, params = "^phi_|^psi_") %>%
   t() %>%
   as_tibble(rownames = "param")
