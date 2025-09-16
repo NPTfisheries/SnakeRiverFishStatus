@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: July 24, 2025
+#   Last Modified: September 15, 2025
 #
 # Notes: 
 
@@ -23,8 +23,8 @@ library(magrittr)
 library(readxl)
 
 # set species and year
-spc = "Steelhead"
-yr = 2010
+spc = "Coho"
+yr = 2024
 
 # load configuration files
 if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
@@ -54,6 +54,19 @@ node_pops = node_branches %>%
             by = ("site_code" = "site_code")) %>%
   arrange(mpg, popname, node)
 
+# temporary fix to update coho populations if configuration hasn't been updated (uses below .xlsx file instead of sr_site_pops)
+if(spc == "Coho"){
+  node_pops = node_branches %>%
+    mutate(site_code = str_remove(node, "_U|_D")) %>%
+    left_join(read_xlsx("data/coho_populations/coho_populations.xlsx"),
+              by = "site_code") %>%
+    rename_with(~str_remove(., spc_prefix)) %>%
+    select(-esu_dps) %>%
+    mutate(incl_sites = NA,
+           geometry = NA) %>%
+    arrange(mpg, popname, node)
+}
+
 # df of trt populations
 trt_df = node_pops %>%
   select(-node) %>%
@@ -65,7 +78,7 @@ trt_df = node_pops %>%
   select(-geometry)
 
 # define which sites were operational and/or should be used for population estimates
-pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2025-07-22.xlsx") %>%
+pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2025-09-16.xlsx") %>%
   filter(species == str_remove(spc_prefix, "_"),
          spawn_year == yr) %>%
   select(species,
