@@ -20,7 +20,7 @@ library(DABOM)
 # some initial setup
 
 # set species and spawn year
-spc = "Chinook"
+spc = "Coho"
 yr = 2024
 
 # load configuration
@@ -29,7 +29,7 @@ if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.r
 rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-05-21.csv"))
+trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"))
 
 # set folder for DABOM results
 dabom_folder = here("output/dabom_results/")
