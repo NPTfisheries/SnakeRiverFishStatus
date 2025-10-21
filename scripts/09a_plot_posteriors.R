@@ -16,7 +16,7 @@ library(here)
 library(tidyverse)
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2024
 
 # load posteriors
