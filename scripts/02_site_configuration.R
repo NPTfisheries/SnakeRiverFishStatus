@@ -5,9 +5,11 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: April 17, 2025
+#   Last Modified: January 6, 2026
 #
 # Notes: 
+# 1. Starting in SY2025 (config updated January 6, 2026), INT sites are trimmed to exclude decommissioned sites.
+# 2. Antennas on WR2 are getting assigned w/ "_D". We should either fix metadata, buildConfig() function, or just update here.
 
 #----------------------
 # clear environment
@@ -28,7 +30,7 @@ library(readxl)
 # set default coordinate reference system
 default_crs = st_crs(32611) # WGS84 ; UTM zone 11N
 
-#----------------------
+#------------------------------------------------
 # prep to summarize Snake River sites of interest
 
 # get Snake River steelhead DPS polygon to filter area of interest
@@ -52,7 +54,6 @@ sthd_pops %>%
 # query metadata for all INT and MRR sites in PTAGIS
 org_config = buildConfig(node_assign = "array",
                          array_suffix = "UD")
-# NOTE: Antennas on WR2 are getting assigned w/ "_D". We should either fix metadata, buildConfig() function, or just update here.
 
 # trim configuration file down to unique sites and make spatial
 ptagis_sf = org_config %>%
@@ -61,6 +62,7 @@ ptagis_sf = org_config %>%
          site_name,
          site_type,
          site_type_name,
+         config_id,
          start_date,
          end_date,
          rkm,
@@ -68,21 +70,21 @@ ptagis_sf = org_config %>%
          latitude,
          longitude,
          site_description) %>%
-  # make spatial
-  filter(!is.na(latitude) | !is.na(longitude)) %>%
-  st_as_sf(coords = c("longitude", 
-                      "latitude"), 
-           crs = 4326) %>%
-  st_transform(default_crs) %>%
-  # unique sites
-  distinct(site_code,
+  filter(!is.na(latitude) & !is.na(longitude)) %>%
+  arrange(site_code, desc(config_id)) %>%          # newest config per site first
+  distinct(site_code,                              # return info for newest config
            site_name,
            site_type,
            rkm,
-           geometry,
-           .keep_all = T) 
+           latitude,
+           longitude,
+           .keep_all = T) %>%
+  st_as_sf(coords = c("longitude", 
+                      "latitude"), 
+           crs = 4326) %>%
+  st_transform(default_crs)
 
-#----------------------
+#-------------------------------------
 # create list of Snake River INT sites
 sr_int_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
@@ -92,32 +94,21 @@ sr_int_sites_sf = ptagis_sf %>%
   filter(site_type == "INT") %>%
   # remove some dam sites; we'll deal with those later
   filter(!str_detect(site_name, "Lower Granite|LOWER GRANITE|Little Goose|Lower Monumental")) %>%
-  # remove unnecessary INT sites we don't want
+  # keep sites that are still operational or decomissioned after June 30, 2025
+  filter(is.na(end_date) | end_date >= as.POSIXct("2025-06-30 00:00:00", tz = "UTC")) %>%
+  # remove remaining unnecessary "operational" INT sites we don't want
   filter(!site_code %in% c("0HR", # Henry's Instream Array, Lemhi
-                           "CCP", # Catherine Creek Acclimation Pond
-                           "CHN", # Challis Diversion North
-                           "CHS", # Challis Diversion South
-                           "CLJ", # Clearwater River Juvenile Fish Trap
-                           #"COU", # Couse Creek Near Mouth
-                           "CRT", # Crooked River Satellite Facility
+                           "CWR", # Clearwater River at CLWTRP (VNA for juveniles)
                            # Dworshak natural-origin fish are returned back to river and so we don't 
                            # really know their destination unless they are detected elsewhere which is 
                            # not necessarily the case for other "Hatchery Return" facilities (e.g., CRT, 
                            # RRT, STL, STR) where we can be confident that they stay in that tributary
                            "DWL", # Dworshak NFH Adult Trap
-                           "GRP", # Grande Ronde Acclimation Pond
-                           "IMJ", # Imnaha River Juvenile Fish Trap
-                           "LOP", # Lostine River Acclimation Pond
                            "RPJ", # Rapid River Hatchery Pond
-                           "RRT", # Red River Satellite Facility
-                           "S2I", # Lemhi Sub-reach 2 SC Inlet
-                           "S2O", # Lemhi Sub-reach 2 SC Outlet
-                           "S3A", # Eagle Valley Ranch S3A
-                           "S3B", # Eagle Valley Ranch S3B
                            "SAJ", # Salmon River Trap
                            "SNJ"))# Snake River Trap
 
-#----------------------
+#-------------------------------------
 # create list of Snake River MRR Sites
 # read in complete tag histories since SY2010
 n_tags_df = list.files(path = here("data/complete_tag_histories/"),
