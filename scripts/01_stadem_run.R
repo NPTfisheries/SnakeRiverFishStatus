@@ -3,7 +3,7 @@
 # Purpose: Gather data and run the STADEM model, for a single species and spawn year. 
 # 
 # Created Date: Unknown
-#   Last Modified: September 15, 2025
+#   Last Modified: January 7, 2026
 #
 # Notes:
 
@@ -11,8 +11,7 @@
 rm(list = ls())
 
 # install STADEM from GitHub, if not already available
-#remotes::install_github("KevinSee/STADEM", ref = "develop")
-remotes::install_github("mackerman44/STADEM", ref = "develop", force = T)
+#remotes::install_github("KevinSee/STADEM", ref = "develop", force = T)
 
 # load packages
 library(tidyverse)
@@ -20,11 +19,11 @@ library(STADEM)
 library(here)
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"), show_col_types = FALSE)
+LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2026-01-06.csv"), show_col_types = FALSE)
 
 # run only a single species x year at a time
-spc = "Coho"
-yr = 2024
+spc = "Steelhead"
+yr = 2025
 
 # set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
@@ -115,7 +114,9 @@ write_csv(stadem_df,
 
 # plot weekly STADEM results
 week_esc_p = plotTimeSeries(stadem_mod = stadem_mod,
-                            weeklyData = stadem_list$weeklyData)
+                            weeklyData = stadem_list$weeklyData %>%
+                              # I may need to create an Issue in STADEM to standardize start_date versus Start_Date among all functions
+                              rename(Start_Date = start_date))
 
 # save weekly escapement plot
 ggsave(paste0(here("output/figures/stadem_weekly_esc"), "/weekly_esc_", spc, "_", yr, ".png"),
