@@ -31,6 +31,8 @@ if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.r
 if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
 rm(flowlines, crb_sites_sf, sr_site_pops)
 
+# RECODE 3BV to BV3
+
 # read in complete tag history
 cth_df = readCTH(paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv"))
 

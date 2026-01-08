@@ -28,7 +28,7 @@ library(janitor)
 library(readxl)
 
 # set default coordinate reference system
-default_crs = st_crs(32611) # WGS84 ; UTM zone 11N
+#default_crs = st_crs(32611) # WGS84 ; UTM zone 11N
 
 #------------------------------------------------
 # prep to summarize Snake River sites of interest
@@ -40,7 +40,8 @@ sthd_pops = st_as_sf(sth_pop) %>%
          sthd_mpg = MPG,
          sthd_popid = TRT_POPID,
          sthd_popname = POP_NAME) %>%
-  st_transform(default_crs); rm(sth_pop)
+  st_transform(4326); rm(sth_pop)
+  #st_transform(default_crs); rm(sth_pop)
 
 # plot sthd populations
 sthd_pops %>%
@@ -53,7 +54,16 @@ sthd_pops %>%
 
 # query metadata for all INT and MRR sites in PTAGIS
 org_config = buildConfig(node_assign = "array",
-                         array_suffix = "UD")
+                         array_suffix = "UD") %>%
+  # only keep the most recent configuration for all sites
+  group_by(site_code) %>%
+  filter(config_id == max(config_id, na.rm = TRUE)) %>%
+  ungroup() %>%
+  # ugh, recode site_code and node for 3BV
+  mutate(
+    site_code = if_else(site_code == "3BV", "BV3", site_code),
+    node = if_else(site_code == "BV3", str_replace_all(node, "3BV", "BV3"), node)
+  )
 
 # trim configuration file down to unique sites and make spatial
 ptagis_sf = org_config %>%
@@ -81,8 +91,8 @@ ptagis_sf = org_config %>%
            .keep_all = T) %>%
   st_as_sf(coords = c("longitude", 
                       "latitude"), 
-           crs = 4326) %>%
-  st_transform(default_crs)
+           crs = 4326) #%>%
+  #st_transform(default_crs)
 
 #-------------------------------------
 # create list of Snake River INT sites
@@ -98,6 +108,9 @@ sr_int_sites_sf = ptagis_sf %>%
   filter(is.na(end_date) | end_date >= as.POSIXct("2025-06-30 00:00:00", tz = "UTC")) %>%
   # remove remaining unnecessary "operational" INT sites we don't want
   filter(!site_code %in% c("0HR", # Henry's Instream Array, Lemhi
+                           "18M", # Eighteenmile Creek, Lemhi (no adult detections since 2010)
+                           "BTL", # Lower Big Timber, Lemhi (no adult detections since 2010)
+                           "CCU", # Catherine Creek at Union (decommissionned November 22, 2024; no detections SY2025)
                            "CWR", # Clearwater River at CLWTRP (VNA for juveniles)
                            # Dworshak natural-origin fish are returned back to river and so we don't 
                            # really know their destination unless they are detected elsewhere which is 
@@ -120,7 +133,8 @@ n_tags_df = list.files(path = here("data/complete_tag_histories/"),
   # add species and spawn year
   mutate(file_name = str_replace(file_name, ".*/", ""), 
          species = str_extract(file_name, "(?<=_)[^_]+"),       
-         spawn_year = str_extract(file_name, "SY[0-9]{4}")) %>%
+         spawn_year = str_extract(file_name, "SY[0-9]{4}"),
+         event_site_code_value = if_else(event_site_code_value == "3BV", "BV3", event_site_code_value)) %>%
   select(-file_name) %>%
   # summarize number of unique tags observed by site
   select(species,
@@ -148,15 +162,15 @@ tags_per_yr = n_tags_df %>%
 # identify potential new sites
 new_chk = tags_per_yr %>%
   filter(
-    !is.na(SY2024),
-    if_all(matches("^SY(?!2024)\\d{4}", perl = TRUE), is.na)
+    !is.na(SY2025),
+    if_all(matches("^SY(?!2025)\\d{4}", perl = TRUE), is.na)
   )
 
 # identify potential sites that haven't uploaded data
 miss_chk = tags_per_yr %>%
-  mutate(non_na_sy = rowSums(!is.na(select(., starts_with("SY")) & names(.) != "SY2024")),
-         is_SY2024_na = is.na(SY2024)) %>%
-  filter(is_SY2024_na & non_na_sy >= 10)
+  mutate(non_na_sy = rowSums(!is.na(select(., starts_with("SY")) & names(.) != "SY2025")),
+         is_SY2025_na = is.na(SY2025)) %>%
+  filter(is_SY2025_na & non_na_sy >= 10)
 
 # summarize n_tags_df
 tags_by_site = n_tags_df %>%
@@ -169,7 +183,8 @@ tags_by_site = n_tags_df %>%
             md = round(median(n_tags, na.rm = T), 1),
             max = round(max(n_tags, na.rm = T), 1),
             yrs = toString(spawn_year),
-            .groups = "drop")
+            .groups = "drop") # %>%
+  # filter(nchar(site_code) > 3)
 
 # mrr sites of interest
 sr_mrr_sites_sf = ptagis_sf %>%
@@ -202,10 +217,13 @@ sr_mrr_sites_sf = ptagis_sf %>%
                            "FISHC",   # Fish Creek carcass recoveries (occurred prior to LRU being installed)
                            "FISTRP",  # Fish Creek trap (occured prior to LRU being installed)
                            "GEORGC",  # George Creek, Asotin Creek watershed
-                           "HORS3C",  # Horse Creek, Imnaha River Basin
+                           "GROS2C",  # Grouse Creek, Imnaha River basin
+                           "HORS3C",  # Horse Creek, Imnaha River basin
                            "PANTHC",  # Panther Creek carcass recoveries (some occurred prior to PCA being installed)
                            "SALR4",   # Salmon River - Pahsimeroi River to headwaters (km 489-650)
-                           "SALRSF"   # South Fork Salmon River
+                           "SALRSF",  # South Fork Salmon River
+                           "TUCH",    # Tucannon Hatchery (uncertain fate of natural-origin fish)
+                           "YANKFK"   # Yankee Fork Salmon River
                            )) %>%
   # finally, add back in some MRR sites that are useful i.e., they help alleviate a black box, can easily be grouped 
   # to a weir to help a conservative estimate, or have sufficient, regular detections that they can be used to estimate 
@@ -214,30 +232,34 @@ sr_mrr_sites_sf = ptagis_sf %>%
               filter(site_code %in% c(# UPPER SALMON
                                       "ALTULC",       # Alturas Lake Creek, Upper Salmon
                                       "BEAVEC",       # Beaver Creek, Upper Salmon
-                                      "PAHSIR",       # Pahsimeroi River
                                       "SAWTRP",       # Sawtooth Trap
-                                      # MIDDLE FORK SALMON
-                                      "BEARVC",       # Bear Valley Creek
                                       # SOUTH FORK SALMON
                                       "BURNLC",       # Burntlog Creek, Johnson Creek
                                       "GROUSC",       # Grouse Creek
                                       "LAKEC",        # Lake Creek
                                       "MCCA",         # McCall Hatchery
                                       "SUMITC",       # Summit Creek
+                                      # MIDDLE FORK SALMON
+                                      "BEAVC",        # Beaver Creek
+                                      "CAPEHC",       # Capehorn Creek
+                                      "KNAPPC",       # Knapp Creek
                                       # LITTLE SALMON
                                       "RAPH",         # Rapid River Hatchery
+                                      # MIDDLE FORK CLEARWATER
+                                      "POWP",         # Powell Rearing Pond
                                       # SOUTH FORK CLEARWATER
                                       "KOOS",         # Kooskia National Fish Hatchery
                                       # IMNAHA RIVER
                                       "LSHEEF",       # Little Sheep Facility
-                                      "GROS2C",       # Grouse Creek, Imnaha River
                                       # GRANDE RONDE
                                       "BCANF",        # Big Canyon Facility
+                                      "BUTC",         # Wenaha River, Butte Creek
                                       "WALH",         # Wallowa Hatchery
+                                      "WENR",         # Wenaha River
                                       "WENRNF",       # Wenaha River, North Fork
                                       "WENRSF",       # Wenaha River, South Fork
                                       # LOWER SNAKE
-                                      "PENAWC",       # Penawawa Creek - tributary to Snake River
+                                      "PENAWC",       # Penawawa Creek, tributary to Snake River
                                       "TENMC2"))) %>% # Tenmile Creek, tributary to Snake River
   distinct(site_code, .keep_all = T) %>%
   arrange(site_code)
@@ -258,44 +280,39 @@ sr_config = org_config %>%
   # Fix some INT sites
   mutate(
     node = case_when(
-      site_code == "BTC"                 ~ str_replace(node, "BTC", "BTL"), # Big Timber Creek; BTC was replaced by BTL
-      site_code == "18M"                 ~ str_replace(node, "18M", "HEC"), # Group 18-mile & Hawley creeks
-      site_code == "IML" & antenna_id == "09"                    ~ "IML_U", # Imnaha River Work Room Antenna
-      site_code == "AFC" &  grepl("MAINSTEM", antenna_group)     ~ "AFC_D", # mainstem Asotin becomes _D
-      site_code == "AFC" & !grepl("MAINSTEM", antenna_group)     ~ "AFC_U", # south and north forks become _U
+      site_code == "IML" & antenna_id == "09"                                 ~ "IML_U", # Imnaha River Work Room Antenna
+      site_code == "AFC" &  grepl("MAINSTEM", antenna_group, ignore.case = T) ~ "AFC_D", # mainstem Asotin becomes _D
+      site_code == "AFC" & !grepl("MAINSTEM", antenna_group, ignore.case = T) ~ "AFC_U", # south and north forks become _U
+      site_code == "TPJ" & grepl("Panjab", antenna_group, ignore.case = T)    ~ "TPJ_U", # Panjab Creek added to _U array
+      site_code == "TFH" & grepl("Ladder", antenna_group, ignore.case = T)    ~ "TFH_U", # ladder is upstream of "close proximity" tandem array
+      site_code == "WR2" & config_id >= 120                                   ~ "WR2",   # remove _D suffix from node
       TRUE ~ node)) %>%  
   # Recode and/or merge some MRR sites; often merging MRR observations into INT sites
   mutate(
     node = case_when(
       # UPPER SALMON 
-      site_code %in% c("SAWTRP", "STL",
-                       "ALTULC", "BEAVEC",
-                       "CHC", "4JC")       ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
-      site_code %in% c("CEY", "YANKFK")    ~ "YFK_U",  # Group Yankee Fork and Cearley Creek obs to YFK_U
-      site_code == "SALREF"                ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
-      site_code == "PAHSIR"                ~ "PAHH"  , # Group Pahsimeroi River carcass recoveries to PAHH
+      site_code %in% c("SAWTRP", "STL", "ALTULC", "BEAVEC", "CHC", "4JC", "POL") ~ "SAWT",   # Group Sawtooth Hatchery/Ladder Array & Upper Salmon carcass recoveries all to SAWT
+      site_code == "SALREF"                                                      ~ "SALEFT", # Group EF Salmon River obs (e.g., carcass recoveries) w/ trap
       # MIDDLE FORK SALMON
-      site_code == "BEARVC"                ~ "BRC",    # Group Bear Valley Creek carcass recoveries to BRC
+      site_code %in% c("BEAVC", "CAPEHC", "KNAPPC")                              ~ "MAR_U",
+      site_code == "BRC"                                                         ~ "BV3_D",  # Group BRC (if functioning), to lower array of BV3
       # SOUTH FORK SALMON
-      site_code %in% c("KNOXB", "MCCA", 
-                       "STR")              ~ "SALSFW", # South Fork Salmon River weir
-      site_code %in% c("SECESR", "GROUSC",
-                       "SUMITC", "LAKEC")  ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN_U
-      site_code == "BURNLC"                ~ "JOHNSC", # Group Burntlog Creek to Johnson Creek
+      site_code %in% c("KNOXB", "MCCA")                                          ~ "SALSFW", # South Fork Salmon River weir
+      site_code %in% c("SECESR", "GROUSC", "SUMITC", "LAKEC")                    ~ "ZEN_U",  # Group Secesh River obs (e.g., carcass recoveries) w/ ZEN_U
+      site_code == "BURNLC"                                                      ~ "JOHNSC", # Group Burntlog Creek to Johnson Creek
       # SOUTH FORK CLEARWATER
-      site_code == "KOOS"                  ~ "CLC_U",    # Group Kooskia Hatchery to CLC_U
+      site_code == "KOOS"                                                        ~ "CLC_U",  # Group Kooskia Hatchery to CLC_U
       # IMNAHA RIVER
-      site_code == "IMNAHW"                ~ "IML_U",   # Group Imnaha Weir w/ trap array
-      site_code == "GROS2C"                ~ "GCM_U",
+      site_code %in% c("IML", "IMNAHW")                                          ~ "IR4_U",
       # GRANDE RONDE
-      site_code == "GRANDW"                ~ "UGS_U",   # Group GRANDW to UGS_U (based on site configuration)
-      site_code == "CATHEW"                ~ "CCW_U",   # Group CATHEW to CCW_U (based on site configuration)
-      site_code %in% c("LOOKGC", "LOOH")   ~ "LGW_U",   # Group LGW, LOOKGC, and LOOH into a single node
-      site_code %in% c("WENRNF", "WENRSF") ~ "WEN_U",
-      site_code == "JOSEPC"                ~ "JOC_U",
+      site_code == "GRANDW"                                                      ~ "UGS_U",   # Group GRANDW to UGS_U (based on site configuration)
+      site_code == "CATHEW"                                                      ~ "CCW_D",   # Group CATHEW to CCW_D (based on site configuration)
+      site_code %in% c("LOOKGC", "LOOH")                                         ~ "LGW_U",   # Group LGW_U, LOOKGC, and LOOH into a single node
+      site_code %in% c("BUTC", "WENR", "WENRNF", "WENRSF")                       ~ "WEN_U",
+      site_code == "WALH"                                                        ~ "WH1_U",
+      site_code == "JOSEPC"                                                      ~ "JOC_U",
       # LOWER SNAKE
-      site_code == "TUCH"                  ~ "TFH_U",   # Group Tucannon Hatchery to TFH_U
-      site_code == "PENAWC"                ~ "PWA_D",   # Group Penawawa Creek to PWA_U
+      site_code == "PENAWC"                                                      ~ "PWA_U",   # Group Penawawa Creek to PWA_U
       TRUE ~ node))
 
 # Snake and Columbia River dams configuration 
@@ -367,50 +384,65 @@ crb_sites_sf = configuration %>%
   left_join(ptagis_sf, by = "site_code") %>%
   # remove an extra Prosser Dam record
   filter(!(site_code == "PRO" & site_type == "MRR")) %>%
-  st_as_sf(crs = default_crs) %>%
+  st_as_sf(crs = 4326) %>%
   select(site_code,
          site_name,
          site_type,
          site_type_name,
          incl_sites,
-         everything())
+         everything()) #%>%
+  #st_transform(4326)
 
 #----------------------
 # download the NHDPlus v2 Flowlines
-dwn_flw = T # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
-nhd_list = queryFlowlines(sites_sf = crb_sites_sf,
-                          root_site_code = "LGR",
-                          min_strm_order = 2,
-                          dwnstrm_sites = dwn_flw, 
-                          dwn_min_stream_order_diff = 4)
+upstrm_loc = "Hells Canyon Dam"
 
-# compile the upstream and downstream flowlines
-flowlines = nhd_list$flowlines
-if(dwn_flw == T) {
-  flowlines %<>%
-    rbind(nhd_list$dwn_flowlines)
-}
-
-# now cut off areas too far upstream
 library(ggmap)
 key = source(here("keys/ma_google_api.txt"))
 register_google(key = key$value)
 
-upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
 upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
   st_as_sf(coords = c("lon", "lat"),
            crs = 4326) %>%
   nhdplusTools::discover_nhdplus_id()
- 
-nhd_upstrm_lst = nhdplusTools::plot_nhdplus(outlets = list(upstrm_comid),
-                                            streamorder = min(nhd_list$flowlines$StreamOrde),
-                                            actually_plot = F) 
 
-# cut off flowlines upstream of Hells Canyon Dam
-flowlines %<>%
-  anti_join(nhd_upstrm_lst$flowline %>%
-              st_drop_geometry() %>%
-              select(Hydroseq))
+dwn_flw = T # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
+nhd_list = queryFlowlines(sites_sf = crb_sites_sf,
+                          root_site_code = "LGR",
+                          min_strm_order = 2,
+                          max_upstream_comid = upstrm_comid,
+                          combine_up_down = dwn_flw
+                          # dwnstrm_sites = dwn_flw, 
+                          # dwn_min_stream_order_diff = 4
+                          )
+
+# compile the upstream and downstream flowlines
+flowlines = nhd_list$flowlines
+# if(dwn_flw == T) {
+#   flowlines %<>%
+#     rbind(nhd_list$dwn_flowlines)
+# }
+
+# now cut off areas too far upstream
+# library(ggmap)
+# key = source(here("keys/ma_google_api.txt"))
+# register_google(key = key$value)
+# 
+# upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
+# upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
+#   st_as_sf(coords = c("lon", "lat"),
+#            crs = 4326) %>%
+#   nhdplusTools::discover_nhdplus_id()
+#  
+# nhd_upstrm_lst = nhdplusTools::plot_nhdplus(outlets = list(upstrm_comid),
+#                                             streamorder = min(nhd_list$flowlines$StreamOrde),
+#                                             actually_plot = F) 
+# 
+# # cut off flowlines upstream of Hells Canyon Dam
+# flowlines %<>%
+#   anti_join(nhd_upstrm_lst$flowline %>%
+#               st_drop_geometry() %>%
+#               select(Hydroseq))
 
 #----------------------
 # build parent-child table
