@@ -20,7 +20,7 @@ rm(list = ls())
 # load needed libraries
 library(PITcleanr)
 library(tidyverse)
-library(here)
+#library(here)
 library(sf)
 library(magrittr)
 library(janitor)
@@ -33,7 +33,7 @@ default_crs = st_crs(4326) # WGS84
 # prep to summarize Snake River sites of interest
 
 # get Snake River steelhead DPS polygon to filter area of interest
-load(here("data/spatial/SR_pops.rda")) ; rm(fall_pop)
+load("data/spatial/SR_pops.rda") ; rm(fall_pop)
 sthd_pops = st_as_sf(sth_pop) %>%
   select(sthd_dps = ESU_DPS,
          sthd_mpg = MPG,
@@ -117,9 +117,9 @@ sr_int_sites_sf = ptagis_sf %>%
 #-------------------------------------
 # create list of Snake River MRR Sites
 # read in complete tag histories since SY2010
-n_tags_df = list.files(path = here("data/complete_tag_histories/"),
-                          pattern = "\\.csv$",
-                          full.names = T) %>%
+n_tags_df = list.files(path = "data/complete_tag_histories/",
+                       pattern = "\\.csv$",
+                       full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(.x, show_col_types = F), .id = "file_name") %>%
   clean_names() %>%
@@ -489,7 +489,7 @@ sr_site_pops = crb_sites_sf %>%
             select(chnk_mpg = MPG,
                    chnk_popid = TRT_POPID,
                    chnk_popname = POP_NAME)) %>%
-  left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
+  left_join(read_excel("data/coho_populations/coho_populations.xlsx") %>%
               select(-coho_esu_dps)) %>%
   select(-geometry, everything(), geometry) %>%    # move geometry column to the end
   mutate(
