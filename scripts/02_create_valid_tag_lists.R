@@ -8,13 +8,14 @@
 # Notes: From Baum et al. 2022: Trapped fish that were missing data for any of the following fields were considered invalid: date
 #   of collection, species, FL, origin (hatchery or wild), or adipose fish status (ad-clipped or ad-intact). Trapped fish less
 #   than 30 cm (FL) were considered invalid as they are not identified to species at the USACE fish-counting window.
+#
+#   After this script, retrieve complete tag histories from PTAGIS.
 
 # clear environment
 rm(list = ls())
 
 # load necessary libraries
 library(tidyverse)
-#library(here)
 library(lubridate)
 library(janitor)
 
