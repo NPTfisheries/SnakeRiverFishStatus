@@ -152,18 +152,25 @@ tags_per_yr = n_tags_df %>%
   select(site_code, species, all_of(sy_sorted)) %>%
   arrange(site_code)
 
-# identify potential new sites
+# a particular spawn year to check for potential new sites & sites with no (delayed) uploads
+review_yr = 2025
+sy_col    = paste0("SY", review_yr)
+
+# potential new sites: has values in review_yr, but all other years are NA
 new_chk = tags_per_yr %>%
   filter(
-    !is.na(SY2025),
-    if_all(matches("^SY(?!2025)\\d{4}", perl = TRUE), is.na)
+    !is.na(.data[[sy_col]]),
+    if_all(matches(paste0("^SY(?!", review_yr, ")\\d{4}$"), perl = TRUE),
+           is.na)
   )
 
-# identify potential sites that haven't uploaded data
-miss_chk = tags_per_yr %>%
-  mutate(non_na_sy = rowSums(!is.na(select(., starts_with("SY")) & names(.) != "SY2025")),
-         is_SY2025_na = is.na(SY2025)) %>%
-  filter(is_SY2025_na & non_na_sy >= 10)
+# potential missing uploads: review_yr is NA but has >= 10 non-NA in other years
+miss_chk <- tags_per_yr %>%
+  mutate(
+    non_na_sy = rowSums(!is.na(select(., matches("^SY\\d{4}$"))[setdiff(names(select(., matches("^SY\\d{4}$"))), sy_col)])),
+    is_sy_na  = is.na(.data[[sy_col]])
+  ) %>%
+  filter(is_sy_na, non_na_sy >= 10)
 
 # summarize n_tags_df
 tags_by_site = n_tags_df %>%
@@ -184,27 +191,22 @@ sr_mrr_sites_sf = ptagis_sf %>%
   # trim down to sites within the Snake River steelhead DPS
   st_join(sthd_pops) %>%
   filter(!is.na(sthd_dps)) %>%
-  # grab only MRR sites
   filter(site_type == "MRR") %>%
-  # remove any sites below the Tucannon River mouth
-  filter(str_extract(rkm, "^[0-9]{3}") == "522" & as.numeric(str_extract(rkm, "(?<=\\.)[0-9]{3}")) >= 100) %>%
-  # remove any Lower Granite or Little Goose Dam MRR sites
-  filter(!str_detect(site_code, "LGR|LGS")) %>%
-  # remove acclimation ponds or river segments
+  filter(str_extract(rkm, "^[0-9]{3}") == "522" & as.numeric(str_extract(rkm, "(?<=\\.)[0-9]{3}")) >= 100) %>% # remove any sites below the Tucannon River mouth
+  filter(!str_detect(site_code, "LGR|LGS")) %>%                                                                # remove any Lower Granite or Little Goose Dam MRR sites 
   filter(!str_detect(site_description, "AcclimationPond|RiverSegment")) %>%
   # join unique tags observed by site
   left_join(tags_by_site %>%
               select(species, site_code, mean) %>%
               pivot_wider(names_from = species,
                           values_from = mean)) %>%
-  # first, let's trim down our list of MRR sites significantly by filtering for only sites where, on average, there 
-  # are 10 or greater detections for Chinook salmon, steelhead, or coho (among only years where fish were detected
-  # i.e., na.rm = T)
+  # first, let's trim down our list of MRR sites significantly by filtering for only sites where, on average, there are 10 or greater detections for 
+  # chinook salmon, steelhead, or coho (among only years where fish were detected i.e., na.rm = T)
   filter(Chinook >= 10 | Steelhead >= 10 | Coho >= 10) %>%
   select(-Chinook, -Steelhead, -Coho) %>%
-  # now, remove some additional sites that pass the above filter, but are not necessarily useful for escapement analyses.
-  # this can be because we can't safely assign detections to other INT or MRR locations, or that carcass recoveries maybe
-  # occurred prior to an adjacent array and detections muddle interpretation of escapement estimates there
+  # now, remove some additional sites that pass the above filter, but are not necessarily useful for escapement analyses. This can be because we can't 
+  # safely assign detections to other INT or MRR locations, or that carcass recoveries maybe occurred prior to an adjacent array and detections muddle 
+  # interpretation of escapement estimates there
   filter(!site_code %in% c("ASOTIC",  # Asotin Creek
                            "CATHEC",  # Catherine Creek (not certain whether these could be assigned to CCW_U or not)
                            "FISHC",   # Fish Creek carcass recoveries (occurred prior to LRU being installed)
@@ -218,9 +220,8 @@ sr_mrr_sites_sf = ptagis_sf %>%
                            "TUCH",    # Tucannon Hatchery (uncertain fate of natural-origin fish)
                            "YANKFK"   # Yankee Fork Salmon River
                            )) %>%
-  # finally, add back in some MRR sites that are useful i.e., they help alleviate a black box, can easily be grouped 
-  # to a weir to help a conservative estimate, or have sufficient, regular detections that they can be used to estimate 
-  # a detection probability at a downstream site, etc.
+  # finally, add back in some MRR sites that are useful i.e., they help alleviate a black box, can easily be grouped to a weir to help a conservative 
+  # estimate, or have sufficient, regular detections that they can be used to estimate a detection probability at a downstream site, etc.
   bind_rows(ptagis_sf %>%
               filter(site_code %in% c(# UPPER SALMON
                                       "ALTULC",       # Alturas Lake Creek, Upper Salmon
@@ -270,7 +271,7 @@ sr_sites_list = bind_rows(sr_int_sites_sf,
 # Snake River INT and MRR Sites
 sr_config = org_config %>%
   filter(site_code %in% sr_sites_list) %>%
-  # Fix some INT sites
+  # fix some INT sites
   mutate(
     node = case_when(
       site_code == "IML" & antenna_id == "09"                                 ~ "IML_U", # Imnaha River Work Room Antenna
@@ -338,7 +339,7 @@ dam_config = org_config %>%
                        "BON", "BCC", "BWL", "BONAFF")     ~ "BON",
       TRUE ~ node))
 
-# Downriver subbasins configuration
+# downriver subbasins configuration
 downriver_config = org_config %>%
   mutate(
     node = case_when(
@@ -383,59 +384,32 @@ crb_sites_sf = configuration %>%
          site_type,
          site_type_name,
          incl_sites,
-         everything()) #%>%
-  #st_transform(4326)
+         everything())
 
 #----------------------
 # download the NHDPlus v2 Flowlines
+
+# set upstream location to trim flowlines
 upstrm_loc = "Hells Canyon Dam"
 
 library(ggmap)
 #key = source(here("keys/ma_google_api.txt"))
 #register_google(key = key$value)
 
+# get common id for upstrm_loc
 upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
   st_as_sf(coords = c("lon", "lat"),
            crs = default_crs) %>%
   nhdplusTools::discover_nhdplus_id()
 
-dwn_flw = T # do you want flowlines downstream of root site? Set to TRUE if you have downstream sites
 nhd_list = queryFlowlines(sites_sf = crb_sites_sf,
                           root_site_code = "LGR",
                           min_strm_order = 2,
                           max_upstream_comid = upstrm_comid,
-                          combine_up_down = dwn_flw
-                          # dwnstrm_sites = dwn_flw, 
-                          # dwn_min_stream_order_diff = 4
-                          )
+                          combine_up_down = T) # do you want flowlines downstream of root_site? set to TRUE if you have downstream sites
 
 # compile the upstream and downstream flowlines
 flowlines = nhd_list$flowlines
-# if(dwn_flw == T) {
-#   flowlines %<>%
-#     rbind(nhd_list$dwn_flowlines)
-# }
-
-# now cut off areas too far upstream
-# library(ggmap)
-# key = source(here("keys/ma_google_api.txt"))
-# register_google(key = key$value)
-# 
-# upstrm_loc = "Hells Canyon Dam" # upstream extent of study area 
-# upstrm_comid = ggmap::geocode(upstrm_loc, output = "latlon") %>%
-#   st_as_sf(coords = c("lon", "lat"),
-#            crs = 4326) %>%
-#   nhdplusTools::discover_nhdplus_id()
-#  
-# nhd_upstrm_lst = nhdplusTools::plot_nhdplus(outlets = list(upstrm_comid),
-#                                             streamorder = min(nhd_list$flowlines$StreamOrde),
-#                                             actually_plot = F) 
-# 
-# # cut off flowlines upstream of Hells Canyon Dam
-# flowlines %<>%
-#   anti_join(nhd_upstrm_lst$flowline %>%
-#               st_drop_geometry() %>%
-#               select(Hydroseq))
 
 #----------------------
 # build parent-child table
@@ -505,21 +479,19 @@ parent_child = crb_sites_sf %>%
 sr_site_pops = crb_sites_sf %>%
   # filter for sites at or above LTR
   filter(str_extract(rkm, "^[0-9]{3}") == "522" & as.numeric(str_extract(rkm, "(?<=\\.)[0-9]{3}")) >= 100) %>%
-  # remove GOA, LGR, and GRS
   filter(!site_code %in% c("GOA", "LGR", "GRS")) %>%
   select(site_code, site_type, incl_sites) %>%
   # join steelhead, sp/sum chinook, and (made up) coho populations
   st_join(sthd_pops %>%
             select(-sthd_dps)) %>%
   st_join(spsm_pop %>%
-            st_transform(crs = default_crs) %>% ####
+            st_transform(crs = default_crs) %>%
             select(chnk_mpg = MPG,
                    chnk_popid = TRT_POPID,
                    chnk_popname = POP_NAME)) %>%
   left_join(read_excel(here("data/coho_populations/coho_populations.xlsx")) %>%
               select(-coho_esu_dps)) %>%
-  # move geometry column to the end
-  select(-geometry, everything(), geometry) %>%
+  select(-geometry, everything(), geometry) %>%    # move geometry column to the end
   mutate(
     chnk_popid   = if_else(site_code %in% c("SC1", "SC2"), "SCLAW/SCUMA", chnk_popid),
     chnk_popname = if_else(site_code %in% c("SC1", "SC2"), "Lawyer Creek/Upper South Fork Clearwater", chnk_popname)
