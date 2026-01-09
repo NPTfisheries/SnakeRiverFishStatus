@@ -5,25 +5,25 @@
 # Created Date: Unknown
 #   Last Modified: January 7, 2026
 #
-# Notes:
+# Notes: Currently writing 1,333 posteriors bc of MCMC params mcmc_chainLength = 40000 & mcmc_thin = 30. Can we clean using params e.g., mcmc_burn 20000, 
+#   mcmc_chainLength 30000, and mcmc_thin = 30 to result in 1,000 iterations? Need to examine joining w/ DABOM posteriors.
 
 # clear environment
 rm(list = ls())
 
-# install STADEM from GitHub, if not already available
+# install STADEM from GitHub, if needed
 #remotes::install_github("KevinSee/STADEM", ref = "develop", force = T)
 
 # load packages
 library(tidyverse)
 library(STADEM)
-library(here)
 
 # load LGTrappingDB
-LGTrappingDB = read_csv(here("data/LGTrappingDB/LGTrappingDB_2026-01-06.csv"), show_col_types = FALSE)
+LGTrappingDB = read_csv("data/LGTrappingDB/LGTrappingDB_2026-01-06.csv", show_col_types = FALSE)
 
-# run only a single species x year at a time
+# run only a single species x spawn year at a time
 spc = "Steelhead"
-yr = 2025
+yr  = 2025
 
 # set spawn year dates and whether to include jacks
 if(spc == "Chinook") {
@@ -58,29 +58,26 @@ jags_data_list = prepJAGS(lgr_weekly = stadem_list[["weeklyData"]], # data frame
                           wild_tags = FALSE)                        # should only wild tags be used to estimate daytime passage and re-ascension rates?
                           
 # JAGs needs to access a .txt file of the model code
-model_file_nm = here("model_files/lgr_stadem_jags_model.txt")
+model_file_nm = "model_files/lgr_stadem_jags_model.txt"
 
 # what distribution to use for window counts?
 win_model = c('pois', 'neg_bin', 'neg_bin2', 'quasi_pois', 'log_space')[2]
 
-# run model using runSTADEMmodel(). Note: runSTADEMmodel() sets the params to save inside the functions,
-# and it does not save all the params available in the model!
-stadem_mod = runSTADEMmodel(file_name = model_file_nm,
+# Note: runSTADEMmodel() sets the params to save inside the functions and it does not save all the params available in the model!
+stadem_mod = runSTADEMmodel(file_name        = model_file_nm,
                             mcmc_chainLength = 40000,
-                            mcmc_burn =   10000,
-                            mcmc_thin =   30,
-                            mcmc_chains = 4,
-                            jags_data = jags_data_list,
-                            seed = 5,
-                            weekly_params = TRUE,
-                            win_model = win_model)
-
-# See 09_combine_model_results.R for code to summarize posteriors from STADEM
+                            mcmc_burn        = 10000,
+                            mcmc_thin        = 30,
+                            mcmc_chains      = 4,
+                            jags_data        = jags_data_list,
+                            seed             = 5,
+                            weekly_params    = TRUE,
+                            win_model        = win_model)
 
 # save raw results
 save(stadem_mod,
      stadem_list,
-     file = paste0(here("output/stadem_results"), "/lgr_stadem_", spc, "_SY", yr, ".rda"))
+     file = paste0("output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
 
 # summarize escapement
 stadem_df = STADEM::extractPost(stadem_mod,
@@ -94,10 +91,10 @@ stadem_df = STADEM::extractPost(stadem_mod,
            grepl('hnc', param)   ~ "Hatchery No-Clip"
          )) %>%
   DABOM::summarisePost(value = tot_abund,
-                # columns to group by
-                species,
-                spawn_yr,
-                origin) %>%
+                       # columns to group by
+                       species,
+                       spawn_yr,
+                       origin) %>%
   select(species,
          spawn_yr,
          origin,
@@ -109,13 +106,12 @@ stadem_df = STADEM::extractPost(stadem_mod,
 
 # write stadem escapement summary
 write_csv(stadem_df,
-          file = paste0(here("output/stadem_results/escapement_summaries"),
-                        "/", spc, "_SY", yr, "_stadem_escapement.csv"))
+          file = paste0("output/stadem_results/escapement_summaries/", spc, "_SY", yr, "_stadem_escapement.csv"))
 
 # plot weekly STADEM results
 week_esc_p = plotTimeSeries(stadem_mod = stadem_mod,
                             weeklyData = stadem_list$weeklyData %>%
-                              # I may need to create an Issue in STADEM to standardize start_date versus Start_Date among all functions
+                              # i may need to create an Issue in STADEM to standardize start_date versus Start_Date among all functions
                               rename(Start_Date = start_date))
 
 # save weekly escapement plot
