@@ -3,13 +3,12 @@
 # Purpose: Run the DABOM model
 # 
 # Created Date: Unknown
-#   Last Modified: April 17, 2025
+#   Last Modified: January 16, 2026
 #
 # Notes: 
 
 # load necessary libraries
 library(tidyverse)
-library(here)
 library(PITcleanr)
 
 # install DABOM, if necessary
@@ -20,19 +19,20 @@ library(DABOM)
 # some initial setup
 
 # set species and spawn year
-spc = "Coho"
-yr = 2024
+spc = "Chinook"
+yr = 2025
 
 # load configuration
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
+if (yr <  2024) { load("data/configuration_files/site_config_LGR_20240927.rda") }
+if (yr == 2024) { load("data/configuration_files/site_config_LGR_20250416.rda") }
+if (yr == 2025) { load("data/configuration_files/site_config_LGR_20260116.rda") }
 rm(flowlines)
 
 # load trap_df to get origins
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"))
+trap_df = read_csv("data/LGTrappingDB/LGTrappingDB_2026-01-06.csv")
 
 # set folder for DABOM results
-dabom_folder = here("output/dabom_results/")
+dabom_folder = "output/dabom_results/"
 
 #--------------------
 # start analysis
@@ -43,7 +43,7 @@ if(spc == "Coho")      { spc_code = 2 ; incl_hatchery = TRUE  }
 if(spc == "Steelhead") { spc_code = 3 ; incl_hatchery = FALSE }
 
 # load compressed, cleaned observations for use in DABOM
-pitcleanr_folder = here("output/PITcleanr/human_reviewed/")
+pitcleanr_folder = "output/PITcleanr/human_reviewed/"
 dabom_obs = readxl::read_excel(paste0(pitcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx" ))
 
 # remove kelts and repeat spawner obs (steelhead) and user_keep_obs == FALSE from DABOM for "human reviewed" PITcleanr output
@@ -107,8 +107,9 @@ bad_paths = filter_ch %>%
 nrow(bad_paths)
 
 # write default, initial jags model
-if (yr <  2024) { init_mod_file = here("model_files/lgr_dabom_jags.txt") }
-if (yr == 2024) { init_mod_file = here("model_files/lgr_dabom_jags_20250417.txt") }
+if (yr <  2024) { init_mod_file = "model_files/lgr_dabom_jags.txt"          }
+if (yr == 2024) { init_mod_file = "model_files/lgr_dabom_jags_20250417.txt" }
+if (yr == 2025) { init_mod_file = "model_files/lgr_dabom_jags_20260116.txt" }
 # writeDABOM(file_name = init_mod_file,
 #            parent_child = parent_child,
 #            configuration = configuration,
