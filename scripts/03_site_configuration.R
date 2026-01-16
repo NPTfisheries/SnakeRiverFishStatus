@@ -5,7 +5,7 @@
 #   tag observations and visualizing infrastructure.
 # 
 # Created Date: October 10, 2023
-#   Last Modified: January 9, 2026
+#   Last Modified: January 16, 2026
 #
 # Notes: 
 # 1. Starting in SY2025 (config updated January 6, 2026), INT sites are trimmed to exclude decommissioned sites.
@@ -20,7 +20,6 @@ rm(list = ls())
 # load needed libraries
 library(PITcleanr)
 library(tidyverse)
-#library(here)
 library(sf)
 library(magrittr)
 library(janitor)
@@ -303,7 +302,7 @@ sr_config = org_config %>%
       site_code == "CATHEW"                                                      ~ "CCW_D",   # Group CATHEW to CCW_D (based on site configuration)
       site_code %in% c("LOOKGC", "LOOH")                                         ~ "LGW_U",   # Group LGW_U, LOOKGC, and LOOH into a single node
       site_code %in% c("BUTC", "WENR", "WENRNF", "WENRSF")                       ~ "WEN_U",
-      site_code == "WALH"                                                        ~ "WH1_U",
+      site_code %in% c("WH1", "WALH")                                            ~ "WH1",     # Group WH1 and WALH into a single terminal node
       site_code == "JOSEPC"                                                      ~ "JOC_U",
       # LOWER SNAKE
       site_code == "PENAWC"                                                      ~ "PWA_U",   # Group Penawawa Creek to PWA_U
@@ -393,7 +392,7 @@ crb_sites_sf = configuration %>%
 upstrm_loc = "Hells Canyon Dam"
 
 library(ggmap)
-#key = source(here("keys/ma_google_api.txt"))
+#key = source("keys/ma_google_api.txt")
 #register_google(key = key$value)
 
 # get common id for upstrm_loc
