@@ -3,7 +3,7 @@
 # Purpose: Process complete tag histories for DABOM using PITcleanr
 # 
 # Created Date: June 28, 2021
-#   Last Modified: September 15, 2025
+#   Last Modified: January 16, 2026
 #
 #   Notes:
 
@@ -13,28 +13,28 @@ rm(list = ls())
 # load necessary libraries
 library(tidyverse)
 library(PITcleanr)
-library(here)
 library(writexl)
 
 # set up folder structure
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
-spc = "Coho"
-yr = 2024
+spc = "Steelhead"
+yr = 2025
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
 
 # load configuration and site and node parent-child data frames
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) }
+if (yr <  2024) { load("data/configuration_files/site_config_LGR_20240927.rda") }
+if (yr == 2024) { load("data/configuration_files/site_config_LGR_20250416.rda") }
+if (yr == 2025) { load("data/configuration_files/site_config_LGR_20260116.rda") }
 rm(flowlines, crb_sites_sf, sr_site_pops)
 
-# RECODE 3BV to BV3
-
 # read in complete tag history
-cth_df = readCTH(paste0(here("data/complete_tag_histories/LGR_"), spc, "_SY", yr, ".csv"))
+cth_df = readCTH(paste0("data/complete_tag_histories/LGR_", spc, "_SY", yr, ".csv")) %>%
+  # deal with 3BV if present in data
+  mutate(event_site_code_value = if_else(event_site_code_value == "3BV", "BV3", event_site_code_value))
 
 # QC complete tag history
 cth_qc = qcTagHistory(cth_df)
@@ -159,13 +159,13 @@ dabom_obs = dabom_obs %>%
 
 # write to excel file
 write_xlsx(dabom_obs,
-           paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
+           paste0(PITcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
 
 # do i want to apply shading to every other tag code in the output
 if(shade_tags == T) {
   library (openxlsx)
   # load existing excel workbook
-  wb = loadWorkbook(paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
+  wb = loadWorkbook(paste0(PITcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx"))
   
   # list of every other tag
   gray_tags = unique(dabom_obs$tag_code) %>%
@@ -186,7 +186,7 @@ if(shade_tags == T) {
   
   # overwrite file with shaded version
   saveWorkbook(wb,
-               paste0(here(PITcleanr_folder), "/", spc, "_SY", yr, "_prepped_obs.xlsx"),
+               paste0(PITcleanr_folder, "/", spc, "_SY", yr, "_prepped_obs.xlsx"),
                overwrite = T)
 } # end if shade_tags == T
 
