@@ -270,6 +270,7 @@ sr_config = org_config %>%
       site_code == "AFC" & !grepl("MAINSTEM", antenna_group, ignore.case = T) ~ "AFC_U", # south and north forks become _U
       site_code == "TPJ" & grepl("Panjab", antenna_group, ignore.case = T)    ~ "TPJ_U", # Panjab Creek added to _U array
       site_code == "TFH" & grepl("Ladder", antenna_group, ignore.case = T)    ~ "TFH_U", # ladder is upstream of "close proximity" tandem array
+      site_code == "WR2"                                                      ~ "WR2",
       TRUE ~ node)) %>%  
   # Recode and/or merge some MRR sites; often merging MRR observations into INT sites
   mutate(
