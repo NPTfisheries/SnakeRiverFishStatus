@@ -52,10 +52,6 @@ sthd_pops %>%
 # query metadata for all INT and MRR sites in PTAGIS
 org_config = buildConfig(node_assign = "array",
                          array_suffix = "UD") %>%
-  # only keep the most recent configuration for all sites
-  group_by(site_code) %>%
-  filter(config_id == max(config_id, na.rm = TRUE)) %>%
-  ungroup() %>%
   # ugh, recode site_code and node for 3BV
   mutate(
     site_code = if_else(site_code == "3BV", "BV3", site_code),
@@ -78,16 +74,12 @@ ptagis_sf = org_config %>%
          longitude,
          site_description) %>%
   filter(!is.na(latitude) & !is.na(longitude)) %>%
-  distinct(site_code,
-           site_name,
-           site_type,
-           rkm,
-           latitude,
-           longitude,
+  group_by(site_code) %>%
+  filter(config_id == max(config_id, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct(site_code,site_name, site_type, rkm, latitude, longitude,
            .keep_all = T) %>%
-  st_as_sf(coords = c("longitude", 
-                      "latitude"), 
-           crs = default_crs)
+  st_as_sf(coords = c("longitude", "latitude"), crs = default_crs)
 
 #-------------------------------------
 # create list of Snake River INT sites
