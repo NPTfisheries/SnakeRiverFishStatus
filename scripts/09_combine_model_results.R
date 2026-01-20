@@ -6,7 +6,7 @@
 #   abundance of each life history group.
 # 
 # Created Date: Unknown
-#   Last Modified: September 15, 2025
+#   Last Modified: January 20, 2026
 #
 # Notes: 
 
@@ -14,7 +14,6 @@
 rm(list = ls())
 
 # load necessary libraries
-library(here)
 library(tidyverse)
 library(sf)
 library(PITcleanr)
@@ -23,12 +22,13 @@ library(magrittr)
 library(readxl)
 
 # set species and year
-spc = "Coho"
-yr = 2024
+spc = "Steelhead"
+yr = 2025
 
 # load configuration files
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) } 
+if (yr <  2024) { load("data/configuration_files/site_config_LGR_20240927.rda") }
+if (yr == 2024) { load("data/configuration_files/site_config_LGR_20250416.rda") } 
+if (yr == 2025) { load("data/configuration_files/site_config_LGR_20260116.rda") } 
 rm(flowlines)
 
 # set prefix
@@ -78,7 +78,7 @@ trt_df = node_pops %>%
   select(-geometry)
 
 # define which sites were operational and/or should be used for population estimates
-pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2025-09-16.xlsx") %>%
+pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/dabom_site_operations_2026-01-13.xlsx") %>%
   filter(species == str_remove(spc_prefix, "_"),
          spawn_year == yr) %>%
   select(species,
@@ -260,12 +260,12 @@ pop_escp_summ = pop_escp_post %>%
 # sex, age, and size estimates
 
 # load sex and age model results
-load(paste0(here(), "/output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
-load(paste0(here(), "/output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
-if(spc == "Steelhead") { load(paste0(here(), "/output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
+load(paste0("output/sex_results/SY", yr, "_", spc, "_pop_sex_prop.rda"))
+load(paste0("output/age_results/SY", yr, "_", spc, "_pop_age_prop.rda"))
+if(spc == "Steelhead") { load(paste0("output/size_results/SY", yr, "_", spc, "_pop_size_prop.rda")) }
 
 # tag life history summary
-tag_lh = readxl::read_excel(paste0(here(), "/output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
+tag_lh = readxl::read_excel(paste0("output/life_history/", spc, "_SY", yr, "_lh_summary.xlsx"),
                             "tag_lh",
                             progress = F)
 
@@ -381,7 +381,7 @@ combined_post %<>%
          param,
          value)
 
-source(here("R/normalizeAges.R"))
+source("R/normalizeAges.R")
 
 # summarise the combined posteriors
 combined_summ = combined_post %>%
@@ -430,7 +430,7 @@ combined_summ = combined_post %>%
 # save results
 # detection probabilities
 save(detect_summ,
-     file = paste0(here("output/dabom_results/detection_probabilities"),
+     file = paste0("output/dabom_results/detection_probabilities",
                    "/SY", yr, "_", spc, "_node_detect_probs.rda"))
 
 # posteriors
@@ -438,14 +438,14 @@ post_list = list(main_escp_post = main_escp_post,
                  trib_escp_post = trib_escp_post,
                  combined_post = combined_post)
 save(post_list,
-     file = paste0(here("output/abundance_results/posteriors"),
+     file = paste0("output/abundance_results/posteriors",
                    "/SY", yr, "_", spc, "_posteriors.rda"))
 
 # abundance summaries
 abund_list = list(site_escp_summ = site_escp_summ,
                   combined_summ = combined_summ)
 save(abund_list,
-     file = paste0(here("output/abundance_results/summaries"),
+     file = paste0("output/abundance_results/summaries",
                    "/SY", yr, "_", spc, "_summaries.rda")) 
 
 ### END SCRIPT
