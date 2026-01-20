@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: July 24, 2025
+#   Last Modified: January 20, 2026
 #
 # Notes: 
 
@@ -12,23 +12,22 @@
 rm(list = ls())
 
 # load necessary libraries
-library(here)
 library(tidyverse)
 library(readxl)
 library(writexl)
 
 # set species
-spc = "Coho"
+spc = "Steelhead"
 
 # stadem estimates
-stadem_synth = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
+stadem_synth = list.files(path = paste0("output/stadem_results/escapement_summaries/"),
                           full.names = T) %>%
   .[grepl(spc, .)] %>%
   map_dfr(read_csv) %>%
   suppressMessages()
 
 # detection probabilities
-detect_synth = list.files(path = paste0(here(), "/output/dabom_results/detection_probabilities/"),
+detect_synth = list.files(path = paste0("output/dabom_results/detection_probabilities/"),
                           pattern = "\\.rda$",
                           full.names = T) %>%
   .[grepl(spc, .)] %>%
@@ -37,7 +36,7 @@ detect_synth = list.files(path = paste0(here(), "/output/dabom_results/detection
   filter(site_operational == TRUE | is.na(site_operational))
 
 # dabom summaries
-dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summaries/"),
+dabom_synth = list.files(path = paste0("output/abundance_results/summaries/"),
                          full.names = T) %>%
   .[grepl(spc, .)] %>%
   map_dfr( ~{
@@ -47,7 +46,7 @@ dabom_synth = list.files(path = paste0(here(), "/output/abundance_results/summar
 
 # compile tag life history data
 if(spc == "Chinook"){
-  tag_df = list.files(path = paste0(here(), "/output/life_history/"),
+  tag_df = list.files(path = paste0("output/life_history/"),
                       pattern = "\\.xlsx$",
                       full.names = T) %>%
     .[grepl(spc, .)] %>%
@@ -70,7 +69,7 @@ if(spc == "Chinook"){
               .groups = "drop")
 }
 if(spc == "Steelhead"){
-  tag_df = list.files(path = paste0(here(), "/output/life_history/"),
+  tag_df = list.files(path = paste0("output/life_history/"),
                       pattern = "\\.xlsx$",
                       full.names = T) %>%
     .[grepl(spc, .)] %>%
@@ -95,7 +94,7 @@ if(spc == "Steelhead"){
               .groups = "drop")  
 }
 if(spc == "Coho"){
-  tag_df = list.files(path = paste0(here(), "/output/life_history/"),
+  tag_df = list.files(path = paste0("output/life_history/"),
                       pattern = "\\.xlsx$",
                       full.names = T) %>%
     .[grepl(spc, .)] %>%
@@ -120,7 +119,7 @@ if(spc == "Coho"){
 
 # load summary of proportion of habitat monitored by each iptds 
 load("C:/Git/SnakeRiverIPTDS/output/available_habitat/snake_river_iptds_and_pop_available_habitat.rda"); rm(site_avail_hab, pop_avail_hab)
-source(here("R/habitatExpansion.R"))
+source("R/habitatExpansion.R")
 
 spc_avail_hab = avail_hab_df %>%
   # trim down to the species of interest
@@ -327,7 +326,7 @@ if(spc == "Steelhead") {
 }
 
 # dabom site escapement summaries
-site_N_synth = list.files(path = paste0(here(), "/output/abundance_results/summaries/"),
+site_N_synth = list.files(path = paste0("output/abundance_results/summaries/"),
                           full.names = T) %>%
   .[grepl(spc, .)] %>%
   map_dfr( ~{
@@ -359,7 +358,7 @@ if(spc == "Chinook" | spc == "Coho") {
        "Pop_Age_Props" = age_p_synth,
        "Node_Det_Probs" = detect_synth,
        "Site_Esc" = site_N_synth) %>%
-    write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
+    write_xlsx(paste0("output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
 }
 if(spc == "Steelhead") {
   list("LGR_Esc" = stadem_synth,
@@ -372,7 +371,7 @@ if(spc == "Steelhead") {
        "Pop_Size_Props" = size_p_synth,
        "Node_Det_Probs" = detect_synth,
        "Site_Esc" = site_N_synth) %>%
-    write_xlsx(paste0(here(), "/output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
+    write_xlsx(paste0("output/syntheses/LGR_", spc, "_all_summaries_", Sys.Date(), ".xlsx"))
 }
 
-### END SCRIPT, FOR NOW
+### END SCRIPT
