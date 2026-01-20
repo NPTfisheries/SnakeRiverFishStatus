@@ -3,8 +3,7 @@
 # Purpose: Summarize sex, age, and size structure information
 # 
 # Created Date: July 1, 2019
-#   Last Modified: September 15, 2025
-#
+#   Last Modified: January 20, 2026
 # Notes:
 
 # clear environment
@@ -12,7 +11,6 @@ rm(list = ls())
 
 # load necessary libraries
 library(PITcleanr)
-library(here)
 library(tidyverse)
 library(sf)
 library(magrittr)

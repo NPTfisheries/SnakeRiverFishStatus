@@ -3,7 +3,7 @@
 # Purpose: Diagnostics for DABOM MCMC runs
 # 
 # Created Date: October 7, 2019
-#   Last Modified: October 2, 2024
+#   Last Modified: January 20, 2025
 #
 # Notes: postpack package can be installed by using "remotes::install_github("bstaton1/postpack")"
 
@@ -12,11 +12,10 @@ rm(list = ls())
 
 # load necessary libraries
 library(tidyverse)
-library(here)
 
 # set species and year
-spc = c("Chinook", "Coho", "Steelhead")[2]
-yr = 2024
+spc = c("Chinook", "Coho", "Steelhead")[3]
+yr = 2025
 
 # where are the dabom results stored?
 dabom_folder = "output/dabom_results/"
@@ -98,7 +97,7 @@ diag_plots(post = my_mod,
 # diag_plots(post = my_mod,
 #            p = param_chk,
 #            save = T,
-#            file = paste0(here("output/figures/mcmc_diagnostic_plots/SY"), yr, "_", spc, "_diagnostic_plots.pdf"))
+#            file = paste0("output/figures/mcmc_diagnostic_plots/SY", yr, "_", spc, "_diagnostic_plots.pdf"))
 
 #-----------------
 # other diagnostic plots with ggmcmc
@@ -117,7 +116,7 @@ for(my_attr in c('nChains', 'nParameters', 'nIterations', 'nBurnin', 'nThin', 'd
 
 # save a file with lots of different diagnostic plots
 # ggmcmc(my_ggs,
-#        file = paste0(here("output/figures/mcmc_diagnostic_plots/SY"), yr, "_", spc, "_diagnostic_plots.pdf"),
+#        file = paste0("output/figures/mcmc_diagnostic_plots/SY", yr, "_", spc, "_diagnostic_plots.pdf"),
 #        param_page = 10)
 
 # a few specific plots to look at
