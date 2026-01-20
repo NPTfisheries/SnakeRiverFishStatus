@@ -3,7 +3,7 @@
 # Purpose: Run life history models to estimate sex ratio and age structure
 # 
 # Created Date: July 10, 2019
-#   Last Modified: September 15, 2025
+#   Last Modified: January 20, 2026
 #
 # Notes: 
 
@@ -17,8 +17,8 @@ library(readxl)
 library(jagsUI)
 
 # set species and year
-spc = "Coho"
-yr = 2024
+spc = "Steelhead"
+yr = 2025
 
 # set up folder structure for output
 sex_folder = "output/sex_results/"
@@ -30,7 +30,7 @@ lh_folder = "output/life_history/"
 
 #-----------------
 # create JAGS model to estimate female proportion
-sex_model_nm = here("model_files/female_prop_jags.txt")
+sex_model_nm = "model_files/female_prop_jags.txt"
 
 model_code = "
 model {

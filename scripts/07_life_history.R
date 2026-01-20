@@ -17,16 +17,17 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Coho"
-yr = 2024
+spc = "Steelhead"
+yr = 2025
 
 # load tag summaries from PITcleanr and used in the DABOM model
-load(paste0(here("output/dabom_results/lgr_dabom_"), spc, "_SY", yr, ".rda"))
+load(paste0("output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 filter_ch = dabom_output$filter_ch
 
 # load configuration and population info
-if (yr <  2024) { load(here("data/configuration_files/site_config_LGR_20240927.rda")) }
-if (yr == 2024) { load(here("data/configuration_files/site_config_LGR_20250416.rda")) } 
+if (yr <  2024) { load("data/configuration_files/site_config_LGR_20240927.rda") }
+if (yr == 2024) { load("data/configuration_files/site_config_LGR_20250416.rda") } 
+if (yr == 2025) { load("data/configuration_files/site_config_LGR_20260116.rda") } 
 rm(flowlines, crb_sites_sf)
 
 # set species prefix and codes
@@ -68,7 +69,7 @@ tag_final_loc = estimateFinalLoc(filter_ch) %>%
             by = c("spawn_site" = "site_code"))
 
 # load LGR trap database
-trap_df = read_csv(here("data/LGTrappingDB/LGTrappingDB_2025-09-15.csv"))
+trap_df = read_csv("data/LGTrappingDB/LGTrappingDB_2026-01-06.csv")
 
 # clean and trim data from the LGTrappingDB to join to tag_final_loc
 bio_df = trap_df %>%
