@@ -5,14 +5,13 @@
 # Created Date: May 7, 2024
 #   Last Modified: 
 #
-# Notes: 
+# Notes: This needs work...
 
 # clear environment
 rm(list = ls())
 
 # load necessary libraries
 library(tidyverse)
-library(here)
 library(readxl)
 # library(writexl)
 
@@ -20,7 +19,7 @@ library(readxl)
 # Lower Granite Dam Escapements
 
 # compile lgr escapements, both species
-lgr_esc_df = list.files(path = paste0(here(), "/output/stadem_results/escapement_summaries/"),
+lgr_esc_df = list.files(path = paste0("output/stadem_results/escapement_summaries/"),
                         full.names = T) %>%
   #.[grepl(spc, .)] %>%
   map_dfr(read_csv) %>%
@@ -80,30 +79,38 @@ ggsave(here("output/figures/lgr_escapements/lgr_sthd_escapement.png"))
 # TRT Population Escapements
 
 # compile trt population escapement, chinook salmon
-trt_chnk_df = read_xlsx(here("output/syntheses/LGR_Chinook_all_summaries_2024-04-08.xlsx"),
+trt_chnk_df = read_xlsx(here("output/syntheses/LGR_Chinook_all_summaries_2026-01-20.xlsx"),
                         sheet = "Pop_Tot_Esc") %>%
-  filter(valid_est == 1) %>%
-  group_by(TRT_POPID) %>%
-  mutate(gm = exp(sum(log(median[median > 0]), na.rm = T) / length(median)))
+  group_by(popid) %>%
+  mutate(gm = exp(sum(log(median_exp[median > 0]), na.rm = T) / length(median_exp)))
 
 trt_chnk_p = trt_chnk_df %>%
-  ggplot(aes(x = spawn_yr, 
-             y = median, 
-             group = TRT_POPID)) +
-  geom_ribbon(aes(ymin = lower95ci, ymax = upper95ci), alpha = .25) +
-  geom_line() +
+  ggplot(aes(x = spawn_yr, group = popid)) +
+  # ribbons
+  geom_ribbon(aes(ymin = lower95ci,     ymax = upper95ci),     alpha = 0.20) +
+  geom_ribbon(aes(ymin = lower95ci_exp, ymax = upper95ci_exp), alpha = 0.20) +
+  # lines
+  geom_line(aes(y = median,     linetype = "median"),     linewidth = 0.5) +
+  geom_line(aes(y = median_exp, linetype = "median_exp"), linewidth = 0.8) +
+  # points
+  geom_point(aes(y = median),     size = 2) +
+  geom_point(aes(y = median_exp), size = 2) +
   geom_hline(aes(yintercept = gm), linetype = 2) +
-  #geom_hline(aes(yintercept = mat), color = 'red', linewidth = 1) +
-  geom_point(size = 2) +
+  scale_linetype_manual(
+    values = c(median = "dotted", median_exp = "solid"),
+    breaks = c("median", "median_exp"),
+    labels = c("IPTDS", "Expanded")
+  ) +
   scale_x_continuous(breaks = scales::breaks_pretty(3)) +
-  facet_wrap(~ TRT_POPID, 
-             scales = "free_y", 
-             ncol = 4, 
+  facet_wrap(~ popid,
+             scales = "free_y",
+             ncol = 4,
              labeller = label_wrap_gen(width = 19)) +
   scale_y_continuous(breaks = scales::breaks_pretty(n = 3)) +
   labs(x = "Spawn Year",
-       y = "Population Escapement") +
-  theme_bw() 
+       y = "Escapement",
+       linetype = NULL) +
+  theme_bw()
 trt_chnk_p
 
 # save .png
