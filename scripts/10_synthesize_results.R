@@ -17,7 +17,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Steelhead"
+spc = "Chinook"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0("output/stadem_results/escapement_summaries/"),
@@ -42,7 +42,19 @@ dabom_synth = list.files(path = paste0("output/abundance_results/summaries/"),
   map_dfr( ~{
     load(.)
     combined_summ = pluck(abund_list, "combined_summ")
-  })
+  }) %>%
+  # temporary resolution of missing mpgs (these were never assigned in site_config_LGR_20240927.rda)
+  mutate(mpg = case_when(
+    popid == "GRCAT/GRUMA"                         ~ "Grande Ronde / Imnaha",
+    popid == "IRMAI/IRBSH"                         ~ "Grande Ronde / Imnaha",
+    popid == "SCLAW/SCUMA"                         ~ "Dry Clearwater",
+    popid == "SFSMA/SFSEC/SFEFS"                   ~ "South Fork Salmon River",
+    popid == "SRLMA/SRPAH/SREFS/SRYFS/SRVAL/SRUMA" ~ "Upper Salmon River",
+    popid == "CRLMA-s/CRSFC-s"                     ~ "Clearwater River",
+    popid == "SFMAI-s/SFSEC-s"                     ~ "Salmon River",
+    popid == "SRPAH-s/SREFS-s/SRUMA-s"             ~ "Salmon River",
+    TRUE ~ mpg
+  ))
 
 # compile tag life history data
 if(spc == "Chinook"){
@@ -54,15 +66,13 @@ if(spc == "Chinook"){
     select(species,
            spawn_yr = spawn_year,
            popid,
-           mpg,
            tag_code,
            GenSex,
            total_age) %>%
     filter(!is.na(popid)) %>%
     group_by(species,
              spawn_yr,
-             popid,
-             mpg) %>%
+             popid) %>%
     summarize(n_tags = n_distinct(tag_code),
               n_sexed = sum(GenSex %in% c("F", "M")),
               n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
@@ -77,7 +87,6 @@ if(spc == "Steelhead"){
     select(species,
            spawn_yr = spawn_year,
            popid,
-           mpg,
            tag_code,
            GenSex,
            total_age,
@@ -85,8 +94,7 @@ if(spc == "Steelhead"){
     filter(!is.na(popid)) %>%
     group_by(species,
              spawn_yr,
-             popid,
-             mpg) %>%
+             popid) %>%
     summarize(n_tags = n_distinct(tag_code),
               n_sexed = sum(GenSex %in% c("F", "M")),
               n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
@@ -102,15 +110,13 @@ if(spc == "Coho"){
     select(species,
            spawn_yr = spawn_year,
            popid,
-           mpg,
            tag_code,
            LGDSex,
            total_age) %>%           # note Lower Granite Dam phenotypic sex, not GenSex
     filter(!is.na(popid)) %>%
     group_by(species,
              spawn_yr,
-             popid,
-             mpg) %>%
+             popid) %>%
     summarize(n_tags = n_distinct(tag_code),
               n_sexed = sum(LGDSex %in% c("F", "M")),
               n_aged = sum(!is.na(total_age) & is.numeric(total_age)),
@@ -124,7 +130,7 @@ source("R/habitatExpansion.R")
 spc_avail_hab = avail_hab_df %>%
   # trim down to the species of interest
   filter(
-    (spc == "Chinook" & spc_code == "chnk") |
+    (spc == "Chinook"   & spc_code == "chnk") |
     (spc == "Steelhead" & spc_code == "sthd")
   ) %>%
   select(site_code,
@@ -136,7 +142,7 @@ spc_avail_hab = avail_hab_df %>%
 N_synth = dabom_synth %>%
   filter(param == "N") %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid", "mpg")) %>%
+            by = c("species", "spawn_yr", "popid")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -190,7 +196,7 @@ if (spc %in% c("Chinook", "Steelhead")) {
 sex_N_synth = dabom_synth %>%
   filter(grepl("N_fem|N_male", param)) %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid", "mpg")) %>%
+            by = c("species", "spawn_yr", "popid")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -236,7 +242,7 @@ age_N_synth = dabom_synth %>%
   filter(grepl("N_age", param)) %>%
   mutate(brood_yr = spawn_yr - as.numeric(str_sub(param, -1))) %>%
   left_join(tag_df,
-            by = c("species", "spawn_yr", "popid", "mpg")) %>%
+            by = c("species", "spawn_yr", "popid")) %>%
   mutate(cv = sd / median) %>%
   select(species,
          spawn_yr,
@@ -282,7 +288,7 @@ if(spc == "Steelhead") {
   size_N_synth = dabom_synth %>%
     filter(param %in% c("N_a", "N_b")) %>%
     left_join(tag_df,
-              by = c("species", "spawn_yr", "popid", "mpg")) %>%
+              by = c("species", "spawn_yr", "popid")) %>%
     mutate(cv = sd / median) %>%
     select(species,
            spawn_yr,
