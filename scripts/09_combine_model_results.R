@@ -94,8 +94,8 @@ pop_sites_yr = read_xlsx(path = "C:/Git/SnakeRiverIPTDS/output/iptds_operations/
 
 #-----------------
 # load stadem and dabom results
-load(paste0(here(), "/output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
-load(paste0(here(), "/output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
+load(paste0("output/stadem_results/lgr_stadem_", spc, "_SY", yr, ".rda"))
+load(paste0("output/dabom_results/lgr_dabom_", spc, "_SY", yr, ".rda"))
 
 #-----------------
 # summarize detection probabilities (p)
