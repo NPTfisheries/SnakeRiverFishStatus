@@ -505,12 +505,12 @@ sr_site_pops = crb_sites_sf %>%
     chnk_popname = if_else(site_code == "WR1", "Lostine River/Minam River", chnk_popname)
   ) %>%
   mutate(
-    chnk_popid   = if_else(site_code == "SFG", "SFSMA/SFSEC/SFEFS", chnk_popid),
+    chnk_popid   = if_else(site_code == "SFG", "SFMAI/SFSEC/SFEFS", chnk_popid),
     chnk_popname = if_else(site_code == "SFG", "South Fork Salmon River mainstem/Secesh River/East Fork South Fork Salmon River", chnk_popname)
   ) %>%
   mutate(
-    chnk_popid   = if_else(site_code == "USE", "SRLMA/SRPAH/SREFS/SRYFS/SRVAL/SRUMA", chnk_popid),
-    chnk_popname = if_else(site_code == "USE", "Salmon River lower mainstem below Redfish Lake/
+    chnk_popid   = if_else(site_code %in% c("USE","USI"), "SRLMA/SRPAH/SREFS/SRYFS/SRVAL/SRUMA", chnk_popid),
+    chnk_popname = if_else(site_code %in% c("USE","USI"), "Salmon River lower mainstem below Redfish Lake/
                            Pahsimeroi River/East Fork Salmon River/Yankee Fork/Valley Creek/Salmon River upper
                            mainstem above Redfish Lake", chnk_popname)
   ) %>%
@@ -519,8 +519,8 @@ sr_site_pops = crb_sites_sf %>%
     sthd_popname = if_else(site_code %in% c("SC1", "SC2"), "Clearwater River lower mainstem/South Fork Clearwater River", sthd_popname)
   ) %>%
   mutate(
-    sthd_popid   = if_else(site_code == "USE", "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI/USE steelhead end up in
-    sthd_popname = if_else(site_code == "USE", "Pahsimeroi River/East Fork Salmon River/Salmon River upper mainstem", sthd_popname)
+    sthd_popid   = if_else(site_code %in% c("USE","USI"), "SRPAH-s/SREFS-s/SRUMA-s", sthd_popid), # We don't necessarily know which population USI/USE steelhead end up in
+    sthd_popname = if_else(site_code %in% c("USE","USI"), "Pahsimeroi River/East Fork Salmon River/Salmon River upper mainstem", sthd_popname)
   ) %>%
   mutate(
     sthd_popid   = if_else(site_code == "SFG", "SFMAI-s/SFSEC-s", sthd_popid),

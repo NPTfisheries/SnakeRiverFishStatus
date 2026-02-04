@@ -17,7 +17,7 @@ library(magrittr)
 library(janitor)
 
 # set species and yr
-spc = "Steelhead"
+spc = "Chinook"
 yr = 2025
 
 # load tag summaries from PITcleanr and used in the DABOM model
