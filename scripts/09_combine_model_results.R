@@ -22,7 +22,7 @@ library(magrittr)
 library(readxl)
 
 # set species and year
-spc = "Chinook"
+spc = "Steelhead"
 yr = 2025
 
 # load configuration files
