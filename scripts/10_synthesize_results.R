@@ -17,7 +17,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0("output/stadem_results/escapement_summaries/"),
