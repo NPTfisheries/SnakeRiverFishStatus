@@ -17,7 +17,7 @@ library(tidyverse)
 # requires a copy of the Lower Granite Dam trapping database and the ODBC driver
 if(.Platform$OS.type != "unix") {                                       # includes windows machines
   
-  trap_filepath = "data/LGTrappingDB/LGTrappingExport_2026-01-06.accdb" # set path to LGTrappingDB Access database
+  trap_filepath = "data/LGTrappingDB/LGTrappingExport_2026-05-05.accdb" # set path to LGTrappingDB Access database
   source("R/loadLGTrappingDBase.R")                                     # source loadLGTrappingDBase function
   con = loadLGTrappingDBase(trapDB_filepath = trap_filepath)            # connect to database
   trap_dbase = DBI::dbReadTable(con, 'tblLGDMasterCombineExport')       # read master table within LGTrappingDB
@@ -25,6 +25,6 @@ if(.Platform$OS.type != "unix") {                                       # includ
 }
 
 # write database to .csv
-write_csv(trap_dbase, file = paste0(here("data/LGTrappingDB/LGTrappingDB_/"), Sys.Date(), ".csv"))
+write_csv(trap_dbase, file = paste0("data/LGTrappingDB/LGTrappingDB_", Sys.Date(), ".csv"))
 
 # END SCRIPT
