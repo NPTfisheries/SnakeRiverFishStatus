@@ -303,8 +303,9 @@ sr_config = org_config %>%
 # Snake and Columbia River dams configuration 
 dam_config = org_config %>%
   # filter our just relevant dam sites
-  filter(site_code %in% c("GRA", "LGRLDR", "LGR",            # LGR Adults
+  filter(site_code %in% c("GRA", "LGRLDR", "LGR",            # LGR Up
                           "GRJ", "GRS", "GRX",               # LGR Juveniles; GRJ, GRX = LGR Juvenile Bypass; GRS = LGR Spillway
+                          #"GRJ", "GRS", "GRX", "LGRTAL",     # LGR Down; GRJ, GRX = LGR Juvenile Bypass; GRS = LGR Spillway; LGRTAL = LGR Tailrace        
                           "LGS", "GOJ", "GOA",               # Little Goose Dam
                           "LMA", "LMN", "LMJ",               # Lower Monumental Dam
                           "IHA", "IHR", "ICH",               # Ice Harbor Dam
@@ -319,6 +320,7 @@ dam_config = org_config %>%
     node = case_when(
       site_code %in% c("GRA", "LGRLDR", "LGR")            ~ "LGR", # LGR Adults
       site_code %in% c("GRJ", "GRS", "GRX")               ~ "GRS", # LGR Juveniles; GRJ, GRX = LGR Juvenile Bypass; GRS = LGR Spillway
+      #site_code %in% c("GRJ", "GRS", "GRX", "LGRTAL")     ~ "GRS",  
       site_code %in% c("LGS", "GOJ", "GOA")               ~ "GOA", # Little Goose Dam
       site_code %in% c("LMA", "LMN", "LMJ")               ~ "LMA", # Lower Monumental Dam
       site_code %in% c("IHA", "IHR", "ICH")               ~ "IHR", # Ice Harbor Dam

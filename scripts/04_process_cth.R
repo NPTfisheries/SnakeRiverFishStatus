@@ -14,13 +14,14 @@ rm(list = ls())
 library(tidyverse)
 library(PITcleanr)
 library(writexl)
+library(here)
 
 # set up folder structure
 PITcleanr_folder = "output/PITcleanr"
 
 # set species and year
 spc = "Steelhead"
-yr = 2025
+yr = 2017
 
 # apply shading to output? shades every other tag to assist with reviewing migration histories
 shade_tags = T
