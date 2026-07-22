@@ -4,7 +4,7 @@
 #   escapements (DABOM), plus escapements parsed by sex, age, etc.
 # 
 # Created Date: February 23, 2024
-#   Last Modified: January 20, 2026
+#   Last Modified: July 22, 2026
 #
 # Notes: 
 
@@ -17,7 +17,7 @@ library(readxl)
 library(writexl)
 
 # set species
-spc = "Chinook"
+spc = "Steelhead"
 
 # stadem estimates
 stadem_synth = list.files(path = paste0("output/stadem_results/escapement_summaries/"),
@@ -136,7 +136,11 @@ spc_avail_hab = avail_hab_df %>%
   select(site_code,
          p_ip,
          p_qrf,
-         p_qrf_se)
+         p_qrf_se,
+         site_qrf_n,
+         site_qrf_n_se,
+         pop_qrf_n,
+         pop_qrf_n_se)
 
 # population abundance
 N_synth = dabom_synth %>%
