@@ -237,7 +237,8 @@ pop_escp_post = site_escp_post %>%
             by = c("param" = "site_code")) %>%
   filter(!is.na(popid)) %>%
   group_by(popid, chain, iter, origin) %>%
-  summarise(abund = sum(abund))
+  summarise(abund = sum(abund),
+            .groups = "drop")
 
 # trt population escapement summaries
 pop_escp_summ = pop_escp_post %>%
