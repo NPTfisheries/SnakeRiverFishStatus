@@ -15,7 +15,7 @@ library(tidyverse)
 
 # set species and year
 spc = c("Chinook", "Coho", "Steelhead")[3]
-yr = 2025
+yr = 2024
 
 # where are the dabom results stored?
 dabom_folder = "output/dabom_results/"
